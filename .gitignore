@@ -1,0 +1,10 @@
+# 依赖与构建产物（本地版所需 vendor 请勿删除，仅排除可重新生成的产物）
+node_modules/
+*.log
+*.tmp
+.tmp-*
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini

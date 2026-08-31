@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>后室 · 泳池 Poolrooms — 自由行走</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #05080a;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  #crosshair {
+    position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px;
+    background: rgba(255,255,255,0.55); border-radius: 50%; z-index: 8; pointer-events: none;
+    box-shadow: 0 0 4px rgba(0,0,0,0.6);
+  }
+
+  #play-overlay {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 18px 28px; border-radius: 16px; text-align: center; user-select: none;
+    pointer-events: none; color: #dfe7e5;
+    background: rgba(8, 14, 16, 0.86); border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  }
+  #play-overlay h1 { margin: 0; font-size: 22px; letter-spacing: 6px; color: #eef6f1; font-weight: 300; }
+  #play-overlay .sub { color: #7fc9c4; letter-spacing: 3px; font-size: 11px; }
+  #play-overlay .btn {
+    pointer-events: auto; margin-top: 8px; padding: 10px 28px; font-size: 15px; letter-spacing: 2px;
+    background: rgba(111,212,208,0.16); color: #d8faf6; border: 1px solid rgba(111,212,208,0.55);
+    border-radius: 30px; cursor: pointer;
+  }
+  #play-overlay .keys { margin-top: 6px; font-size: 11px; color: #8fa7a4; line-height: 1.8; letter-spacing: 1px; }
+
+  #pickup-hint {
+    position: fixed; left: 50%; top: 68%; transform: translateX(-50%); z-index: 9;
+    color: #eafff9; font-size: 14px; letter-spacing: 2px; padding: 7px 18px; border-radius: 18px;
+    background: rgba(8,14,16,0.66); border: 1px solid rgba(111,212,208,0.5); display: none;
+  }
+
+  #level-tag {
+    position: fixed; top: 14px; right: 14px; z-index: 10;
+    color: #ffd98a; font-size: 13px; letter-spacing: 3px;
+    background: rgba(10,14,16,0.55); border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 12px; border-radius: 8px; user-select: none;
+  }
+  #level-fade {
+    position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none;
+    z-index: 30; transition: opacity .45s linear;
+  }
+  #scare-flash {
+    position: fixed; inset: 0; pointer-events: none; z-index: 31; opacity: 0;
+    background: radial-gradient(circle at 50% 45%, rgba(255,255,255,0.75), rgba(170,20,20,0.55));
+    transition: opacity .1s linear;
+  }
+  #flash-text {
+    position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
+    color: #ffdede; font-size: 26px; letter-spacing: 5px; z-index: 32; pointer-events: none;
+    opacity: 0; text-align: center; text-shadow: 0 0 18px rgba(255,0,40,0.85);
+    transition: opacity .8s; white-space: nowrap;
+  }
+
+  #end-overlay {
+    position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(8,16,18,0.88), rgba(3,6,8,0.96));
+    color: #eaf4f0; text-align: center; user-select: none;
+  }
+  #end-overlay .card {
+    background: rgba(10,16,18,0.72); border: 1px solid rgba(111,212,208,0.35);
+    border-radius: 18px; padding: 30px 44px; box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  }
+  #end-overlay h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: 8px; color: #bdf5ee; font-weight: 300; }
+  #end-overlay .sub { color: #7fc9c4; letter-spacing: 3px; font-size: 12px; margin-bottom: 20px; }
+  #end-overlay .stat { font-size: 15px; color: #d5e5e1; line-height: 2.1; letter-spacing: 1px; }
+  #end-overlay .stat b { color: #9fe8e2; font-variant-numeric: tabular-nums; }
+  #end-overlay .btns { margin-top: 22px; display: flex; gap: 12px; justify-content: center; }
+  #end-overlay button {
+    padding: 11px 26px; font-size: 15px; letter-spacing: 2px; cursor: pointer;
+    border-radius: 26px; border: 1px solid rgba(111,212,208,0.55);
+    background: rgba(111,212,208,0.16); color: #d8faf6;
+  }
+  #end-overlay button:hover { background: rgba(111,212,208,0.3); }
+
+  #hud {
+    position: fixed; top: 14px; left: 14px; z-index: 10;
+    background: rgba(10, 14, 16, 0.6);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 12px 15px; color: #dfe7e5;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    font-size: 12px; min-width: 228px; user-select: none;
+  }
+  #hud h1 { margin: 0 0 2px; font-size: 14px; letter-spacing: 3px; color: #eaf4f0; }
+  #hud .sub { margin: 0 0 10px; color: #8fa7a4; font-size: 11px; letter-spacing: 1px; }
+  #hud label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; }
+  #hud label span { flex: 0 0 auto; width: 52px; color: #cfe0dc; }
+  #hud input[type=range] { flex: 1; accent-color: #6fd4d0; cursor: pointer; }
+  #hud .val { width: 36px; text-align: right; color: #9fe8e2; font-variant-numeric: tabular-nums; }
+  #hint { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 10; color: #9fb6b2; font-size: 11px; letter-spacing: 1px;
+    background: rgba(10,14,16,0.5); padding: 5px 12px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="crosshair"></div>
+
+<div id="play-overlay">
+  <h1>POOLROOMS</h1>
+  <div class="sub">Level 0 · 后室 — 收集 3 枚保险丝，逃往泳池层</div>
+  <div class="btn">点击进入</div>
+  <div class="keys">
+    WASD 移动 · 鼠标 观察 · Shift 奔跑 · 空格 跳跃 · E 交互拾取<br>
+    Esc 释放光标调参 · H 面板 · 小心黑暗中的东西…
+  </div>
+</div>
+
+<div id="hud">
+  <h1>POOLROOMS</h1>
+  <p class="sub">后室 · 泳池层 — 自由行走</p>
+  <label><span>曝光</span><input id="c-exposure" type="range" min="0.2" max="2.6" step="0.01" value="1.28"><b class="val" id="v-exposure">1.28</b></label>
+  <label><span>泛光</span><input id="c-bloom" type="range" min="0" max="2" step="0.01" value="0.55"><b class="val" id="v-bloom">0.55</b></label>
+  <label><span>雾气</span><input id="c-fog" type="range" min="0" max="0.06" step="0.001" value="0.016"><b class="val" id="v-fog">0.016</b></label>
+  <label><span>灵敏度</span><input id="c-sens" type="range" min="0.5" max="4" step="0.05" value="1.8"><b class="val" id="v-sens">1.8</b></label>
+  <label><span>音量</span><input id="c-volume" type="range" min="0" max="1" step="0.01" value="0.7"><b class="val" id="v-volume">0.70</b></label>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+    <span style="color:#cfe0dc;">任务</span><b id="v-task" style="color:#ffd98a;">收集保险丝 0/3</b>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+    <span style="color:#cfe0dc;">手电筒</span><b id="v-flash" style="color:#ffd98a;">未拾取 · F 开关</b>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+    <span style="color:#cfe0dc;">漂浮物</span><b id="v-pick" style="color:#9fe8e2;">0 / 6</b>
+  </div>
+</div>
+
+<div id="hint">WASD 移动 · Shift 奔跑 · 空格 跳/上浮 · E 拾取 · Esc 调参 · H 面板</div>
+<div id="pickup-hint">按 E 拾取</div>
+<div id="level-tag">LEVEL 0 · 后室</div>
+<div id="level-fade"></div>
+<div id="scare-flash"></div>
+<div id="flash-text"></div>
+<div id="end-overlay">
+  <div class="card">
+    <h1>LEVEL CLEAR</h1>
+    <div class="sub">你逃出了后室，又穿过了泳池层</div>
+    <div class="stat">总用时&nbsp; <b id="e-time">--:--</b></div>
+    <div class="stat">碰见黑影&nbsp; <b id="e-scares">0</b> 次 · 保险丝 <b id="e-fuses">3/3</b> · 漂浮物 <b id="e-floats">6/6</b></div>
+    <div class="btns">
+      <button id="btn-replay">再玩一次</button>
+      <button id="btn-continue">继续漫游</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { Water } from 'three/addons/objects/Water.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+
+RectAreaLightUniformsLib.init();
+
+/* ============================================================ 基础渲染器 */
+const container = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = false;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.28;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060605);
+scene.fog = new THREE.FogExp2(0x0b0a08, 0.055);
+
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.08, 140);
+camera.rotation.order = 'YXZ';
+scene.add(camera);
+// 手电筒聚光（挂相机，F 开关）
+const flashLight = new THREE.SpotLight(0xfff0c8, 0, 16, 0.52, 0.45, 1.6);
+flashLight.position.set(0.14, -0.06, 0.1);
+camera.add(flashLight);
+camera.add(flashLight.target);
+flashLight.target.position.set(0, 0, -9);
+
+/* ============================================================ 后处理 */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.85, 0.8);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
+
+// 水下折射（把最终画面按噪声扭曲 + 水色叠加）
+function makeRefractionNoise(size) {
+  const c = makeCanvas(size, size);
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgb(128,128,128)'; g.fillRect(0, 0, size, size);
+  for (let i = 0; i < 70; i++) {
+    const x = Math.random() * size, y = Math.random() * size, r = 8 + Math.random() * 32;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, Math.random() > 0.5 ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)');
+    grad.addColorStop(1, 'rgba(128,128,128,0)');
+    g.fillStyle = grad; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+const refractionUniforms = {
+  tDiffuse: { value: null }, uNoise: { value: makeRefractionNoise(256) },
+  uTime: { value: 0 }, uAmount: { value: 0 },
+};
+const refractionPass = new ShaderPass({
+  uniforms: refractionUniforms,
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    uniform sampler2D tDiffuse; uniform sampler2D uNoise;
+    uniform float uTime; uniform float uAmount; varying vec2 vUv;
+    void main(){
+      vec2 uv = vUv; float a = uAmount;
+      if(a > 0.001){
+        vec4 n = texture2D(uNoise, vUv * 1.6 + vec2(uTime * 0.04, -uTime * 0.03));
+        vec2 off = (n.rg - vec2(0.5)) * 0.07 * a;
+        off += vec2(0.004 * sin(vUv.y * 180.0 + uTime * 3.0), 0.004 * cos(vUv.x * 170.0 + uTime * 2.6)) * a;
+        uv += off;
+      }
+      vec3 c = texture2D(tDiffuse, uv).rgb;
+      c = mix(c, c * vec3(0.78, 0.97, 1.08), a * 0.32);
+      float vig = 1.0 - 0.35 * a * smoothstep(0.3, 1.0, length(vUv - 0.5) * 1.4);
+      gl_FragColor = vec4(c * vig, 1.0);
+    }`
+});
+composer.addPass(refractionPass);
+
+/* ============================================================ 地图数据 */
+const H = 4.2;
+const BOUNDS = { x1: -24, x2: 24, z1: -16, z2: 20 };
+
+// 泳池：大台阶浅端 + 深水区（台阶自 zEnd 向 zStepsLow 逐级下降）
+const POOLS = [
+  { name: 'main', x1: -9, x2: 7, zDeep1: -6, bottom: -2.30, water: -0.28,
+    steps: [
+      { z1: 7.2, z2: 8,   top: -0.12 },
+      { z1: 6.4, z2: 7.2, top: -0.62 },
+      { z1: 5.6, z2: 6.4, top: -1.12 },
+      { z1: 4.8, z2: 5.6, top: -1.62 },
+      { z1: 4.0, z2: 4.8, top: -2.30 },
+    ], zStepsLow: 4.0, zEnd: 8 },
+  { name: 'lap', x1: 14, x2: 22, zDeep1: -4, bottom: -2.00, water: -0.34,
+    steps: [
+      { z1: 3.5, z2: 4.0, top: -0.10 },
+      { z1: 3.0, z2: 3.5, top: -0.72 },
+      { z1: 2.5, z2: 3.0, top: -1.34 },
+      { z1: 2.0, z2: 2.5, top: -2.00 },
+    ], zStepsLow: 2.0, zEnd: 4 },
+];
+
+// 浅反射池
+const BASIN = { x1: -4, x2: 4, z1: -15, z2: -10, bottom: -0.25, water: -0.18 };
+
+// 隔断墙（门洞之外均为墙段）
+const PARTITIONS = [
+  { x: 12, zRanges: [[-16, -5], [5, 20]] },
+  { x: -16, zRanges: [[-16, -2.5], [2.5, 20]] },
+];
+
+const COLLIDERS = [];
+
+/* ============ 关卡状态（0 = Level 0 后室，1 = 泳池层） ============ */
+const BOUNDS_L0 = { x1: -150, x2: -64, z1: -24, z2: 24 };
+const L0H = 3.0;
+const COLLIDERS_L0 = [];
+const L0_SPAWN = { x: -144, z: 0 };
+const L0_RESPAWN = { x: -144, z: 0 };
+let LEVEL = 0;
+let ACTIVE_COLLIDERS = COLLIDERS_L0;
+let ACTIVE_BOUNDS = BOUNDS_L0;
+let fuses = 0;
+let exitUnlocked = false;
+let transitioning = false;
+const stats = { start: performance.now(), scares: 0 };
+
+function insidePoolArea(x, z, pad = 0.4) {
+  for (const p of POOLS) {
+    if (x > p.x1 - pad && x < p.x2 + pad && z > p.zDeep1 - pad && z < p.zEnd + pad) return true;
+  }
+  return false;
+}
+
+function groundAt(x, z) {
+  if (LEVEL === 0) return 0;
+  for (const p of POOLS) {
+    if (x >= p.x1 && x <= p.x2 && z >= p.zDeep1 && z <= p.zEnd) {
+      if (z <= p.zStepsLow) return p.bottom;
+      for (const s of p.steps) { if (z >= s.z1 && z <= s.z2) return s.top; }
+    }
+  }
+  if (x >= BASIN.x1 && x <= BASIN.x2 && z >= BASIN.z1 && z <= BASIN.z2) return BASIN.bottom;
+  return 0;
+}
+
+function waterLevelAt(x, z) {
+  if (LEVEL === 0) return null;
+  for (const p of POOLS) {
+    if (x >= p.x1 && x <= p.x2 && z >= p.zDeep1 && z <= p.zEnd) return p.water;
+  }
+  if (x >= BASIN.x1 && x <= BASIN.x2 && z >= BASIN.z1 && z <= BASIN.z2) return BASIN.water;
+  return null;
+}
+
+/* ============================================================ 程序化贴图（高精度） */
+function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function hexToRgb(hex) { const n = parseInt(hex.slice(1), 16); return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }; }
+function shade(hex, amt) {
+  const { r, g, b } = hexToRgb(hex);
+  const t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+  return `rgb(${Math.round(r + (t - r) * p)},${Math.round(g + (t - g) * p)},${Math.round(b + (t - b) * p)})`;
+}
+
+/* 无缝大尺度明暗斑驳（周期 sines，消除重复感） */
+function applyMottle(ctx, size, amount, freq) {
+  const img = ctx.getImageData(0, 0, size, size);
+  const d = img.data, k = (Math.PI * 2) / size;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = x * k, v = y * k;
+      let n = Math.sin(u * freq) * Math.sin(v * freq * 0.83);
+      n += 0.5 * Math.sin(u * freq * 2.3 + 1.7) * Math.sin(v * freq * 1.9 + 0.4);
+      n += 0.25 * Math.sin(u * freq * 5.1 + 0.9) * Math.sin(v * freq * 4.3 + 2.1);
+      const m = 1 + n * amount;
+      const i = (y * size + x) * 4;
+      d[i] = Math.min(255, d[i] * m);
+      d[i + 1] = Math.min(255, d[i + 1] * m);
+      d[i + 2] = Math.min(255, d[i + 2] * m);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function createTileSet(o) {
+  const size = o.size || 1024;
+  const cols = o.cols || 8, rows = o.rows || 8;
+  const tw = size / cols, th = size / rows;
+  const inset = (1 - (o.tileScale == null ? 0.9 : o.tileScale)) / 2;
+  const tileBase = Array.isArray(o.tile) ? o.tile : [o.tile];
+
+  const diffuse = makeCanvas(size, size), dc = diffuse.getContext('2d');
+  const hC = makeCanvas(size, size), hc = hC.getContext('2d');
+  const rC = makeCanvas(size, size), rc = rC.getContext('2d');
+
+  dc.fillStyle = o.grout; dc.fillRect(0, 0, size, size);
+  hc.fillStyle = 'rgb(40,40,42)'; hc.fillRect(0, 0, size, size);
+  rc.fillStyle = 'rgb(186,186,188)'; rc.fillRect(0, 0, size, size);
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const checker = o.checker ? (x + y) % 2 : 0;
+      const base = tileBase[checker % tileBase.length];
+      const v = (Math.random() * 2 - 1) * (o.vary || 0.04);
+      const color = shade(base, v);
+      const px = x * tw + tw * inset, py = y * th + th * inset;
+      const w = tw * (1 - 2 * inset), h = th * (1 - 2 * inset);
+
+      // 釉面渐变 + 色彩
+      const grad = dc.createLinearGradient(px, py, px, py + h);
+      grad.addColorStop(0, shade(color, 0.09));
+      grad.addColorStop(0.5, color);
+      grad.addColorStop(1, shade(color, -0.09));
+      dc.fillStyle = grad;
+      dc.fillRect(px, py, w, h);
+
+      // 瓷砖内阴影（烘焙 AO）
+      if (o.ao) {
+        dc.strokeStyle = `rgba(40,30,20,${o.ao})`;
+        dc.lineWidth = Math.max(2, tw * 0.05);
+        dc.strokeRect(px + 1, py + 1, w - 2, h - 2);
+      }
+      // 釉面细纹 / 微裂纹
+      dc.globalAlpha = 0.05 + Math.random() * 0.05;
+      dc.fillStyle = Math.random() > 0.5 ? '#000' : '#fff';
+      for (let i = 0; i < 3; i++) dc.fillRect(px + Math.random() * w, py + Math.random() * h, w * (0.15 + Math.random() * 0.45), h * 0.018);
+      dc.globalAlpha = 1;
+      if (o.cracks && Math.random() < 0.06) {
+        dc.strokeStyle = 'rgba(30,26,22,0.55)';
+        dc.lineWidth = 1.2;
+        let cx = px + Math.random() * w, cy = py + Math.random() * h;
+        dc.beginPath(); dc.moveTo(cx, cy);
+        for (let i = 0; i < 3; i++) { cx += (Math.random() - 0.5) * tw * 0.5; cy += (Math.random() - 0.5) * th * 0.5; dc.lineTo(cx, cy); }
+        dc.stroke();
+      }
+
+      // 高度图：倒角
+      const hb = 200 + Math.round((Math.random() * 2 - 1) * 22);
+      hc.fillStyle = `rgb(${hb},${hb},${hb})`;
+      hc.fillRect(px, py, w, h);
+      hc.fillStyle = `rgb(${Math.min(255, hb + 30)},${Math.min(255, hb + 30)},${Math.min(255, hb + 30)})`;
+      hc.fillRect(px + w * 0.13, py + h * 0.13, w * 0.74, h * 0.74);
+
+      // 粗糙度
+      const rv = 46 + Math.round(Math.random() * 34);
+      rc.fillStyle = `rgb(${rv},${rv},${rv})`;
+      rc.fillRect(px, py, w, h);
+    }
+  }
+
+  // 整体脏污颗粒
+  const speck = (ctx) => {
+    ctx.globalAlpha = 0.11;
+    const n = size * (o.grime || 0.08);
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.4)';
+      const s = 1 + Math.random() * 2.2;
+      ctx.fillRect(Math.random() * size, Math.random() * size, s, s);
+    }
+    ctx.globalAlpha = 1;
+  };
+  speck(dc); speck(hc); speck(rc);
+
+  if (o.mottle) { applyMottle(dc, size, o.mottle, 3); applyMottle(hc, size, o.mottle * 0.7, 3); }
+
+  const normal = computeNormalMap(hC, o.normalStrength == null ? 2.5 : o.normalStrength);
+  return { diffuse, normal, rough: rC, coverageX: cols * o.tileWorld, coverageY: rows * o.tileWorld };
+}
+
+function computeNormalMap(src, strength) {
+  const w = src.width, h = src.height;
+  const ctx = src.getContext('2d');
+  const data = ctx.getImageData(0, 0, w, h).data;
+  const out = makeCanvas(w, h);
+  const octx = out.getContext('2d');
+  const img = octx.createImageData(w, h);
+  const od = img.data;
+  const Hv = (x, y) => { x = ((x % w) + w) % w; y = ((y % h) + h) % h; return data[(y * w + x) * 4] / 255; };
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx = (Hv(x + 1, y) - Hv(x - 1, y)) * strength;
+      const dy = (Hv(x, y + 1) - Hv(x, y - 1)) * strength;
+      let nx = -dx, ny = -dy, nz = 1;
+      const inv = 1 / Math.sqrt(nx * nx + ny * ny + nz * nz);
+      const i = (y * w + x) * 4;
+      od[i] = Math.round((nx * inv * 0.5 + 0.5) * 255);
+      od[i + 1] = Math.round((ny * inv * 0.5 + 0.5) * 255);
+      od[i + 2] = Math.round((nz * inv * 0.5 + 0.5) * 255);
+      od[i + 3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  return out;
+}
+
+function createPlain(o) {
+  const size = o.size || 512;
+  const c = makeCanvas(size, size), ctx = c.getContext('2d');
+  ctx.fillStyle = o.base; ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < size * (o.speck || 0.3); i++) {
+    const a = Math.random() * 0.08;
+    ctx.fillStyle = Math.random() > 0.5 ? `rgba(0,0,20,${a})` : `rgba(255,250,240,${a})`;
+    const s = 1 + Math.random() * 3;
+    ctx.fillRect(Math.random() * size, Math.random() * size, s, s);
+  }
+  return { diffuse: c };
+}
+
+function createWaterNormal(size = 256) {
+  const c = makeCanvas(size, size), ctx = c.getContext('2d');
+  const img = ctx.createImageData(size, size), d = img.data;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = (x / size) * Math.PI * 2, v = (y / size) * Math.PI * 2;
+      const h = 0.5
+        + 0.22 * Math.sin(u * 3 + 1.3) * Math.sin(v * 2 + 0.7)
+        + 0.16 * Math.sin(u * 7 + 4.1) * Math.sin(v * 6 + 2.4)
+        + 0.10 * Math.sin(u * 13 + 0.9) * Math.sin(v * 11 + 5.2)
+        + 0.06 * Math.sin(u * 23 + 3.3) * Math.sin(v * 19 + 1.1);
+      const val = Math.round(h * 255), i = (y * size + x) * 4;
+      d[i] = d[i + 1] = d[i + 2] = val; d[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return computeNormalMap(c, 3.2);
+}
+
+/* ============================================================ 材质工厂 */
+function texFrom(canvas, rx, ry, srgb) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if (rx != null || ry != null) t.repeat.set(rx == null ? 1 : rx, ry == null ? 1 : ry);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+function matFor(set, rx, ry, opts = {}) {
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: opts.roughness == null ? 0.42 : opts.roughness,
+    metalness: opts.metalness == null ? 0.02 : opts.metalness,
+  });
+  if (set.diffuse) { mat.map = texFrom(set.diffuse, rx, ry, true); if (opts.color) mat.color.set(opts.color); }
+  if (set.normal) mat.normalMap = texFrom(set.normal, rx, ry, false);
+  if (set.rough) mat.roughnessMap = texFrom(set.rough, rx, ry, false);
+  return mat;
+}
+function physicalMat(set, rx, ry, opts = {}) {
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: opts.roughness == null ? 0.45 : opts.roughness,
+    metalness: opts.metalness == null ? 0.02 : opts.metalness,
+    clearcoat: opts.clearcoat == null ? 0.28 : opts.clearcoat,
+    clearcoatRoughness: opts.clearcoatRoughness == null ? 0.32 : opts.clearcoatRoughness,
+  });
+  if (set.diffuse) { mat.map = texFrom(set.diffuse, rx, ry, true); if (opts.color) mat.color.set(opts.color); }
+  if (set.normal) mat.normalMap = texFrom(set.normal, rx, ry, false);
+  if (set.rough) mat.roughnessMap = texFrom(set.rough, rx, ry, false);
+  return mat;
+}
+
+/* ============================================================ IBL 环境反射 */
+function buildEnvScene() {
+  const env = new THREE.Scene();
+  const c = makeCanvas(1024, 512), g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0, '#f3e6cb'); grad.addColorStop(0.3, '#b4bdb9');
+  grad.addColorStop(0.62, '#536166'); grad.addColorStop(1, '#142128');
+  g.fillStyle = grad; g.fillRect(0, 0, 1024, 512);
+  g.fillStyle = 'rgba(255,244,222,0.95)';
+  for (let i = 0; i < 10; i++) {
+    const x = Math.random() * 1024, y = 20 + Math.random() * 100;
+    g.save(); g.translate(x, y); g.scale(1, 0.45);
+    g.beginPath(); g.arc(0, 0, 22 + Math.random() * 44, 0, Math.PI * 2); g.fill(); g.restore();
+  }
+  g.fillStyle = 'rgba(110,205,214,0.35)'; g.fillRect(0, 300, 1024, 120);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide });
+  mat.color.setRGB(3.0, 2.9, 2.7);
+  env.add(new THREE.Mesh(new THREE.SphereGeometry(40, 64, 32), mat));
+  return env;
+}
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(buildEnvScene(), 0.04).texture;
+
+/* ============================================================ 贴图集合 */
+const wallTiles = createTileSet({
+  cols: 16, rows: 16, tileWorld: 0.30, size: 1024,
+  tile: '#eee7da', grout: '#c2b8a7', vary: 0.045, grime: 0.09,
+  tileScale: 0.9, ao: 0.34, cracks: true, mottle: 0.055, normalStrength: 2.4 });
+const floorWest = createTileSet({
+  cols: 8, rows: 8, tileWorld: 0.75, size: 1024,
+  tile: '#e7dfcd', grout: '#b9b09d', vary: 0.035, grime: 0.11,
+  tileScale: 0.88, ao: 0.28, cracks: true, mottle: 0.05, normalStrength: 2.1 });
+const floorEast = createTileSet({
+  cols: 8, rows: 8, tileWorld: 0.75, size: 1024,
+  tile: '#dcdcd6', grout: '#a9aaa6', vary: 0.035, grime: 0.14,
+  tileScale: 0.88, ao: 0.30, cracks: true, mottle: 0.05, normalStrength: 2.1 });
+const floorMaint = createTileSet({
+  cols: 6, rows: 6, tileWorld: 0.62, size: 512,
+  tile: '#676966', grout: '#424542', vary: 0.05, grime: 0.18, tileScale: 0.86, ao: 0.4, normalStrength: 2.2 });
+const poolMosaic = createTileSet({
+  cols: 24, rows: 24, tileWorld: 0.055, size: 512,
+  tile: ['#8edcd8', '#76c7cd'], grout: '#4b9aa0', vary: 0.06, grime: 0.05,
+  tileScale: 0.86, ao: 0.22, checker: true, normalStrength: 2.7 });
+const rimTiles = createTileSet({
+  cols: 10, rows: 2, tileWorld: 0.13, size: 256,
+  tile: '#274b55', grout: '#17323a', vary: 0.07, grime: 0.06, tileScale: 0.86, ao: 0.3, normalStrength: 2.2 });
+const skirting = createTileSet({
+  cols: 8, rows: 1, tileWorld: 0.28, size: 256,
+  tile: '#1f3d44', grout: '#14292f', vary: 0.06, grime: 0.08, tileScale: 0.88, ao: 0.3, normalStrength: 2.4 });
+const ceiling = createPlain({ base: '#e7e5de', speck: 0.4 });
+
+/* ============================================================ 几何辅助 */
+function addPlane(w, h, x, y, z, rx, ry, mat) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0);
+  m.receiveShadow = true; scene.add(m); return m;
+}
+function addBox(w, h, d, x, y, z, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); m.receiveShadow = true; m.castShadow = true; scene.add(m); return m;
+}
+
+/* ---------------- 地板（ShapeGeometry 洞口 + 世界坐标 UV） ---------------- */
+function holePath(x1, z1, x2, z2) {
+  const p = new THREE.Path();
+  p.moveTo(x1, -z1); p.lineTo(x2, -z1); p.lineTo(x2, -z2); p.lineTo(x1, -z2); p.closePath();
+  return p;
+}
+function deckShape(x1, z1, x2, z2, holes) {
+  const s = new THREE.Shape();
+  s.moveTo(x1, -z1); s.lineTo(x2, -z1); s.lineTo(x2, -z2); s.lineTo(x1, -z2); s.closePath();
+  for (const hh of holes) s.holes.push(holePath(hh[0], hh[1], hh[2], hh[3]));
+  return s;
+}
+function addDeck(x1, z1, x2, z2, holes, set, opts) {
+  const geo = new THREE.ShapeGeometry(deckShape(x1, z1, x2, z2, holes));
+  const mat = (opts && opts.physical ? physicalMat : matFor)(set, 1 / set.coverageX, 1 / set.coverageY, opts);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  return mesh;
+}
+
+// 西侧大厅地板（主泳池 + 反射池洞口）
+addDeck(-24, -16, 12, 20, [[-9, -6, 7, 8], [BASIN.x1, BASIN.z1, BASIN.x2, BASIN.z2]], floorWest, { physical: true });
+// 东侧大厅地板（泳道池洞口）
+addDeck(12, -16, 24, 20, [[14, -4, 22, 4]], floorEast, { physical: true });
+// 西机房深色地板覆盖层（无洞口，y 略浮）
+(function () {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(8.01, 36.01), matFor(floorMaint, 8 / floorMaint.coverageX, 36 / floorMaint.coverageY));
+  m.rotation.x = -Math.PI / 2; m.position.set(-20, 0.012, 2);
+  m.renderOrder = 1; m.polygonOffset = true; m.polygonOffsetFactor = -1;
+  scene.add(m);
+})();
+// 门洞门槛石（东大厅 x=12 门洞）
+addBox(0.7, 0.05, 10.4, 12, 0.025, 0, matFor(rimTiles, 0.7 / rimTiles.coverageX, 10.4 / rimTiles.coverageY));
+
+/* ---------------- 泳池建造 ---------------- */
+function poolAreaMat(w, d) { return physicalMat(poolMosaic, w / poolMosaic.coverageX, d / poolMosaic.coverageY, { roughness: 0.4, clearcoat: 0.4 }); }
+
+function buildPool(p) {
+  const W = p.x2 - p.x1, cx = (p.x1 + p.x2) / 2;
+  const depth = 0 - p.bottom;
+  const fullLen = p.zEnd - p.zDeep1;
+
+  // 深水区底部
+  addPlane(W, p.zStepsLow - p.zDeep1, cx, p.bottom, (p.zDeep1 + p.zStepsLow) / 2, -Math.PI / 2, 0, poolAreaMat(W, p.zStepsLow - p.zDeep1));
+  // 三面侧墙
+  addPlane(W, depth, cx, -depth / 2, p.zDeep1, 0, 0, poolAreaMat(W, depth));
+  addPlane(fullLen, depth, p.x1, -depth / 2, (p.zDeep1 + p.zEnd) / 2, 0, Math.PI / 2, poolAreaMat(fullLen, depth));
+  addPlane(fullLen, depth, p.x2, -depth / 2, (p.zDeep1 + p.zEnd) / 2, 0, -Math.PI / 2, poolAreaMat(fullLen, depth));
+
+  // 宽阔台阶级
+  for (const s of p.steps) {
+    const h = s.top - p.bottom, dz = s.z2 - s.z1;
+    addBox(W, h, dz, cx, (s.top + p.bottom) / 2, (s.z1 + s.z2) / 2, poolAreaMat(W, dz));
+  }
+
+  // 池沿收边（深色）
+  const rimH = matFor(rimTiles, 0.4 / rimTiles.coverageX, 0.14 / rimTiles.coverageY);
+  addBox(W + 0.4, 0.14, 0.44, cx, 0.07, p.zDeep1 - 0.16, rimH);
+  addBox(0.44, 0.14, fullLen, p.x1 - 0.16, 0.07, (p.zDeep1 + p.zEnd) / 2, rimH);
+  addBox(0.44, 0.14, fullLen, p.x2 + 0.16, 0.07, (p.zDeep1 + p.zEnd) / 2, rimH);
+  addBox(W + 0.4, 0.14, 0.44, cx, 0.07, p.zEnd + 0.16, rimH);
+
+  // 碰撞：三面封闭，台阶端开放
+  COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.15, z2: p.zDeep1 + 0.15 });
+  COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x1 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2 });
+  COLLIDERS.push({ x1: p.x2 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2 });
+
+  // 水面
+  const water = new Water(new THREE.PlaneGeometry(W + 0.35, fullLen + 0.35), {
+    textureWidth: 1024, textureHeight: 1024,
+    waterNormals: texFrom(createWaterNormal(256), 9, 7, false),
+    sunDirection: new THREE.Vector3(0, 1, 0),
+    sunColor: 0xfff1d6, waterColor: 0x2b8fa0, distortionScale: 4.4, fog: true });
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(cx, p.water, (p.zDeep1 + p.zEnd) / 2);
+  scene.add(water);
+  return water;
+}
+buildPool(POOLS[0]);
+buildPool(POOLS[1]);
+
+// 反射池
+(function () {
+  const W = BASIN.x2 - BASIN.x1, D = BASIN.z2 - BASIN.z1, cx = 0, cz = (BASIN.z1 + BASIN.z2) / 2;
+  addPlane(W, D, cx, BASIN.bottom, cz, -Math.PI / 2, 0, poolAreaMat(W, D));
+  const rw = matFor(rimTiles, 0.4 / rimTiles.coverageX, 0.12 / rimTiles.coverageY);
+  [[0, BASIN.z1 - 0.12, W + 0.3, 0.3], [0, BASIN.z2 + 0.12, W + 0.3, 0.3],
+   [BASIN.x1 - 0.12, 0, 0.3, D], [BASIN.x2 + 0.12, 0, 0.3, D]].forEach(([x, z, w, dd]) => addBox(w, 0.12, dd, x, 0.06, z, rw));
+  const water = new Water(new THREE.PlaneGeometry(W + 0.3, D + 0.3), {
+    textureWidth: 512, textureHeight: 512,
+    waterNormals: texFrom(createWaterNormal(128), 5, 5, false),
+    sunDirection: new THREE.Vector3(0, 1, 0), sunColor: 0xfff1d6,
+    waterColor: 0x2b8fa0, distortionScale: 3.0, fog: true });
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(cx, BASIN.water, cz);
+  scene.add(water);
+})();
+
+/* ---------------- 外墙与隔断 ---------------- */
+const wallMat = () => matFor(wallTiles, 48 / wallTiles.coverageX, H / wallTiles.coverageY);
+addPlane(48, H, 0, H / 2, BOUNDS.z1, 0, 0, wallMat());
+addPlane(48, H, 0, H / 2, BOUNDS.z2, 0, Math.PI, wallMat());
+addPlane(36, H, BOUNDS.x1, H / 2, 2, 0, Math.PI / 2, matFor(wallTiles, 36 / wallTiles.coverageX, H / wallTiles.coverageY));
+addPlane(36, H, BOUNDS.x2, H / 2, 2, 0, -Math.PI / 2, matFor(wallTiles, 36 / wallTiles.coverageX, H / wallTiles.coverageY));
+
+for (const part of PARTITIONS) {
+  for (const [za, zb] of part.zRanges) {
+    const len = zb - za;
+    const wall = addBox(0.5, H, len, part.x, H / 2, (za + zb) / 2, wallMat());
+    // 踢脚
+    const base = matFor(skirting, 0.6 / skirting.coverageX, 0.5 / skirting.coverageY);
+    addBox(0.58, 0.5, len, part.x, 0.25, (za + zb) / 2, base);
+    COLLIDERS.push({ x1: part.x - 0.3, x2: part.x + 0.3, z1: za, z2: zb });
+  }
+}
+// 门洞门套（薄片，贴合墙面）
+const trimMat = matFor(rimTiles, 0.6 / rimTiles.coverageX, H / rimTiles.coverageY);
+[[12, -5], [12, 5], [-16, -2.5], [-16, 2.5]].forEach(([x, z]) => {
+  const t = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.16), trimMat);
+  t.position.set(x, H / 2, z); scene.add(t);
+  COLLIDERS.push({ x1: x - 0.3, x2: x + 0.3, z1: z - 0.15, z2: z + 0.15 });
+});
+
+/* ---------------- 天花板与灯板 ---------------- */
+const ceilMat = new THREE.MeshStandardMaterial({ map: texFrom(ceiling.diffuse, 7, 5, true), roughness: 0.95, metalness: 0 });
+addPlane(48, 36, 0, H, 2, Math.PI / 2, 0, ceilMat);
+
+function ceilingLight(x, z, intensity = 5.6, w = 2.6, h = 1.55, color = 0xffe6c2) {
+  const l = new THREE.RectAreaLight(color, intensity, w, h);
+  l.position.set(x, H - 0.06, z);
+  l.lookAt(x + 0.001, 0, z);
+  scene.add(l);
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+    new THREE.MeshStandardMaterial({ color: 0x181818, emissive: 0xfff1da, emissiveIntensity: 5.2 }));
+  panel.position.set(x, H - 0.05, z); panel.rotation.x = Math.PI / 2;
+  scene.add(panel);
+}
+for (const x of [-12, -4, 4, 8]) for (const z of [-12, -4, 4, 12]) ceilingLight(x, z);
+for (const x of [16, 20]) for (const z of [-12, -4, 4, 12]) ceilingLight(x, z);
+
+/* ---------------- 立柱 ---------------- */
+const colMat = matFor(wallTiles, 0.9 / wallTiles.coverageX, H / wallTiles.coverageY);
+const capMat = matFor(wallTiles, 0.55 / wallTiles.coverageX, 0.1 / wallTiles.coverageY);
+const colBaseMat = matFor(skirting, 0.55 / skirting.coverageX, 0.1 / skirting.coverageY);
+function addColumn(x, z) {
+  if (insidePoolArea(x, z, 1.0) || (x >= BASIN.x1 - 1 && x <= BASIN.x2 + 1 && z >= BASIN.z1 - 1 && z <= BASIN.z2 + 1)) return;
+  addBox(0.9, H, 0.9, x, H / 2, z, colMat);
+  addBox(1.12, 0.18, 1.12, x, H - 0.09, z, capMat);
+  addBox(1.06, 0.5, 1.06, x, 0.25, z, colBaseMat);
+  COLLIDERS.push({ x1: x - 0.48, x2: x + 0.48, z1: z - 0.48, z2: z + 0.48 });
+}
+for (const x of [-20, -12, -8, -4, 0, 4, 8]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
+for (const x of [16, 20]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
+
+/* ---------------- 长椅（整块石质，无零散立方腿） ---------------- */
+function addBench(x, z, rotY = 0) {
+  const stone = matFor(floorEast, 1.8 / floorEast.coverageX, 0.5 / floorEast.coverageY, { roughness: 0.55 });
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.46, 0.5), stone);
+  seat.position.set(x, 0.23, z); seat.rotation.y = rotY;
+  scene.add(seat);
+  if (rotY === 0) COLLIDERS.push({ x1: x - 0.95, x2: x + 0.95, z1: z - 0.35, z2: z + 0.35 });
+  else COLLIDERS.push({ x1: x - 0.35, x2: x + 0.35, z1: z - 1.0, z2: z + 1.0 });
+}
+addBench(12.9, -6.6, 0); addBench(12.9, 6.6, 0);
+addBench(-4.8, -12.6, -Math.PI / 2); addBench(4.8, -12.6, -Math.PI / 2);
+
+/* ---------------- 西机房（昏灯与灯板） ---------------- */
+(function () {
+  const p1 = new THREE.PointLight(0xffc27a, 7, 12, 2); p1.position.set(-20, 2.6, -8); scene.add(p1);
+  const p2 = new THREE.PointLight(0xffc27a, 7, 12, 2); p2.position.set(-20, 2.6, 8); scene.add(p2);
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.45),
+    new THREE.MeshStandardMaterial({ color: 0x111, emissive: 0xffe2b8, emissiveIntensity: 3.2 }));
+  panel.position.set(-20, H - 0.05, 1); panel.rotation.x = Math.PI / 2; scene.add(panel);
+})();
+
+/* ---------------- 环境与基础光 ---------------- */
+const hemi = new THREE.HemisphereLight(0xfff1dd, 0x84989a, 0.5);
+scene.add(hemi);
+[[-3.5, -1.5], [3.5, 1.5]].forEach(([x, z]) => {
+  const p = new THREE.PointLight(0xc9f2ff, 10, 13, 2); p.position.set(x, 2.2, z); scene.add(p);
+});
+
+/* ============================================================ 合成音频（脚步 + 回声） */
+let audioCtx = null, audioMaster = null, audioDry = null, stepTimer = 0;
+function makeImpulse(duration, decay) {
+  const rate = audioCtx.sampleRate, len = Math.floor(rate * duration);
+  const buf = audioCtx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    }
+  }
+  return buf;
+}
+function initAudio() {
+  const vol = parseFloat(document.getElementById('c-volume').value);
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioMaster = audioCtx.createGain(); audioMaster.gain.value = vol; audioMaster.connect(audioCtx.destination);
+    audioDry = audioCtx.createGain(); audioDry.gain.value = 0.7; audioDry.connect(audioMaster);
+    const conv = audioCtx.createConvolver(); conv.buffer = makeImpulse(2.8, 2.4);
+    const wet = audioCtx.createGain(); wet.gain.value = 0.5; conv.connect(wet); wet.connect(audioMaster);
+    audioCtx._conv = conv;
+    startDrone();
+  } else if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+let droneNodes = null;
+function makeNoiseBuffer(len) {
+  const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * len), audioCtx.sampleRate);
+  const d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+function startDrone() {
+  if (!audioCtx || droneNodes) return;
+  const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = 47;
+  const n = audioCtx.createBufferSource(); n.buffer = makeNoiseBuffer(2); n.loop = true;
+  const f = audioCtx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 240;
+  const g = audioCtx.createGain(); g.gain.value = 0.05;
+  o.connect(g); n.connect(f); f.connect(g); g.connect(audioMaster);
+  o.start(); n.start();
+  droneNodes = { o, n, g };
+}
+function burst(o) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime, dur = o.dur || 0.09;
+  let src;
+  if (o.type === 'noise') {
+    const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur), audioCtx.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    src = audioCtx.createBufferSource(); src.buffer = b;
+  } else {
+    src = audioCtx.createOscillator(); src.type = o.type;
+    src.frequency.setValueAtTime(o.f0 || 150, t);
+    if (o.f1) src.frequency.exponentialRampToValueAtTime(o.f1, t + dur);
+  }
+  const flt = audioCtx.createBiquadFilter();
+  flt.type = o.filter || 'bandpass'; flt.frequency.value = o.freq || 600; flt.Q.value = o.q || 0.8;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(o.gain || 0.5, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(flt); flt.connect(g);
+  g.connect(audioDry); g.connect(audioCtx._conv);
+  src.start(t); src.stop(t + dur + 0.02);
+}
+function synthStep(surface) {
+  if (surface === 'water') {
+    burst({ type: 'noise', dur: 0.15, freq: 950, q: 0.5, gain: 0.34 });
+    burst({ type: 'sine', f0: 320, f1: 110, dur: 0.12, gain: 0.2, filter: 'lowpass' });
+  } else if (surface === 'carpet') {
+    burst({ type: 'noise', dur: 0.06, freq: 300, q: 0.6, gain: 0.38, filter: 'lowpass' });
+    burst({ type: 'sine', f0: 75, f1: 45, dur: 0.07, gain: 0.3, filter: 'lowpass' });
+  } else if (surface === 'concrete') {
+    burst({ type: 'noise', dur: 0.07, freq: 380, q: 0.9, gain: 0.5 });
+    burst({ type: 'sine', f0: 95, f1: 55, dur: 0.08, gain: 0.4, filter: 'lowpass' });
+  } else {
+    burst({ type: 'noise', dur: 0.07, freq: 720, q: 0.7, gain: 0.42 });
+    burst({ type: 'sine', f0: 150, f1: 70, dur: 0.08, gain: 0.34, filter: 'lowpass' });
+  }
+}
+function synthPickup() {
+  burst({ type: 'sine', f0: 660, f1: 990, dur: 0.12, gain: 0.3, filter: 'lowpass' });
+  burst({ type: 'sine', f0: 880, f1: 1320, dur: 0.16, gain: 0.22, filter: 'lowpass' });
+}
+function synthFuse()   { burst({ type: 'sine', f0: 640, f1: 800, dur: 0.08, gain: 0.22, filter: 'lowpass' }); burst({ type: 'sine', f0: 900, f1: 1200, dur: 0.1, gain: 0.18, filter: 'lowpass' }); }
+function synthUnlock() { burst({ type: 'sine', f0: 420, f1: 420, dur: 0.1, gain: 0.28, filter: 'lowpass' }); burst({ type: 'sine', f0: 630, f1: 630, dur: 0.14, gain: 0.24, filter: 'lowpass' }); }
+function synthCreak()  { burst({ type: 'sine', f0: 240, f1: 130, dur: 0.5, gain: 0.12, freq: 320, q: 6 }); }
+function synthWhoosh() { burst({ type: 'noise', dur: 1.0, freq: 640, q: 0.25, gain: 0.55 }); }
+function synthScare()  { burst({ type: 'noise', dur: 0.55, freq: 1500, q: 1.0, gain: 0.9 }); burst({ type: 'sawtooth', f0: 950, f1: 70, dur: 0.5, gain: 0.5, filter: 'lowpass' }); }
+
+/* ============================================================ 漂浮物（救生圈 / 鸭子） */
+const pickups = [], PICK_TOTAL = 6;
+let pickedCount = 0;
+function ringTexture() {
+  const c = makeCanvas(128, 64), g = c.getContext('2d');
+  for (let i = 0; i < 8; i++) {
+    g.fillStyle = (i % 2) ? '#e23b2e' : '#f4f4f1';
+    g.fillRect(i * 16, 0, 16, 64);
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function makeDuck() {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffd21f, roughness: 0.35, metalness: 0.05 });
+  const beakMat = new THREE.MeshStandardMaterial({ color: 0xf27a1a, roughness: 0.45 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 16), bodyMat);
+  body.scale.set(1, 0.85, 1.2); body.position.y = 0.03; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), bodyMat);
+  head.position.set(0, 0.17, 0.12); g.add(head);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.07, 10), beakMat);
+  beak.rotation.x = -Math.PI / 2; beak.position.set(0, 0.165, 0.24); g.add(beak);
+  return g;
+}
+function makeRing() {
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.1, 12, 32),
+    new THREE.MeshStandardMaterial({ map: ringTexture(), roughness: 0.35, metalness: 0.1 }));
+  ring.rotation.x = Math.PI / 2;
+  return ring;
+}
+function spawnPickup(kind, x, z, waterY) {
+  const mesh = kind === 'duck' ? makeDuck() : makeRing();
+  mesh.position.set(x, waterY + 0.04, z);
+  mesh.rotation.y = Math.random() * Math.PI * 2;
+  scene.add(mesh);
+  pickups.push({ kind, mesh, x, z, baseY: waterY + 0.04, phase: Math.random() * Math.PI * 2 });
+}
+const PICKUP_DEFS = [
+  ['duck', 0.5, 1, -0.28],
+  ['duck', -5, -2, -0.28],
+  ['ring', 3.5, 1.5, -0.28],
+  ['duck', 18, -1, -0.34],
+  ['ring', 20, 1, -0.34],
+  ['duck', -1, -12.5, -0.18],
+];
+PICKUP_DEFS.forEach(d => spawnPickup(d[0], d[1], d[2], d[3]));
+document.getElementById('v-pick').textContent = `0 / ${PICK_TOTAL}`;
+
+/* ============================================================ Level 0 · 后室（经典前置关卡） */
+let l0Lights = [], exitPanel = null, exitSignMat = null, exitLight = null;
+// 阴黄抹灰墙面（接近截图质感：低对比、无裂纹）
+const wallpaper = createTileSet({ cols: 4, rows: 4, tileWorld: 1.0, size: 512,
+  tile: '#d5c99e', grout: '#c8bc92', vary: 0.02, grime: 0.12, tileScale: 0.96, ao: 0.12, mottle: 0.03, normalStrength: 1.2 });
+const carpet = createTileSet({ cols: 6, rows: 6, tileWorld: 0.9, size: 512,
+  tile: '#211b13', grout: '#171209', vary: 0.02, grime: 0.25, tileScale: 0.96, ao: 0.2, mottle: 0.05, normalStrength: 1.2 });
+const ceilL0 = createPlain({ base: '#0e0c08', speck: 0.3 });
+
+const hemiL0 = new THREE.HemisphereLight(0xcdbd8a, 0x3d3826, 0.5);
+scene.add(hemiL0);
+
+const l0WallMat = (len) => matFor(wallpaper, len / wallpaper.coverageX, L0H / wallpaper.coverageY);
+function wall(x1, z1, x2, z2) {
+  const horizontal = z1 === z2;
+  const len = horizontal ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
+  const w = horizontal ? len : 0.3;
+  const d = horizontal ? 0.3 : len;
+  const cx = horizontal ? (x1 + x2) / 2 : x1;
+  const cz = horizontal ? z1 : (z1 + z2) / 2;
+  addBox(w, L0H, d, cx, L0H / 2, cz, l0WallMat(len));
+  COLLIDERS_L0.push({ x1: cx - w / 2 - 0.08, x2: cx + w / 2 + 0.08, z1: cz - d / 2 - 0.08, z2: cz + d / 2 + 0.08 });
+}
+
+(function buildLevel0() {
+  // 地板 / 天花板 / 外壳
+  const floorL0 = new THREE.Mesh(new THREE.PlaneGeometry(86, 48),
+    physicalMat(carpet, 86 / carpet.coverageX, 48 / carpet.coverageY, { roughness: 0.62, clearcoat: 0.05 }));
+  floorL0.rotation.x = -Math.PI / 2; floorL0.position.set(-107, 0, 0); scene.add(floorL0);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(86, 48),
+    new THREE.MeshStandardMaterial({ map: texFrom(ceilL0.diffuse, 10, 5, true), roughness: 0.96 }));
+  ceil.rotation.x = Math.PI / 2; ceil.position.set(-107, L0H, 0); scene.add(ceil);
+  addPlane(86, L0H, -107, L0H / 2, -24, 0, 0, l0WallMat(86));
+  addPlane(86, L0H, -107, L0H / 2, 24, 0, Math.PI, l0WallMat(86));
+  addPlane(48, L0H, -150, L0H / 2, 0, 0, Math.PI / 2, l0WallMat(48));
+  addPlane(48, L0H, -64, L0H / 2, 0, 0, -Math.PI / 2, l0WallMat(48));
+
+  // 走廊（x -146..-74, z -4.5..4.5）
+  wall(-146, -4.5, -144, -4.5); wall(-140, -4.5, -95, -4.5); wall(-89, -4.5, -74, -4.5);
+  wall(-146, 4.5, -108, 4.5); wall(-102, 4.5, -88, 4.5); wall(-82, 4.5, -74, 4.5);
+  wall(-146, -4.5, -146, 4.5);
+  wall(-74, -6, -74, -2.2); wall(-74, 2.2, -74, 6);
+  // 出生房（北侧）
+  wall(-146, -18, -134, -18); wall(-146, -18, -146, -4.5); wall(-134, -18, -134, -4.5);
+  // R7 / R8（南侧侧室）
+  wall(-108, 16.5, -99, 16.5); wall(-108, 4.5, -108, 16.5); wall(-99, 4.5, -99, 16.5);
+  wall(-88, 16.5, -79, 16.5); wall(-88, 4.5, -88, 16.5); wall(-79, 4.5, -79, 16.5);
+  // R9（北侧黑暗死巷）
+  wall(-95, -17.5, -85, -17.5); wall(-95, -17.5, -95, -4.5); wall(-85, -17.5, -85, -4.5);
+  // 出口房
+  wall(-74, -6, -64, -6); wall(-74, 6, -64, 6);
+  // 迷宫短墙
+  wall(-140, 10.5, -128, 10.5); wall(-120, -11, -108, -11); wall(-96, 10.5, -88, 10.5); wall(-70, 12, -64, 12);
+
+  // 立柱（深灰粗方柱，如截图）
+  const colMatL0 = new THREE.MeshStandardMaterial({ color: 0x2c2b26, roughness: 0.92, metalness: 0.02 });
+  [[-140, -21], [-126, -21], [-112, -21], [-108, 20], [-92, 20], [-76, 20], [-120, 12],
+   [-134, 8], [-93, 10], [-68, 12], [-131, -8], [-102, -10]].forEach(([x, z]) => {
+    addBox(1.0, L0H, 1.0, x, L0H / 2, z, colMatL0);
+    COLLIDERS_L0.push({ x1: x - 0.54, x2: x + 0.54, z1: z - 0.54, z2: z + 0.54 });
+  });
+
+  // 荧光灯（昏暗暖光，可闪烁）
+  [[-138, 0], [-126, 0], [-114, 0], [-102, 0], [-90, 0], [-78, 0],
+   [-141, -8], [-141, -15], [-103, 11], [-83, 11], [-90, -11], [-68, 0]].forEach(([x, z]) => {
+    const light = new THREE.PointLight(0xffe9c0, 2.2, 10, 2);
+    light.position.set(x, 2.7, z); light.userData.base = 2.2;
+    scene.add(light);
+    const pmat = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffedc4, emissiveIntensity: 1.5 });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.5), pmat);
+    panel.position.set(x, 2.97, z); panel.rotation.x = Math.PI / 2;
+    scene.add(panel);
+    l0Lights.push({ light, pmat, i: l0Lights.length });
+  });
+
+  // 办公角（截图同款：桌椅 + 盆栽 + 行李袋 + 单束暖光 + 黄门）
+  (function () {
+    const dark = new THREE.MeshStandardMaterial({ color: 0x23221f, roughness: 0.85 });
+    const metal = new THREE.MeshStandardMaterial({ color: 0x3a3a38, metalness: 0.5, roughness: 0.5 });
+    const desk = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.7), dark); top.position.y = 0.78; desk.add(top);
+    [[-0.72, -0.28], [0.72, -0.28], [-0.72, 0.28], [0.72, 0.28]].forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.78, 0.08), metal); leg.position.set(lx, 0.39, lz); desk.add(leg);
+    });
+    desk.position.set(-140.2, 0, -11.6); scene.add(desk);
+    const chair = new THREE.Group();
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.5), dark); seat.position.y = 0.5; chair.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.08), dark); back.position.set(0, 0.82, -0.24); chair.add(back);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 10), metal); pole.position.y = 0.28; chair.add(pole);
+    const cbase = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.06, 12), metal); cbase.position.y = 0.06; chair.add(cbase);
+    chair.position.set(-140.2, 0, -10.6); chair.rotation.y = 2.7; scene.add(chair);
+    const plant = new THREE.Group();
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.24, 10),
+      new THREE.MeshStandardMaterial({ color: 0x4a4a46, roughness: 0.8 })); pot.position.y = 0.12; plant.add(pot);
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x3a5a2c, roughness: 0.8 });
+    for (let i = 0; i < 5; i++) {
+      const l = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.6, 6), leafMat);
+      l.position.set(Math.sin(i * 1.26) * 0.1, 0.55, Math.cos(i * 1.26) * 0.1);
+      l.rotation.set(Math.sin(i) * 0.5, 0, Math.cos(i) * 0.5); plant.add(l);
+    }
+    plant.position.set(-141.4, 0, -11.2); scene.add(plant);
+    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.26, 0.3),
+      new THREE.MeshStandardMaterial({ color: 0x23201a, roughness: 0.9 }));
+    bag.position.set(-138.8, 0.13, -10.8); bag.rotation.y = 0.5; scene.add(bag);
+    // 单束聚光 + 灯管
+    const spot = new THREE.SpotLight(0xffe4ae, 34, 15, 0.66, 0.55, 1.5);
+    spot.position.set(-140.4, 2.9, -11.2); scene.add(spot); scene.add(spot.target);
+    spot.target.position.set(-140.4, 0, -11.2);
+    const tube = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.2),
+      new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffedc4, emissiveIntensity: 3.6 }));
+    tube.position.set(-140.4, 2.94, -11.2); scene.add(tube);
+    // 黄门（北墙装饰门框 + 亮门板）
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.4, 0.1), dark);
+    frame.position.set(-140.4, 1.2, -17.95); scene.add(frame);
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2),
+      new THREE.MeshStandardMaterial({ color: 0xd8c26a, roughness: 0.55 }));
+    door.position.set(-140.4, 1.1, -17.88); scene.add(door);
+    COLLIDERS_L0.push({ x1: -141.2, x2: -139.4, z1: -12.1, z2: -11.0 });
+  })();
+
+  // 出口门（东墙 x=-64）
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.22, L0H, 3.0),
+    new THREE.MeshStandardMaterial({ color: 0x33342f, metalness: 0.55, roughness: 0.5 }));
+  frame.position.set(-63.9, L0H / 2, 0); scene.add(frame);
+  exitPanel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.35, 2.3),
+    new THREE.MeshStandardMaterial({ color: 0x1b1d20, metalness: 0.7, roughness: 0.45, emissive: 0x0c0d10 }));
+  exitPanel.position.set(-63.82, 1.18, 0); scene.add(exitPanel);
+  const signTex = makeSignTexture();
+  exitSignMat = new THREE.MeshStandardMaterial({
+    map: signTex, emissiveMap: signTex, color: 0x000000, emissive: 0xff2a2a, emissiveIntensity: 2.8 });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.5), exitSignMat);
+  sign.position.set(-63.78, 2.72, 0); sign.rotation.y = -Math.PI / 2; scene.add(sign);
+  exitLight = new THREE.PointLight(0xff3333, 3.2, 7, 2); exitLight.position.set(-63.4, 2.4, 0); scene.add(exitLight);
+})();
+
+function makeSignTexture() {
+  const c = makeCanvas(256, 96), g = c.getContext('2d');
+  g.fillStyle = '#1e0404'; g.fillRect(0, 0, 256, 96);
+  g.fillStyle = '#ff2a2a'; g.font = 'bold 52px Arial';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('EXIT', 128, 52);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+/* ---------------- 保险丝 ---------------- */
+const fusesList = [];
+let nearestFuse = null;
+const FUSE_DEFS = [[-136, -16], [-90, -15], [-84, 14]];
+function fuseMesh() {
+  return new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.16),
+    new THREE.MeshStandardMaterial({ color: 0x241c0a, emissive: 0xff9b1e, emissiveIntensity: 2.6, roughness: 0.4 }));
+}
+function spawnFuse(x, z) {
+  const m = fuseMesh(); m.position.set(x, 0.42, z); scene.add(m);
+  fusesList.push({ mesh: m, x, z, ph: Math.random() * 6.28 });
+}
+FUSE_DEFS.forEach(d => spawnFuse(d[0], d[1]));
+function updateFuseProximity() {
+  let best = null, bestD = 1.7;
+  for (const f of fusesList) {
+    const d = Math.hypot(player.x - f.x, player.z - f.z);
+    if (d < bestD) { bestD = d; best = f; }
+  }
+  nearestFuse = best;
+}
+function tryFuse() {
+  if (!nearestFuse) return;
+  scene.remove(nearestFuse.mesh);
+  fusesList.splice(fusesList.indexOf(nearestFuse), 1);
+  fuses++;
+  synthFuse();
+  document.getElementById('v-task').textContent = `收集保险丝 ${fuses}/3`;
+  if (fuses >= 3) {
+    exitUnlocked = true;
+    synthUnlock();
+    document.getElementById('v-task').textContent = '出口已开启 — 向尽头逃去';
+    openExitDoor();
+    showFlashText('出口已开启！');
+  } else {
+    showFlashText(`保险丝 ${fuses}/3 — 它来了…`);
+    activateEntity(3.0, 9);
+  }
+  nearestFuse = null;
+}
+
+/* ---------------- 手电筒（Level 0 限定拾取） ---------------- */
+const FLASHLIGHT_DEF = { x: -105, z: 12 };
+let flashlight = { owned: false, on: false, charge: 1.0 };
+let flashMesh = null, nearestFlash = null;
+function makeFlashMesh() {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x23262a, metalness: 0.7, roughness: 0.4 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.26, 14), bodyMat);
+  body.rotation.x = Math.PI / 2; body.position.y = 0.12; g.add(body);
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.03, 14),
+    new THREE.MeshStandardMaterial({ color: 0x222320, emissive: 0xfff3c4, emissiveIntensity: 2.6 }));
+  lens.rotation.x = Math.PI / 2; lens.position.set(0, 0.12, 0.15); g.add(lens);
+  return g;
+}
+function spawnFlash() {
+  flashMesh = makeFlashMesh();
+  flashMesh.position.set(FLASHLIGHT_DEF.x, 0, FLASHLIGHT_DEF.z);
+  scene.add(flashMesh);
+}
+spawnFlash();
+function updateFlashProximity() {
+  if (flashlight.owned) { nearestFlash = null; return; }
+  nearestFlash = Math.hypot(player.x - FLASHLIGHT_DEF.x, player.z - FLASHLIGHT_DEF.z) < 1.9 ? flashMesh : null;
+}
+function pickFlash() {
+  if (!nearestFlash || flashlight.owned) return;
+  scene.remove(flashMesh); flashMesh = null;
+  flashlight.owned = true; flashlight.on = false;
+  synthPickup();
+  updateFlashHud();
+  showFlashText('获得手电筒 — F 开关');
+}
+function toggleFlash() {
+  if (!flashlight.owned) return;
+  if (LEVEL !== 0) { showFlashText('手电筒只在后室层可用'); return; }
+  if (flashlight.on) { flashlight.on = false; synthFuse(); }
+  else if (flashlight.charge > 0.02) { flashlight.on = true; synthFuse(); }
+  else { showFlashText('手电筒没电了…'); }
+  updateFlashHud();
+}
+function updateFlashHud() {
+  const el = document.getElementById('v-flash');
+  if (!flashlight.owned) { el.textContent = '未拾取 · F 开关'; return; }
+  const pct = Math.round(flashlight.charge * 100);
+  el.textContent = flashlight.on ? `开 · ${pct}%` : (pct > 0 ? `关 · ${pct}%` : '没电');
+}
+
+/* ---------------- 黑影实体（恐怖事件） ---------------- */
+const ENTITY_POINTS = [[-140, 10], [-122, -7], [-104, 12], [-90, -1], [-128, 17], [-112, -15], [-84, -16], [-69, 1]];
+function makeEntity() {
+  const g = new THREE.Group();
+  const skin = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.92, emissive: 0x0a0505, emissiveIntensity: 0.15 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 1.1, 8, 14), skin);
+  body.position.y = 1.0; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), skin);
+  head.position.y = 1.85; g.add(head);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xff2222, emissiveIntensity: 3.2 });
+  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), eyeMat); e1.position.set(-0.09, 1.9, 0.2); g.add(e1);
+  const e2 = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), eyeMat); e2.position.set(0.09, 1.9, 0.2); g.add(e2);
+  g.visible = false; scene.add(g); return g;
+}
+const entity = makeEntity();
+let entityUntil = 0, creakTimer = 7, ambientTimer = 9;
+function activateEntity(dur, minDist) {
+  const cands = ENTITY_POINTS.filter(p => Math.hypot(player.x - p[0], player.z - p[1]) > minDist);
+  const p = cands.length ? cands[Math.floor(Math.random() * cands.length)] : ENTITY_POINTS[0];
+  entity.position.set(p[0], 0, p[1]);
+  entity.visible = true;
+  entityUntil = performance.now() + dur * 1000;
+}
+function jumpscare() {
+  synthScare();
+  stats.scares++;
+  const sf = document.getElementById('scare-flash');
+  sf.style.opacity = '1';
+  setTimeout(() => { sf.style.opacity = '0'; }, 150);
+  showFlashText('它发现了你……');
+  entity.visible = false;
+  player.x = L0_RESPAWN.x; player.z = L0_RESPAWN.z; player.y = 0; player.vy = 0;
+  yaw = -Math.PI / 2; pitch = 0;
+}
+
+/* ---------------- Level 0 每帧逻辑 ---------------- */
+function updateLevel0(dt) {
+  if (LEVEL !== 0) return;
+  const t = performance.now() * 0.001;
+  hemi.intensity = 0.05; hemiL0.intensity = 0.32;
+  // 灯管闪烁
+  for (const L of l0Lights) {
+    let f = 0.62 + 0.38 * Math.sin(t * 6.3 + L.i * 1.7) * Math.sin(t * 2.7 + L.i * 3.1);
+    if (Math.random() < 0.012) f = 0.05;
+    const mul = entity.visible ? 0.45 : 1;
+    f = Math.max(0.05, Math.min(1, f)) * mul;
+    L.light.intensity = 2.2 * f;
+    L.pmat.emissiveIntensity = 1.5 * f;
+  }
+  // 保险丝浮动
+  for (const f of fusesList) {
+    f.mesh.position.y = 0.42 + Math.sin(t * 2.1 + f.ph) * 0.05;
+    f.mesh.rotation.y += dt * 1.2;
+  }
+  // 环境杂音 / 远处黑影
+  creakTimer -= dt;
+  if (creakTimer <= 0) { synthCreak(); creakTimer = 6 + Math.random() * 10; }
+  ambientTimer -= dt;
+  if (ambientTimer <= 0) {
+    ambientTimer = 8 + Math.random() * 14;
+    if (Math.random() < 0.45) activateEntity(2.3, 14);
+  }
+  // 实体行为
+  if (entity.visible) {
+    entity.lookAt(player.x, 0, player.z);
+    const d = Math.hypot(player.x - entity.position.x, player.z - entity.position.z);
+    if (d < 4.6) jumpscare();
+    else if (performance.now() > entityUntil) entity.visible = false;
+  }
+  // 出口触发
+  if (exitUnlocked && player.x < -66 && Math.abs(player.z) < 2.6) enterPoolrooms();
+}
+function openExitDoor() {
+  exitPanel.position.y = 2.9; // 门板升起（模拟开启）
+  exitSignMat.emissive.set(0x37ff6e);
+  exitLight.color.set(0x37ff6e); exitLight.intensity = 7;
+}
+function showFlashText(msg) {
+  const el = document.getElementById('flash-text');
+  el.textContent = msg; el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 1900);
+}
+function enterPoolrooms() {
+  if (transitioning) return;
+  transitioning = true;
+  synthWhoosh();
+  document.getElementById('level-fade').style.opacity = '1';
+  entity.visible = false;
+  setTimeout(() => {
+    LEVEL = 1;
+    ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
+    scene.fog = new THREE.FogExp2(0xbfc9c4, 0.016);
+    scene.background = new THREE.Color(0x0a1014);
+    hemi.intensity = 0.5; hemiL0.intensity = 0;
+    if (droneNodes) droneNodes.g.gain.value = 0.012;
+    player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
+    yaw = 0; pitch = 0;
+    flashlight.on = false; updateFlashHud();
+    document.getElementById('v-task').textContent = '泳池层 · 自由探索';
+    document.getElementById('level-tag').textContent = 'LEVEL 37 · 泳池层';
+    showFlashText('Level 37 — 泳池层');
+    setTimeout(() => { document.getElementById('level-fade').style.opacity = '0'; transitioning = false; }, 520);
+  }, 520);
+}
+
+/* ============================================================ 第一人称控制器 */
+const RADIUS = 0.35, EYE = 1.62;
+const player = { x: L0_SPAWN.x, y: 0, z: L0_SPAWN.z, vy: 0, grounded: true };
+let yaw = -Math.PI / 2, pitch = 0;
+const keys = new Set();
+let sensitivity = 1.8;
+let cameraBob = 0, moveAmount = 0;
+
+const keysMap = {
+  'KeyW': 'forward', 'ArrowUp': 'forward', 'KeyS': 'back', 'ArrowDown': 'back',
+  'KeyA': 'left', 'ArrowLeft': 'left', 'KeyD': 'right', 'ArrowRight': 'right',
+  'Space': 'jump', 'ShiftLeft': 'run', 'ShiftRight': 'run',
+};
+
+document.getElementById('play-overlay').addEventListener('click', () => {
+  initAudio();
+  renderer.domElement.requestPointerLock();
+});
+document.addEventListener('pointerlockchange', () => {
+  const locked = document.pointerLockElement === renderer.domElement;
+  if (endScreenOpen) { document.getElementById('play-overlay').style.display = 'none'; return; }
+  document.getElementById('play-overlay').style.display = locked ? 'none' : 'flex';
+});
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== renderer.domElement) return;
+  yaw -= e.movementX * 0.0021 * sensitivity;
+  pitch -= e.movementY * 0.0021 * sensitivity;
+  pitch = Math.max(-1.52, Math.min(1.52, pitch));
+});
+window.addEventListener('keydown', (e) => {
+  keys.add(e.code);
+  if (e.code === 'KeyH') toggleHud();
+  if (e.code === 'KeyE' && !e.repeat) tryInteract();
+  if (e.code === 'KeyF' && !e.repeat) toggleFlash();
+  if (e.code === 'KeyP') { if (document.pointerLockElement) document.exitPointerLock(); }
+});
+window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+function toggleHud() {
+  const hud = document.getElementById('hud');
+  hud.style.display = hud.style.display === 'none' ? '' : 'none';
+}
+
+function collideCircle(x, z, r) {
+  for (const c of ACTIVE_COLLIDERS) {
+    const cx = Math.max(c.x1, Math.min(x, c.x2));
+    const cz = Math.max(c.z1, Math.min(z, c.z2));
+    const dx = x - cx, dz = z - cz;
+    const d2 = dx * dx + dz * dz;
+    if (d2 < r * r) {
+      if (d2 > 1e-10) { const d = Math.sqrt(d2), push = (r - d) / d; x += dx * push; z += dz * push; }
+      else {
+        const l = x - c.x1, rr = c.x2 - x, t = z - c.z1, b = c.z2 - z;
+        const m = Math.min(l, rr, t, b);
+        if (m === l) x = c.x1 - r; else if (m === rr) x = c.x2 + r;
+        else if (m === t) z = c.z1 - r; else z = c.z2 + r;
+      }
+    }
+  }
+  x = Math.max(ACTIVE_BOUNDS.x1 + r, Math.min(x, ACTIVE_BOUNDS.x2 - r));
+  z = Math.max(ACTIVE_BOUNDS.z1 + r, Math.min(z, ACTIVE_BOUNDS.z2 - r));
+  return [x, z];
+}
+
+const _fwd = new THREE.Vector3(), _right = new THREE.Vector3();
+function updatePlayer(dt) {
+  const waterLv = waterLevelAt(player.x, player.z);
+  const submerged = waterLv !== null && player.y < waterLv;
+  const camUnder = waterLv !== null && (player.y + EYE) < waterLv;
+  const running = keys.has('ShiftLeft') || keys.has('ShiftRight');
+  const speed = (submerged ? 1.9 : (running ? 5.6 : 3.4)) * (1 + (running && !submerged ? 0 : 0));
+
+  _fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+  _right.set(Math.cos(yaw), 0, -Math.sin(yaw));
+  let ix = 0, iz = 0;
+  if (keys.has('KeyW') || keys.has('ArrowUp')) { ix += _fwd.x; iz += _fwd.z; }
+  if (keys.has('KeyS') || keys.has('ArrowDown')) { ix -= _fwd.x; iz -= _fwd.z; }
+  if (keys.has('KeyD') || keys.has('ArrowRight')) { ix += _right.x; iz += _right.z; }
+  if (keys.has('KeyA') || keys.has('ArrowLeft')) { ix -= _right.x; iz -= _right.z; }
+  const il = Math.hypot(ix, iz);
+  if (il > 0) { ix /= il; iz /= il; }
+  moveAmount = il * (il > 0 ? 1 : 0);
+
+  player.x += ix * speed * dt;
+  player.z += iz * speed * dt;
+  [player.x, player.z] = collideCircle(player.x, player.z, RADIUS);
+
+  // 垂直
+  const G = 12.5;
+  if (submerged) {
+    if (keys.has('Space')) player.vy = Math.min(player.vy + 16 * dt, 3.0);
+    player.vy *= Math.max(0, 1 - 3.5 * dt);
+    player.vy -= 0.9 * dt;
+  } else {
+    player.vy -= G * dt;
+    if (player.grounded && keys.has('Space')) player.vy = 4.7;
+  }
+  player.y += player.vy * dt;
+  const ground = groundAt(player.x, player.z);
+  if (player.y <= ground) { player.y = ground; player.vy = 0; player.grounded = true; }
+  else player.grounded = false;
+
+  // 脚步声音 + 头部摆动
+  if (player.grounded && il > 0) {
+    stepTimer -= dt;
+    if (stepTimer <= 0) {
+      const surface = LEVEL === 0 ? 'carpet' : (submerged ? 'water' : (player.x < -16.1 ? 'concrete' : 'tile'));
+      synthStep(surface);
+      stepTimer = running ? 0.30 : 0.44;
+    }
+    cameraBob += dt * (running ? 13 : 9);
+  }
+  const bob = (player.grounded && il > 0) ? Math.sin(cameraBob) * 0.035 * Math.min(1, speed / 3.4) : 0;
+  camera.position.set(player.x, player.y + EYE + bob, player.z);
+  camera.rotation.set(pitch, yaw, 0);
+
+  // 水下折射强度（仅相机入水，渐变过渡）
+  refractionUniforms.uAmount.value += ((camUnder ? 1 : 0) - refractionUniforms.uAmount.value) * Math.min(1, dt * 4);
+  // FOV
+  const targetFov = running && !camUnder ? 78 : 72;
+  if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
+}
+
+/* ---------------- 漂浮物交互 ---------------- */
+let nearestPickup = null;
+function updatePickups(dt) {
+  let best = null, bestD = 1.7;
+  for (const pk of pickups) {
+    pk.mesh.position.y = pk.baseY + Math.sin(performance.now() * 0.0014 + pk.phase) * 0.045;
+    pk.mesh.rotation.y += dt * 0.5;
+    const d = Math.hypot(player.x - pk.x, player.z - pk.z);
+    if (d < bestD) { bestD = d; best = pk; }
+  }
+  nearestPickup = best;
+}
+function tryPickup() {
+  if (!nearestPickup) return;
+  scene.remove(nearestPickup.mesh);
+  const idx = pickups.indexOf(nearestPickup);
+  if (idx >= 0) pickups.splice(idx, 1);
+  pickedCount++;
+  document.getElementById('v-pick').textContent = `${pickedCount} / ${PICK_TOTAL}`;
+  synthPickup();
+  nearestPickup = null;
+  if (pickedCount >= PICK_TOTAL) showEndScreen();
+}
+function tryInteract() {
+  if (LEVEL === 0) {
+    if (nearestFlash && !flashlight.owned) { pickFlash(); return; }
+    tryFuse();
+  } else {
+    tryPickup();
+  }
+}
+
+/* ============================================================ 通关结算 / 重玩 */
+let endScreenOpen = false;
+function fmtTime(ms) {
+  const s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+  return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+function showEndScreen() {
+  endScreenOpen = true;
+  if (document.pointerLockElement) document.exitPointerLock();
+  document.getElementById('e-time').textContent = fmtTime(performance.now() - stats.start);
+  document.getElementById('e-scares').textContent = stats.scares;
+  document.getElementById('e-fuses').textContent = `${Math.min(fuses, 3)}/3`;
+  document.getElementById('e-floats').textContent = `${pickedCount}/${PICK_TOTAL}`;
+  document.getElementById('end-overlay').style.display = 'flex';
+}
+function hideEndScreen() {
+  endScreenOpen = false;
+  document.getElementById('end-overlay').style.display = 'none';
+  if (!document.pointerLockElement) renderer.domElement.requestPointerLock();
+}
+function resetGame() {
+  // 清空泳池漂浮物并重新生成
+  for (const pk of pickups) scene.remove(pk.mesh);
+  pickups.length = 0; pickedCount = 0;
+  PICKUP_DEFS.forEach(d => spawnPickup(d[0], d[1], d[2], d[3]));
+  // 保险丝
+  for (const f of fusesList) scene.remove(f.mesh);
+  fusesList.length = 0; fuses = 0;
+  FUSE_DEFS.forEach(d => spawnFuse(d[0], d[1]));
+  // 手电筒
+  if (flashMesh) { scene.remove(flashMesh); flashMesh = null; }
+  flashlight = { owned: false, on: false, charge: 1.0 };
+  spawnFlash();
+  // 出口门
+  exitUnlocked = false;
+  if (exitPanel) exitPanel.position.y = 1.18;
+  if (exitSignMat) exitSignMat.emissive.set(0xff2a2a);
+  if (exitLight) { exitLight.color.set(0xff3333); exitLight.intensity = 3.2; }
+  // 关卡状态
+  hideEndScreen();
+  LEVEL = 0;
+  ACTIVE_COLLIDERS = COLLIDERS_L0; ACTIVE_BOUNDS = BOUNDS_L0;
+  scene.fog = new THREE.FogExp2(0x0b0a08, 0.055);
+  scene.background = new THREE.Color(0x060605);
+  hemi.intensity = 0.05; hemiL0.intensity = 0.32;
+  if (droneNodes) droneNodes.g.gain.value = 0.05;
+  entity.visible = false;
+  // 玩家
+  player.x = L0_SPAWN.x; player.z = L0_SPAWN.z; player.y = 0; player.vy = 0;
+  yaw = -Math.PI / 2; pitch = 0;
+  // UI
+  document.getElementById('v-task').textContent = '收集保险丝 0/3';
+  document.getElementById('v-pick').textContent = `0 / ${PICK_TOTAL}`;
+  document.getElementById('level-tag').textContent = 'LEVEL 0 · 后室';
+  updateFlashHud();
+  // 统计
+  stats.start = performance.now(); stats.scares = 0;
+}
+document.getElementById('btn-replay').addEventListener('click', resetGame);
+document.getElementById('btn-continue').addEventListener('click', hideEndScreen);
+
+/* ============================================================ UI */
+const $ = id => document.getElementById(id);
+const bind = (id, valId, fn) => $(id).addEventListener('input', e => { $(valId).textContent = e.target.value; fn(parseFloat(e.target.value)); });
+bind('c-exposure', 'v-exposure', v => renderer.toneMappingExposure = v);
+bind('c-bloom', 'v-bloom', v => bloomPass.strength = v);
+bind('c-fog', 'v-fog', v => scene.fog.density = v);
+bind('c-sens', 'v-sens', v => sensitivity = v);
+bind('c-volume', 'v-volume', v => { if (audioMaster) audioMaster.gain.value = v; });
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ============================================================ 主循环 */
+const clock = new THREE.Clock();
+let flashHudT = 0;
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(0.05, clock.getDelta());
+  refractionUniforms.uTime.value += dt;
+  if (document.pointerLockElement === renderer.domElement) updatePlayer(dt);
+  updatePickups(dt);
+  updateFuseProximity();
+  updateFlashProximity();
+  updateLevel0(dt);
+
+  // 手电筒电量 + 光束（Level 0 限定照明）
+  if (flashlight.on && flashlight.charge > 0) {
+    flashlight.charge = Math.max(0, flashlight.charge - dt / 100);
+    if (flashlight.charge <= 0) { flashlight.on = false; showFlashText('手电筒没电了…'); }
+  }
+  const low = flashlight.charge < 0.25;
+  flashLight.intensity = (flashlight.on && LEVEL === 0)
+    ? (low ? 16 + 6 * Math.sin(performance.now() * 0.02) : 22) : 0;
+  flashHudT -= dt;
+  if (flashHudT <= 0 && flashlight.owned) { updateFlashHud(); flashHudT = 0.5; }
+
+  // 交互提示（按目标类型显示）
+  let hintTarget = null, hintText = '按 E 拾取';
+  if (LEVEL === 0) {
+    if (nearestFlash && !flashlight.owned) { hintTarget = nearestFlash; hintText = '按 E 拾取手电筒'; }
+    else if (nearestFuse) { hintTarget = nearestFuse; hintText = '按 E 拾取保险丝'; }
+  } else if (nearestPickup) { hintTarget = nearestPickup; }
+  const hintEl = document.getElementById('pickup-hint');
+  if (hintTarget) { hintEl.style.display = 'block'; hintEl.textContent = hintText; }
+  else hintEl.style.display = 'none';
+
+  composer.render();
+});
+
+// 初始朝向（面向泳池）
+player.y = groundAt(player.x, player.z);
+camera.position.set(player.x, player.y + EYE, player.z);
+camera.rotation.set(0, yaw, 0);
+</script>
+</body>
+</html>
