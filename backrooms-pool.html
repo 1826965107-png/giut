@@ -497,8 +497,37 @@ function createWaterNormal(size = 256) {
 }
 
 /* ============================================================ 材质工厂 */
-function texFrom(canvas, rx, ry, srgb) {
-  const t = new THREE.CanvasTexture(canvas);
+const TEX_CACHE = new Map();   // url -> 降采样 canvas（多材质共享，防显存爆炸）
+const TEX_MAX = {              // 各贴图降采样上限（小贴图用于大量重复材质）
+  'textures/wallpaper-yellow.png': 512,
+  'textures/carpet-dark.png': 512,
+  'textures/ceiling-dark.png': 512,
+  'textures/pool-tiles-white.png': 1024,
+  'textures/pool-mosaic-teal.png': 512,
+  'textures/water-caustics.png': 512,
+};
+function texFrom(src, rx, ry, srgb) {
+  if (typeof src === 'string') {
+    // AI 生成图片贴图：异步加载 + 降采样缓存，材质先用占位纹理（加载后自动亮起）
+    const t = new THREE.Texture();
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    if (rx != null || ry != null) t.repeat.set(rx == null ? 1 : rx, ry == null ? 1 : ry);
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    new THREE.TextureLoader().load(src, (img) => {
+      let c = TEX_CACHE.get(src);
+      if (!c) {
+        const max = TEX_MAX[src] || 1024;
+        const s = Math.min(img.width, max);
+        c = makeCanvas(s, s);
+        c.getContext('2d').drawImage(img, 0, 0, s, s);
+        TEX_CACHE.set(src, c);
+      }
+      t.image = c; t.needsUpdate = true;
+    });
+    return t;
+  }
+  const t = new THREE.CanvasTexture(src);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   if (rx != null || ry != null) t.repeat.set(rx == null ? 1 : rx, ry == null ? 1 : ry);
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
@@ -582,6 +611,10 @@ const skirting = createTileSet({
   tile: '#1f3d44', grout: '#14292f', vary: 0.06, grime: 0.08, tileScale: 0.88, ao: 0.3, normalStrength: 2.4 });
 const ceiling = createPlain({ base: '#e7e5de', speck: 0.4 });
 
+/* —— 接入 AI 生成贴图包（textures/）：替换泳池层墙砖与池内马赛克 —— */
+wallTiles.diffuse = 'textures/pool-tiles-white.png'; wallTiles.normal = null; wallTiles.rough = null;
+poolMosaic.diffuse = 'textures/pool-mosaic-teal.png'; poolMosaic.normal = null; poolMosaic.rough = null;
+
 /* ============================================================ 几何辅助 */
 function addPlane(w, h, x, y, z, rx, ry, mat) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
@@ -632,6 +665,31 @@ addBox(0.7, 0.05, 10.4, 12, 0.025, 0, matFor(rimTiles, 0.7 / rimTiles.coverageX,
 /* ---------------- 泳池建造 ---------------- */
 function poolAreaMat(w, d) { return physicalMat(poolMosaic, w / poolMosaic.coverageX, d / poolMosaic.coverageY, { roughness: 0.4, clearcoat: 0.4 }); }
 
+/* 水底焦散（AI 贴图 + 缓慢滚动，多材质共享降采样缓存） */
+const causticAnims = [];
+function makeCaustics(w, d, cx, cz, y) {
+  const t = new THREE.Texture();
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(w / 3.4, d / 3.4);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const mat = new THREE.MeshBasicMaterial({
+    map: t, transparent: true, opacity: 0.34,
+    blending: THREE.AdditiveBlending, depthWrite: false, visible: false });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+  m.rotation.x = -Math.PI / 2; m.position.set(cx, y, cz);
+  scene.add(m);
+  new THREE.TextureLoader().load('textures/water-caustics.png', (img) => {
+    let c = TEX_CACHE.get('textures/water-caustics.png');
+    if (!c) {
+      c = makeCanvas(512, 512);
+      c.getContext('2d').drawImage(img, 0, 0, 512, 512);
+      TEX_CACHE.set('textures/water-caustics.png', c);
+    }
+    t.image = c; t.needsUpdate = true; mat.visible = true;
+  });
+  causticAnims.push({ t, sx: 0.010 + Math.random() * 0.012, sy: 0.006 + Math.random() * 0.009 });
+}
+
 function buildPool(p) {
   const W = p.x2 - p.x1, cx = (p.x1 + p.x2) / 2;
   const depth = 0 - p.bottom;
@@ -671,6 +729,8 @@ function buildPool(p) {
   water.rotation.x = -Math.PI / 2;
   water.position.set(cx, p.water, (p.zDeep1 + p.zEnd) / 2);
   scene.add(water);
+  // 底部焦散
+  makeCaustics(W - 0.6, p.zStepsLow - p.zDeep1 - 0.6, cx, (p.zDeep1 + p.zStepsLow) / 2, p.bottom + 0.035);
   return water;
 }
 buildPool(POOLS[0]);
@@ -691,6 +751,8 @@ buildPool(POOLS[1]);
   water.rotation.x = -Math.PI / 2;
   water.position.set(cx, BASIN.water, cz);
   scene.add(water);
+  // 反射池底部焦散
+  makeCaustics(W - 0.4, D - 0.4, cx, cz, BASIN.bottom + 0.02);
 })();
 
 /* ---------------- 外墙与隔断 ---------------- */
@@ -923,6 +985,10 @@ const wallpaper = createTileSet({ cols: 4, rows: 4, tileWorld: 1.0, size: 512,
 const carpet = createTileSet({ cols: 6, rows: 6, tileWorld: 0.9, size: 512,
   tile: '#211b13', grout: '#171209', vary: 0.02, grime: 0.25, tileScale: 0.96, ao: 0.2, mottle: 0.05, normalStrength: 1.2 });
 const ceilL0 = createPlain({ base: '#0e0c08', speck: 0.3 });
+/* —— 接入贴图包：Level 0 墙纸 / 地毯 / 天花 —— */
+wallpaper.diffuse = 'textures/wallpaper-yellow.png'; wallpaper.normal = null; wallpaper.rough = null;
+carpet.diffuse = 'textures/carpet-dark.png'; carpet.normal = null; carpet.rough = null;
+ceilL0.diffuse = 'textures/ceiling-dark.png';
 
 const hemiL0 = new THREE.HemisphereLight(0xcdbd8a, 0x3d3826, 0.5);
 scene.add(hemiL0);
@@ -1490,6 +1556,7 @@ let flashHudT = 0;
 renderer.setAnimationLoop(() => {
   const dt = Math.min(0.05, clock.getDelta());
   refractionUniforms.uTime.value += dt;
+  for (const ca of causticAnims) { ca.t.offset.x += dt * ca.sx; ca.t.offset.y += dt * ca.sy; }
   if (document.pointerLockElement === renderer.domElement) updatePlayer(dt);
   updatePickups(dt);
   updateFuseProximity();
