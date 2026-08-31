@@ -497,34 +497,15 @@ function createWaterNormal(size = 256) {
 }
 
 /* ============================================================ 材质工厂 */
-const TEX_CACHE = new Map();   // url -> 降采样 canvas（多材质共享，防显存爆炸）
-const TEX_MAX = {              // 各贴图降采样上限（小贴图用于大量重复材质）
-  'textures/wallpaper-yellow.png': 512,
-  'textures/carpet-dark.png': 512,
-  'textures/ceiling-dark.png': 512,
-  'textures/pool-tiles-white.png': 1024,
-  'textures/pool-mosaic-teal.png': 512,
-  'textures/water-caustics.png': 512,
-};
 function texFrom(src, rx, ry, srgb) {
   if (typeof src === 'string') {
-    // AI 生成图片贴图：异步加载 + 降采样缓存，材质先用占位纹理（加载后自动亮起）
+    // AI 生成原图直接作为材质（全分辨率，不做降采样）
     const t = new THREE.Texture();
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     if (rx != null || ry != null) t.repeat.set(rx == null ? 1 : rx, ry == null ? 1 : ry);
     if (srgb) t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    new THREE.TextureLoader().load(src, (img) => {
-      let c = TEX_CACHE.get(src);
-      if (!c) {
-        const max = TEX_MAX[src] || 1024;
-        const s = Math.min(img.width, max);
-        c = makeCanvas(s, s);
-        c.getContext('2d').drawImage(img, 0, 0, s, s);
-        TEX_CACHE.set(src, c);
-      }
-      t.image = c; t.needsUpdate = true;
-    });
+    new THREE.TextureLoader().load(src, (img) => { t.image = img; t.needsUpdate = true; });
     return t;
   }
   const t = new THREE.CanvasTexture(src);
@@ -616,13 +597,37 @@ wallTiles.diffuse = 'textures/pool-tiles-white.png'; wallTiles.normal = null; wa
 poolMosaic.diffuse = 'textures/pool-mosaic-teal.png'; poolMosaic.normal = null; poolMosaic.rough = null;
 
 /* ============================================================ 几何辅助 */
-function addPlane(w, h, x, y, z, rx, ry, mat) {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+/* 世界尺寸 UV 缩放：让各材质共享同一张贴图（原图直用，repeat 由几何 UV 承担） */
+function scaleUV(geo, su, sv) {
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  uv.needsUpdate = true;
+  return geo;
+}
+function scaleBoxUV(geo, w, h, d, cov) {
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < 24; i++) {
+    const face = Math.floor(i / 4);
+    let su, sv;
+    if (face === 0 || face === 1) { su = d / cov; sv = h / cov; }
+    else if (face === 2 || face === 3) { su = w / cov; sv = d / cov; }
+    else { su = w / cov; sv = h / cov; }
+    uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+function addPlane(w, h, x, y, z, rx, ry, mat, cov) {
+  const geo = new THREE.PlaneGeometry(w, h);
+  if (cov) scaleUV(geo, w / cov, h / cov);
+  const m = new THREE.Mesh(geo, mat);
   m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0);
   m.receiveShadow = true; scene.add(m); return m;
 }
-function addBox(w, h, d, x, y, z, mat) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+function addBox(w, h, d, x, y, z, mat, cov) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  if (cov) scaleBoxUV(geo, w, h, d, cov);
+  const m = new THREE.Mesh(geo, mat);
   m.position.set(x, y, z); m.receiveShadow = true; m.castShadow = true; scene.add(m); return m;
 }
 
@@ -663,9 +668,11 @@ addDeck(12, -16, 24, 20, [[14, -4, 22, 4]], floorEast, { physical: true });
 addBox(0.7, 0.05, 10.4, 12, 0.025, 0, matFor(rimTiles, 0.7 / rimTiles.coverageX, 10.4 / rimTiles.coverageY));
 
 /* ---------------- 泳池建造 ---------------- */
-function poolAreaMat(w, d) { return physicalMat(poolMosaic, w / poolMosaic.coverageX, d / poolMosaic.coverageY, { roughness: 0.4, clearcoat: 0.4 }); }
+// 池内马赛克：全场景共享一个材质（原图直用，重复比例由几何 UV 承担）
+const poolMatShared = physicalMat(poolMosaic, 1, 1, { roughness: 0.42, clearcoat: 0.22, clearcoatRoughness: 0.5 });
+const poolAreaMat = () => poolMatShared;
 
-/* 水底焦散（AI 贴图 + 缓慢滚动，多材质共享降采样缓存） */
+/* 水底焦散（AI 原图 + 缓慢滚动） */
 const causticAnims = [];
 function makeCaustics(w, d, cx, cz, y) {
   const t = new THREE.Texture();
@@ -679,13 +686,7 @@ function makeCaustics(w, d, cx, cz, y) {
   m.rotation.x = -Math.PI / 2; m.position.set(cx, y, cz);
   scene.add(m);
   new THREE.TextureLoader().load('textures/water-caustics.png', (img) => {
-    let c = TEX_CACHE.get('textures/water-caustics.png');
-    if (!c) {
-      c = makeCanvas(512, 512);
-      c.getContext('2d').drawImage(img, 0, 0, 512, 512);
-      TEX_CACHE.set('textures/water-caustics.png', c);
-    }
-    t.image = c; t.needsUpdate = true; mat.visible = true;
+    t.image = img; t.needsUpdate = true; mat.visible = true;
   });
   causticAnims.push({ t, sx: 0.010 + Math.random() * 0.012, sy: 0.006 + Math.random() * 0.009 });
 }
@@ -694,18 +695,19 @@ function buildPool(p) {
   const W = p.x2 - p.x1, cx = (p.x1 + p.x2) / 2;
   const depth = 0 - p.bottom;
   const fullLen = p.zEnd - p.zDeep1;
+  const COV = poolMosaic.coverageX;
 
   // 深水区底部
-  addPlane(W, p.zStepsLow - p.zDeep1, cx, p.bottom, (p.zDeep1 + p.zStepsLow) / 2, -Math.PI / 2, 0, poolAreaMat(W, p.zStepsLow - p.zDeep1));
+  addPlane(W, p.zStepsLow - p.zDeep1, cx, p.bottom, (p.zDeep1 + p.zStepsLow) / 2, -Math.PI / 2, 0, poolAreaMat(), COV);
   // 三面侧墙
-  addPlane(W, depth, cx, -depth / 2, p.zDeep1, 0, 0, poolAreaMat(W, depth));
-  addPlane(fullLen, depth, p.x1, -depth / 2, (p.zDeep1 + p.zEnd) / 2, 0, Math.PI / 2, poolAreaMat(fullLen, depth));
-  addPlane(fullLen, depth, p.x2, -depth / 2, (p.zDeep1 + p.zEnd) / 2, 0, -Math.PI / 2, poolAreaMat(fullLen, depth));
+  addPlane(W, depth, cx, -depth / 2, p.zDeep1, 0, 0, poolAreaMat(), COV);
+  addPlane(fullLen, depth, p.x1, -depth / 2, (p.zDeep1 + p.zEnd) / 2, 0, Math.PI / 2, poolAreaMat(), COV);
+  addPlane(fullLen, depth, p.x2, -depth / 2, (p.zDeep1 + p.zEnd) / 2, 0, -Math.PI / 2, poolAreaMat(), COV);
 
   // 宽阔台阶级
   for (const s of p.steps) {
     const h = s.top - p.bottom, dz = s.z2 - s.z1;
-    addBox(W, h, dz, cx, (s.top + p.bottom) / 2, (s.z1 + s.z2) / 2, poolAreaMat(W, dz));
+    addBox(W, h, dz, cx, (s.top + p.bottom) / 2, (s.z1 + s.z2) / 2, poolAreaMat(), COV);
   }
 
   // 池沿收边（深色）
@@ -739,7 +741,7 @@ buildPool(POOLS[1]);
 // 反射池
 (function () {
   const W = BASIN.x2 - BASIN.x1, D = BASIN.z2 - BASIN.z1, cx = 0, cz = (BASIN.z1 + BASIN.z2) / 2;
-  addPlane(W, D, cx, BASIN.bottom, cz, -Math.PI / 2, 0, poolAreaMat(W, D));
+  addPlane(W, D, cx, BASIN.bottom, cz, -Math.PI / 2, 0, poolAreaMat(), poolMosaic.coverageX);
   const rw = matFor(rimTiles, 0.4 / rimTiles.coverageX, 0.12 / rimTiles.coverageY);
   [[0, BASIN.z1 - 0.12, W + 0.3, 0.3], [0, BASIN.z2 + 0.12, W + 0.3, 0.3],
    [BASIN.x1 - 0.12, 0, 0.3, D], [BASIN.x2 + 0.12, 0, 0.3, D]].forEach(([x, z, w, dd]) => addBox(w, 0.12, dd, x, 0.06, z, rw));
@@ -756,16 +758,16 @@ buildPool(POOLS[1]);
 })();
 
 /* ---------------- 外墙与隔断 ---------------- */
-const wallMat = () => matFor(wallTiles, 48 / wallTiles.coverageX, H / wallTiles.coverageY);
-addPlane(48, H, 0, H / 2, BOUNDS.z1, 0, 0, wallMat());
-addPlane(48, H, 0, H / 2, BOUNDS.z2, 0, Math.PI, wallMat());
-addPlane(36, H, BOUNDS.x1, H / 2, 2, 0, Math.PI / 2, matFor(wallTiles, 36 / wallTiles.coverageX, H / wallTiles.coverageY));
-addPlane(36, H, BOUNDS.x2, H / 2, 2, 0, -Math.PI / 2, matFor(wallTiles, 36 / wallTiles.coverageX, H / wallTiles.coverageY));
+const wallMat = () => matFor(wallTiles, 1, 1);
+addPlane(48, H, 0, H / 2, BOUNDS.z1, 0, 0, wallMat(), wallTiles.coverageX);
+addPlane(48, H, 0, H / 2, BOUNDS.z2, 0, Math.PI, wallMat(), wallTiles.coverageX);
+addPlane(36, H, BOUNDS.x1, H / 2, 2, 0, Math.PI / 2, wallMat(), wallTiles.coverageX);
+addPlane(36, H, BOUNDS.x2, H / 2, 2, 0, -Math.PI / 2, wallMat(), wallTiles.coverageX);
 
 for (const part of PARTITIONS) {
   for (const [za, zb] of part.zRanges) {
     const len = zb - za;
-    const wall = addBox(0.5, H, len, part.x, H / 2, (za + zb) / 2, wallMat());
+    addBox(0.5, H, len, part.x, H / 2, (za + zb) / 2, wallMat(), wallTiles.coverageX);
     // 踢脚
     const base = matFor(skirting, 0.6 / skirting.coverageX, 0.5 / skirting.coverageY);
     addBox(0.58, 0.5, len, part.x, 0.25, (za + zb) / 2, base);
@@ -993,7 +995,7 @@ ceilL0.diffuse = 'textures/ceiling-dark.png';
 const hemiL0 = new THREE.HemisphereLight(0xcdbd8a, 0x3d3826, 0.5);
 scene.add(hemiL0);
 
-const l0WallMat = (len) => matFor(wallpaper, len / wallpaper.coverageX, L0H / wallpaper.coverageY);
+const l0WallMat = matFor(wallpaper, 1, 1);
 function wall(x1, z1, x2, z2) {
   const horizontal = z1 === z2;
   const len = horizontal ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
@@ -1001,7 +1003,7 @@ function wall(x1, z1, x2, z2) {
   const d = horizontal ? 0.3 : len;
   const cx = horizontal ? (x1 + x2) / 2 : x1;
   const cz = horizontal ? z1 : (z1 + z2) / 2;
-  addBox(w, L0H, d, cx, L0H / 2, cz, l0WallMat(len));
+  addBox(w, L0H, d, cx, L0H / 2, cz, l0WallMat, wallpaper.coverageX);
   COLLIDERS_L0.push({ x1: cx - w / 2 - 0.08, x2: cx + w / 2 + 0.08, z1: cz - d / 2 - 0.08, z2: cz + d / 2 + 0.08 });
 }
 
@@ -1013,10 +1015,10 @@ function wall(x1, z1, x2, z2) {
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(86, 48),
     new THREE.MeshStandardMaterial({ map: texFrom(ceilL0.diffuse, 10, 5, true), roughness: 0.96 }));
   ceil.rotation.x = Math.PI / 2; ceil.position.set(-107, L0H, 0); scene.add(ceil);
-  addPlane(86, L0H, -107, L0H / 2, -24, 0, 0, l0WallMat(86));
-  addPlane(86, L0H, -107, L0H / 2, 24, 0, Math.PI, l0WallMat(86));
-  addPlane(48, L0H, -150, L0H / 2, 0, 0, Math.PI / 2, l0WallMat(48));
-  addPlane(48, L0H, -64, L0H / 2, 0, 0, -Math.PI / 2, l0WallMat(48));
+  addPlane(86, L0H, -107, L0H / 2, -24, 0, 0, l0WallMat, wallpaper.coverageX);
+  addPlane(86, L0H, -107, L0H / 2, 24, 0, Math.PI, l0WallMat, wallpaper.coverageX);
+  addPlane(48, L0H, -150, L0H / 2, 0, 0, Math.PI / 2, l0WallMat, wallpaper.coverageX);
+  addPlane(48, L0H, -64, L0H / 2, 0, 0, -Math.PI / 2, l0WallMat, wallpaper.coverageX);
 
   // 走廊（x -146..-74, z -4.5..4.5）
   wall(-146, -4.5, -144, -4.5); wall(-140, -4.5, -95, -4.5); wall(-89, -4.5, -74, -4.5);
