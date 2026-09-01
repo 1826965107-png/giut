@@ -656,13 +656,6 @@ function addDeck(x1, z1, x2, z2, holes, set, opts) {
 addDeck(-24, -16, 12, 20, [[-9, -14, 3, 11]], floorWest, { physical: true });
 // 东侧大厅地板（训练池洞口 8m×8m）
 addDeck(12, -16, 24, 20, [[14, -6, 22, 2]], floorEast, { physical: true, color: 0xd2dbe0 });
-// 西机房深色地板覆盖层（无洞口，y 略浮）
-(function () {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(8.01, 36.01), matFor(floorMaint, 8 / floorMaint.coverageX, 36 / floorMaint.coverageY));
-  m.rotation.x = -Math.PI / 2; m.position.set(-20, 0.012, 2);
-  m.renderOrder = 1; m.polygonOffset = true; m.polygonOffsetFactor = -1;
-  scene.add(m);
-})();
 // 门洞门槛石（东大厅 x=12 门洞）
 addBox(0.7, 0.05, 10.4, 12, 0.025, 0, matFor(rimTiles, 0.7 / rimTiles.coverageX, 10.4 / rimTiles.coverageY));
 
@@ -888,35 +881,6 @@ function downlight(x, z) {
 }
 for (const x of [-18, -12, -6, 0, 6]) for (const z of [-13, -5, 5, 17]) downlight(x, z);
 for (const x of [16, 20]) for (const z of [-13, -5, 5, 17]) downlight(x, z);
-
-/* 墙面红色标识（贴照片：白墙红字 + 小红牌列） */
-function makeWallSign(text, w, h, bg, fg, px) {
-  const c = makeCanvas(w, h), g = c.getContext('2d');
-  g.fillStyle = bg; g.fillRect(0, 0, w, h);
-  g.fillStyle = fg; g.font = `bold ${px}px 'Microsoft YaHei','PingFang SC',sans-serif`;
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, w / 2, h / 2 + px * 0.02);
-  return new THREE.CanvasTexture(c);
-}
-(function () {
-  const bigTex = makeWallSign('严禁潜水', 1024, 256, '#f2f1ee', '#c8281e', 158);
-  bigTex.colorSpace = THREE.SRGBColorSpace;
-  const big = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 2.1),
-    new THREE.MeshBasicMaterial({ map: bigTex }));
-  big.position.set(-3, 2.8, -15.88); scene.add(big);
-  // 一排小红牌（照片远处的红色标志列）
-  const smMat = new THREE.MeshBasicMaterial({ color: 0xc8281e });
-  for (let i = 0; i < 10; i++) {
-    const s = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.33), smMat);
-    s.position.set(-9 + i * 1.25, 1.45, -15.88); scene.add(s);
-  }
-  // 深水区标识（东西墙）
-  const dTex = makeWallSign('深水区 1.8m', 768, 192, '#f2f1ee', '#c8281e', 100);
-  dTex.colorSpace = THREE.SRGBColorSpace;
-  const d1 = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 0.85), new THREE.MeshBasicMaterial({ map: dTex }));
-  d1.position.set(-23.86, 2.0, -2); d1.rotation.y = Math.PI / 2; scene.add(d1);
-  const d2 = d1.clone(); d2.position.x = 11.86; d2.rotation.y = -Math.PI / 2; scene.add(d2);
-})();
 
 /* ---------------- 立柱 ---------------- */
 const colMat = matFor(wallTiles, 0.9 / wallTiles.coverageX, H / wallTiles.coverageY);
