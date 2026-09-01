@@ -676,6 +676,7 @@ const poolAreaMat = () => poolMatShared;
 
 /* 水底焦散（AI 原图 + 缓慢滚动） */
 const causticAnims = [];
+const waterMats = [];   // 水面材质收集（主循环推进 time 波动）
 function makeCaustics(w, d, cx, cz, y) {
   const t = new THREE.Texture();
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -756,6 +757,7 @@ function buildPool(p) {
   water.rotation.x = -Math.PI / 2;
   water.position.set(cx, p.water, (p.zDeep1 + p.zEnd) / 2);
   scene.add(water);
+  waterMats.push(water.material);
   // 底部焦散
   makeCaustics(W - 0.6, p.zStepsLow - p.zDeep1 - 0.6, cx, (p.zDeep1 + p.zStepsLow) / 2, p.bottom + 0.035);
   return water;
@@ -778,6 +780,7 @@ buildPool(POOLS[1]);
   water.rotation.x = -Math.PI / 2;
   water.position.set(cx, BASIN.water, cz);
   scene.add(water);
+  waterMats.push(water.material);
   // 反射池底部焦散
   makeCaustics(W - 0.4, D - 0.4, cx, cz, BASIN.bottom + 0.02);
 })();
@@ -1578,13 +1581,27 @@ window.addEventListener('resize', () => {
 });
 
 /* ============================================================ 主循环 */
+/* 运行时错误可视化（不再黑屏哑火） */
+function showErr(msg) {
+  let el = document.getElementById('err-box');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'err-box';
+    el.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:99;background:rgba(140,10,10,0.9);color:#fff;padding:8px 12px;font:12px monospace;border-radius:6px;max-width:72vw;white-space:pre-wrap';
+    document.body.appendChild(el);
+  }
+  el.textContent = '脚本错误: ' + msg;
+}
+window.addEventListener('error', (e) => showErr(e.message || String(e.type)));
+
 const clock = new THREE.Clock();
 let flashHudT = 0;
 renderer.setAnimationLoop(() => {
+ try {
   const dt = Math.min(0.05, clock.getDelta());
   refractionUniforms.uTime.value += dt;
   for (const ca of causticAnims) { ca.t.offset.x += dt * ca.sx; ca.t.offset.y += dt * ca.sy; }
-  for (const m of waterMats) m.uniforms.time.value += dt;
+  for (const m of waterMats) if (m.uniforms && m.uniforms.time) m.uniforms.time.value += dt;
   if (document.pointerLockElement === renderer.domElement) updatePlayer(dt);
   updatePickups(dt);
   updateFuseProximity();
@@ -1613,6 +1630,7 @@ renderer.setAnimationLoop(() => {
   else hintEl.style.display = 'none';
 
   composer.render();
+ } catch (err) { showErr(err && err.message ? err.message : String(err)); }
 });
 
 // 初始朝向（面向泳池）
