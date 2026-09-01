@@ -808,7 +808,7 @@ const trimMat = matFor(rimTiles, 0.6 / rimTiles.coverageX, H / rimTiles.coverage
 });
 
 /* ---------------- 天花板与灯板 ---------------- */
-const ceilMat = new THREE.MeshStandardMaterial({ map: texFrom(ceiling.diffuse, 7, 5, true), roughness: 0.95, metalness: 0 });
+const ceilMat = new THREE.MeshStandardMaterial({ map: texFrom('textures/ceiling-dark.png', 7, 5, true), roughness: 0.95, metalness: 0 });
 addPlane(48, 36, 0, H, 2, Math.PI / 2, 0, ceilMat);
 
 function ceilingLight(x, z, intensity = 5.6, w = 2.6, h = 1.55, color = 0xffe6c2) {
