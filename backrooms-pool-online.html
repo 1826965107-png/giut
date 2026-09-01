@@ -1584,6 +1584,7 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(0.05, clock.getDelta());
   refractionUniforms.uTime.value += dt;
   for (const ca of causticAnims) { ca.t.offset.x += dt * ca.sx; ca.t.offset.y += dt * ca.sy; }
+  for (const m of waterMats) m.uniforms.time.value += dt;
   if (document.pointerLockElement === renderer.domElement) updatePlayer(dt);
   updatePickups(dt);
   updateFuseProximity();
