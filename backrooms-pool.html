@@ -896,18 +896,6 @@ function addColumn(x, z) {
 for (const x of [-20, -12, -8, -4, 0, 4, 8]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
 for (const x of [16, 20]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
 
-/* ---------------- 长椅（整块石质，无零散立方腿） ---------------- */
-function addBench(x, z, rotY = 0) {
-  const stone = matFor(floorEast, 1.8 / floorEast.coverageX, 0.5 / floorEast.coverageY, { roughness: 0.55 });
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.46, 0.5), stone);
-  seat.position.set(x, 0.23, z); seat.rotation.y = rotY;
-  scene.add(seat);
-  if (rotY === 0) COLLIDERS.push({ x1: x - 0.95, x2: x + 0.95, z1: z - 0.35, z2: z + 0.35 });
-  else COLLIDERS.push({ x1: x - 0.35, x2: x + 0.35, z1: z - 1.0, z2: z + 1.0 });
-}
-addBench(12.9, -6.6, 0); addBench(12.9, 6.6, 0);
-addBench(-14.5, -12, 0); addBench(6.5, -12, 0); addBench(-14.5, 14, 0); addBench(6.5, 14, 0);
-
 /* ---------------- 西机房（昏灯与灯板） ---------------- */
 (function () {
   const p1 = new THREE.PointLight(0xffc27a, 7, 12, 2); p1.position.set(-20, 2.6, -8); scene.add(p1);
