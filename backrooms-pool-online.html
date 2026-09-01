@@ -592,9 +592,11 @@ const skirting = createTileSet({
   tile: '#1f3d44', grout: '#14292f', vary: 0.06, grime: 0.08, tileScale: 0.88, ao: 0.3, normalStrength: 2.4 });
 const ceiling = createPlain({ base: '#e7e5de', speck: 0.4 });
 
-/* —— 接入 AI 生成贴图包（textures/）：替换泳池层墙砖与池内马赛克 —— */
+/* —— 接入 AI 生成贴图包（textures/）：替换泳池层墙砖 / 池内马赛克 / 大厅地板 —— */
 wallTiles.diffuse = 'textures/pool-tiles-white.png'; wallTiles.normal = null; wallTiles.rough = null;
 poolMosaic.diffuse = 'textures/pool-mosaic-teal.png'; poolMosaic.normal = null; poolMosaic.rough = null;
+floorWest.diffuse = 'textures/pool-floor.png'; floorWest.normal = null; floorWest.rough = null;
+floorEast.diffuse = 'textures/pool-floor.png'; floorEast.normal = null; floorEast.rough = null;
 
 /* ============================================================ 几何辅助 */
 /* 世界尺寸 UV 缩放：让各材质共享同一张贴图（原图直用，repeat 由几何 UV 承担） */
@@ -656,7 +658,7 @@ function addDeck(x1, z1, x2, z2, holes, set, opts) {
 // 西侧大厅地板（主泳池 + 反射池洞口）
 addDeck(-24, -16, 12, 20, [[-9, -6, 7, 8], [BASIN.x1, BASIN.z1, BASIN.x2, BASIN.z2]], floorWest, { physical: true });
 // 东侧大厅地板（泳道池洞口）
-addDeck(12, -16, 24, 20, [[14, -4, 22, 4]], floorEast, { physical: true });
+addDeck(12, -16, 24, 20, [[14, -4, 22, 4]], floorEast, { physical: true, color: 0xd2dbe0 });
 // 西机房深色地板覆盖层（无洞口，y 略浮）
 (function () {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(8.01, 36.01), matFor(floorMaint, 8 / floorMaint.coverageX, 36 / floorMaint.coverageY));
@@ -689,6 +691,29 @@ function makeCaustics(w, d, cx, cz, y) {
     t.image = tex.image; t.needsUpdate = true; mat.visible = true;
   });
   causticAnims.push({ t, sx: 0.010 + Math.random() * 0.012, sy: 0.006 + Math.random() * 0.009 });
+}
+
+/* 水面法线：AI 水面原图 → 灰度 → 程序法线贴图（Water 着色器专用） */
+function makeAINormalTexture(url, rx, ry, strength = 4.0) {
+  const t = new THREE.Texture();
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(rx, ry);
+  new THREE.TextureLoader().load(url, (tex) => {
+    const size = 512;
+    const c = makeCanvas(size, size);
+    const g = c.getContext('2d');
+    g.drawImage(tex.image, 0, 0, size, size);
+    const img = g.getImageData(0, 0, size, size);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = (d[i] + d[i + 1] + d[i + 2]) / 3;
+      d[i] = d[i + 1] = d[i + 2] = v;
+    }
+    g.putImageData(img, 0, 0);
+    t.image = computeNormalMap(c, strength);
+    t.needsUpdate = true;
+  });
+  return t;
 }
 
 function buildPool(p) {
@@ -725,7 +750,7 @@ function buildPool(p) {
   // 水面
   const water = new Water(new THREE.PlaneGeometry(W + 0.35, fullLen + 0.35), {
     textureWidth: 1024, textureHeight: 1024,
-    waterNormals: texFrom(createWaterNormal(256), 9, 7, false),
+    waterNormals: makeAINormalTexture('textures/water-surface.png', 9, 7),
     sunDirection: new THREE.Vector3(0, 1, 0),
     sunColor: 0xfff1d6, waterColor: 0x2b8fa0, distortionScale: 4.4, fog: true });
   water.rotation.x = -Math.PI / 2;
@@ -747,7 +772,7 @@ buildPool(POOLS[1]);
    [BASIN.x1 - 0.12, 0, 0.3, D], [BASIN.x2 + 0.12, 0, 0.3, D]].forEach(([x, z, w, dd]) => addBox(w, 0.12, dd, x, 0.06, z, rw));
   const water = new Water(new THREE.PlaneGeometry(W + 0.3, D + 0.3), {
     textureWidth: 512, textureHeight: 512,
-    waterNormals: texFrom(createWaterNormal(128), 5, 5, false),
+    waterNormals: makeAINormalTexture('textures/water-surface.png', 5, 5, 3.4),
     sunDirection: new THREE.Vector3(0, 1, 0), sunColor: 0xfff1d6,
     waterColor: 0x2b8fa0, distortionScale: 3.0, fog: true });
   water.rotation.x = -Math.PI / 2;
