@@ -922,7 +922,7 @@ function makeWatcher() {
   const skin = new THREE.MeshStandardMaterial({ color: 0xcfc9ba, roughness: 0.95, emissive: 0x16150f, emissiveIntensity: 0.15 });
   const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.85, 6, 12), skin); torso.position.y = 0.98; g.add(torso);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 12), skin); head.position.y = 1.74; g.add(head);
-  const eyeM = new THREE.MeshBasicMaterial({ color: 0x050505 });
+  const eyeM = new THREE.MeshStandardMaterial({ color: 0x140202, emissive: 0xff2a14, emissiveIntensity: 1.5 });
   const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), eyeM); e1.position.set(-0.075, 1.76, 0.17); g.add(e1);
   const e2 = e1.clone(); e2.position.x = 0.075; g.add(e2);
   const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.62, 4, 8), skin);
@@ -931,6 +931,7 @@ function makeWatcher() {
   const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.5, 4, 8), skin);
   leg.position.set(0.14, 0.34, 0); g.add(leg);
   const leg2 = leg.clone(); leg2.position.x = -0.14; g.add(leg2);
+  g.userData.skin = skin; g.userData.eyes = eyeM;
   return g;
 }
 const watcher = makeWatcher();
@@ -938,6 +939,11 @@ watcher.scale.setScalar(0.85);   // 缩小：站立池底时头顶也低于水�
 watcher.position.set(-3, POOLS[0].bottom, -12.2);
 scene.add(watcher);
 const WATCHER_SPOTS = [[-6, -3], [0, 4], [-4.5, -8], [1, 8], [-8, 1], [-1.5, -11]];
+// 水面尾迹（辉光环）——追逐时玩家可据此判断怪物位置与航向
+const wake = new THREE.Mesh(new THREE.CircleGeometry(1.5, 28),
+  new THREE.MeshBasicMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }));
+wake.rotation.x = -Math.PI / 2;
+wake.visible = false; scene.add(wake);
 // 水下掠影（停电时从水面下快速滑过）
 const lurker = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 1.7, 6, 12),
   new THREE.MeshStandardMaterial({ color: 0x06090c, roughness: 1 }));
@@ -966,6 +972,14 @@ function updatePoolHorror(dt) {
   dripTimer -= dt;
   if (dripTimer <= 0) { (Math.random() < 0.5 ? synthDrip : synthSplashFar)(); dripTimer = 10 + Math.random() * 16; }
   const P = POOLS[0];
+  // 追逐阶段：躯体微光 + 红眼增强（浑水里可辨）；尾迹淡出
+  const glowOn = poolMonster.swim;
+  watcher.userData.skin.emissiveIntensity += ((glowOn ? 2.0 : 0.15) - watcher.userData.skin.emissiveIntensity) * Math.min(1, dt * 3);
+  watcher.userData.eyes.emissiveIntensity += ((glowOn ? 7 : 1.5) - watcher.userData.eyes.emissiveIntensity) * Math.min(1, dt * 3);
+  if (!glowOn && wake.visible) {
+    wake.material.opacity *= Math.max(0, 1 - dt * 2.5);
+    if (wake.material.opacity < 0.02) wake.visible = false;
+  }
   poolDark.timer -= dt;
   if (!poolDark.active && poolDark.timer <= 0) {
     poolDark.active = true; poolDark.dur = 1.7 + Math.random() * 1.7; poolDark.moved = false;
@@ -1026,8 +1040,8 @@ function updatePoolHorror(dt) {
       // 影子始终留在竞赛池边界内（玩家在训练池时它贴壁"陪游"）
       watcher.position.x = Math.min(P.x2 - 0.45, Math.max(P.x1 + 0.45, watcher.position.x));
       watcher.position.z = Math.min(P.zEnd - 0.45, Math.max(P.zDeep1 + 0.45, watcher.position.z));
-      // 深度：贴水下游弋（0.85 缩小后全身最低点也在水面下，缓慢呼吸式起伏）
-      const ty = P.water - 0.78 + Math.sin(t * 0.0011) * 0.12;
+      // 深度：追逐时头肩破水而出（躯干仍半没水下），不再"全程隐身"
+      const ty = P.water - 0.36 + Math.sin(t * 0.0011) * 0.07;
       watcher.position.y += (ty - watcher.position.y) * Math.min(1, dt * 2);
       // 航向 = 速度方向（最短角缓转，丝滑）
       const yawT = Math.atan2(poolMonster.vx, poolMonster.vz);
@@ -1040,6 +1054,13 @@ function updatePoolHorror(dt) {
       lurker.position.x += ((watcher.position.x - poolMonster.vx * 0.7) - lurker.position.x) * Math.min(1, dt * 1.6);
       lurker.position.z += ((watcher.position.z - poolMonster.vz * 0.7) - lurker.position.z) * Math.min(1, dt * 1.6);
       lurker.position.y += ((P.water - 0.42) - lurker.position.y) * Math.min(1, dt * 1.6);
+      // 水面尾迹：辉光环随怪物推进，长轴对齐航向（水下也能看清它从哪来）
+      wake.visible = true;
+      wake.position.set(watcher.position.x, P.water + 0.03, watcher.position.z);
+      const wsp = Math.hypot(poolMonster.vx, poolMonster.vz);
+      wake.scale.set(0.9 + wsp * 0.55, 0.85 + wsp * 0.14, 1);
+      wake.rotation.z = Math.atan2(-poolMonster.vz, poolMonster.vx);
+      wake.material.opacity = 0.30 + Math.sin(t * 0.004) * 0.08 + wsp * 0.06;
       if (dist < 1.35) {
         poolScare();
         poolMonster.swim = false; poolMonster.phase = 'sink';
@@ -1582,6 +1603,7 @@ function enterPoolrooms() {
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     lurker.visible = false;
     poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
+    wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
     watcher.rotation.set(0, 0, 0);
     watcher.position.set(-3, POOLS[0].bottom, -12.2);
     for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
@@ -1813,6 +1835,7 @@ function resetGame() {
   poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
   lurker.visible = false;
   poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
+  wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
   watcher.rotation.set(0, 0, 0);
   watcher.position.set(-3, POOLS[0].bottom, -12.2);
   for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
