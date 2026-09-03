@@ -189,13 +189,13 @@ container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x060605);
-scene.fog = new THREE.FogExp2(0x0b0a08, 0.055);
+scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.08, 140);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 // 手电筒聚光（挂相机，F 开关）
-const flashLight = new THREE.SpotLight(0xfff0c8, 0, 16, 0.52, 0.45, 1.6);
+const flashLight = new THREE.SpotLight(0xfff0c8, 0, 26, 0.5, 0.45, 1.4);
 flashLight.position.set(0.14, -0.06, 0.1);
 camera.add(flashLight);
 camera.add(flashLight.target);
@@ -869,7 +869,8 @@ const trimMat = matFor(rimTiles, 0.6 / rimTiles.coverageX, H / rimTiles.coverage
 const ceilMat = new THREE.MeshStandardMaterial({ map: texFrom('textures/ceiling-dark.png', 7, 5, true), roughness: 0.95, metalness: 0 });
 addPlane(48, 36, 0, H, 2, Math.PI / 2, 0, ceilMat);
 
-/* 暗色顶棚筒灯（贴照片：黑顶 + 密布小灯点） */
+/* 暗色顶棚筒灯（贴照片：黑顶 + 密布小灯点）——登记到 poolLights 供停电事件控制 */
+const poolLights = [];
 function downlight(x, z) {
   const l = new THREE.PointLight(0xf2f6ff, 3.2, 9.5, 2);
   l.position.set(x, H - 0.4, z);
@@ -878,6 +879,7 @@ function downlight(x, z) {
     new THREE.MeshStandardMaterial({ color: 0x0b0b0b, emissive: 0xf7f2e2, emissiveIntensity: 4.5 }));
   fixture.position.set(x, H - 0.035, z);
   scene.add(fixture);
+  poolLights.push({ light: l, fxMat: fixture.material, base: 3.2 });
 }
 for (const x of [-18, -12, -6, 0, 6]) for (const z of [-13, -5, 5, 17]) downlight(x, z);
 for (const x of [16, 20]) for (const z of [-13, -5, 5, 17]) downlight(x, z);
@@ -910,7 +912,91 @@ const hemi = new THREE.HemisphereLight(0xfff1dd, 0x84989a, 0.5);
 scene.add(hemi);
 [[-3.5, -1.5], [3.5, 1.5]].forEach(([x, z]) => {
   const p = new THREE.PointLight(0xc9f2ff, 10, 13, 2); p.position.set(x, 2.2, z); scene.add(p);
+  poolLights.push({ light: p, base: 10 });
 });
+
+/* ---------------- 泳池层恐怖元素 ---------------- */
+// 「池中人」：苍白人影立于深水区池底，每次全馆停电换位；来电瞬间离你太近 → 惊吓
+function makeWatcher() {
+  const g = new THREE.Group();
+  const skin = new THREE.MeshStandardMaterial({ color: 0xcfc9ba, roughness: 0.95, emissive: 0x16150f, emissiveIntensity: 0.15 });
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.85, 6, 12), skin); torso.position.y = 0.98; g.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 12), skin); head.position.y = 1.74; g.add(head);
+  const eyeM = new THREE.MeshBasicMaterial({ color: 0x050505 });
+  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), eyeM); e1.position.set(-0.075, 1.76, 0.17); g.add(e1);
+  const e2 = e1.clone(); e2.position.x = 0.075; g.add(e2);
+  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.62, 4, 8), skin);
+  arm.position.set(0.38, 1.02, 0); g.add(arm);
+  const arm2 = arm.clone(); arm2.position.x = -0.38; g.add(arm2);
+  const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.5, 4, 8), skin);
+  leg.position.set(0.14, 0.34, 0); g.add(leg);
+  const leg2 = leg.clone(); leg2.position.x = -0.14; g.add(leg2);
+  return g;
+}
+const watcher = makeWatcher();
+watcher.position.set(-3, POOLS[0].bottom, -12.2);
+scene.add(watcher);
+const WATCHER_SPOTS = [[-6, -3], [0, 4], [-4.5, -8], [1, 8], [-8, 1], [-1.5, -11]];
+// 水下掠影（停电时从水面下快速滑过）
+const lurker = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 1.7, 6, 12),
+  new THREE.MeshStandardMaterial({ color: 0x06090c, roughness: 1 }));
+lurker.rotation.x = Math.PI / 2;
+lurker.visible = false; scene.add(lurker);
+const poolDark = { timer: 22 + Math.random() * 18, active: false, dur: 0, moved: false };
+let poolIntroShown = false, dripTimer = 12;
+function poolScare() {
+  synthScare(); stats.scares++;
+  const sf = document.getElementById('scare-flash');
+  sf.style.opacity = '1';
+  setTimeout(() => { sf.style.opacity = '0'; }, 150);
+  showFlashText('它一直站在水里看着你……');
+  player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
+  yaw = 0; pitch = 0;
+}
+function updatePoolHorror(dt) {
+  if (LEVEL !== 1) return;
+  if (!poolIntroShown) {
+    poolIntroShown = true;
+    setTimeout(() => showFlashText('水面下……好像站着什么'), 2600);
+  }
+  dripTimer -= dt;
+  if (dripTimer <= 0) { (Math.random() < 0.5 ? synthDrip : synthSplashFar)(); dripTimer = 10 + Math.random() * 16; }
+  const P = POOLS[0];
+  poolDark.timer -= dt;
+  if (!poolDark.active && poolDark.timer <= 0) {
+    poolDark.active = true; poolDark.dur = 1.7 + Math.random() * 1.7; poolDark.moved = false;
+    synthBlackout();
+  }
+  if (poolDark.active) {
+    poolDark.dur -= dt;
+    for (const L of poolLights) { L.light.intensity = 0; if (L.fxMat) L.fxMat.emissiveIntensity = 0.12; }
+    hemi.intensity = 0.1;
+    if (!poolDark.moved) {
+      poolDark.moved = true;
+      const s = WATCHER_SPOTS[Math.random() * WATCHER_SPOTS.length | 0];
+      watcher.position.set(s[0], P.bottom, s[1]);
+      lurker.visible = true;
+      lurker.position.set(P.x1 + 1.2 + Math.random() * 2.5, P.water - 0.16, P.zDeep1 + 1);
+      lurker.userData.sweep = true;
+      synthSplashFar();
+    }
+    if (lurker.userData.sweep) {
+      lurker.position.z += dt * 9.5;
+      if (lurker.position.z > P.zEnd - 1) lurker.userData.sweep = false;
+    }
+    if (poolDark.dur <= 0) {
+      poolDark.active = false; poolDark.timer = 24 + Math.random() * 26;
+      for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
+      hemi.intensity = 0.5;
+      lurker.visible = false;
+      const hd = Math.hypot(player.x - watcher.position.x, player.z - watcher.position.z);
+      const vd = Math.abs(player.y - watcher.position.y);
+      if (hd < 3.4 && vd < 2.8) poolScare();
+    }
+  } else {
+    watcher.lookAt(player.x, watcher.position.y + 0.7, player.z);
+  }
+}
 
 /* ============================================================ 合成音频（脚步 + 回声） */
 let audioCtx = null, audioMaster = null, audioDry = null, stepTimer = 0;
@@ -1002,6 +1088,10 @@ function synthUnlock() { burst({ type: 'sine', f0: 420, f1: 420, dur: 0.1, gain:
 function synthCreak()  { burst({ type: 'sine', f0: 240, f1: 130, dur: 0.5, gain: 0.12, freq: 320, q: 6 }); }
 function synthWhoosh() { burst({ type: 'noise', dur: 1.0, freq: 640, q: 0.25, gain: 0.55 }); }
 function synthScare()  { burst({ type: 'noise', dur: 0.55, freq: 1500, q: 1.0, gain: 0.9 }); burst({ type: 'sawtooth', f0: 950, f1: 70, dur: 0.5, gain: 0.5, filter: 'lowpass' }); }
+function synthHeartbeat() { burst({ type: 'sine', f0: 64, f1: 38, dur: 0.14, gain: 0.26, filter: 'lowpass' }); }
+function synthBlackout() { burst({ type: 'noise', dur: 0.05, freq: 3800, q: 1.2, gain: 0.3 }); burst({ type: 'sawtooth', f0: 150, f1: 35, dur: 0.35, gain: 0.22, filter: 'lowpass' }); }
+function synthDrip()  { burst({ type: 'sine', f0: 1400, f1: 480, dur: 0.07, gain: 0.12, filter: 'bandpass' }); }
+function synthSplashFar() { burst({ type: 'noise', dur: 0.4, freq: 1150, q: 0.3, gain: 0.15 }); burst({ type: 'sine', f0: 230, f1: 85, dur: 0.25, gain: 0.08, filter: 'lowpass' }); }
 
 /* ============================================================ 漂浮物（救生圈 / 鸭子） */
 const pickups = [], PICK_TOTAL = 6;
@@ -1116,17 +1206,18 @@ function wall(x1, z1, x2, z2) {
     COLLIDERS_L0.push({ x1: x - 0.54, x2: x + 0.54, z1: z - 0.54, z2: z + 0.54 });
   });
 
-  // 荧光灯（昏暗暖光，可闪烁）
+  // 荧光灯（大部分已烧毁，仅零星残存——手电筒成为关键）
+  const aliveIdx = new Set([0, 4, 7, 11]);
   [[-138, 0], [-126, 0], [-114, 0], [-102, 0], [-90, 0], [-78, 0],
    [-141, -8], [-141, -15], [-103, 11], [-83, 11], [-90, -11], [-68, 0]].forEach(([x, z]) => {
-    const light = new THREE.PointLight(0xffe9c0, 2.2, 10, 2);
-    light.position.set(x, 2.7, z); light.userData.base = 2.2;
+    const light = new THREE.PointLight(0xffe9c0, 1.3, 8.5, 2);
+    light.position.set(x, 2.7, z); light.userData.base = 1.3;
     scene.add(light);
-    const pmat = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffedc4, emissiveIntensity: 1.5 });
+    const pmat = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffedc4, emissiveIntensity: 1.1 });
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.5), pmat);
     panel.position.set(x, 2.97, z); panel.rotation.x = Math.PI / 2;
     scene.add(panel);
-    l0Lights.push({ light, pmat, i: l0Lights.length });
+    l0Lights.push({ light, pmat, i: l0Lights.length, dead: !aliveIdx.has(l0Lights.length) });
   });
 
   // 办公角（截图同款：桌椅 + 盆栽 + 行李袋 + 单束暖光 + 黄门）
@@ -1229,9 +1320,13 @@ function tryFuse() {
   if (fuses >= 3) {
     exitUnlocked = true;
     synthUnlock();
-    document.getElementById('v-task').textContent = '出口已开启 — 向尽头逃去';
+    document.getElementById('v-task').textContent = '出口已开启！它在追你——快跑！';
     openExitDoor();
-    showFlashText('出口已开启！');
+    showFlashText('出口开启！快跑！！！');
+    startChase(3.05, 22);
+  } else if (fuses === 2) {
+    showFlashText('它开始追你了——别停下！');
+    startChase(2.2, 12);
   } else {
     showFlashText(`保险丝 ${fuses}/3 — 它来了…`);
     activateEntity(3.0, 9);
@@ -1322,18 +1417,37 @@ function jumpscare() {
 }
 
 /* ---------------- Level 0 每帧逻辑 ---------------- */
+let entityChasing = false, chaseSpeed = 0, chaseLeft = 0, hbTimer = 0;
+function endChase() {
+  entityChasing = false; entity.visible = false;
+  if (droneNodes) droneNodes.g.gain.value = 0.05;
+}
+function startChase(speed, dur) {
+  const cands = ENTITY_POINTS.filter(q => Math.hypot(player.x - q[0], player.z - q[1]) > 10);
+  const s = cands.length ? cands[Math.random() * cands.length | 0] : ENTITY_POINTS[0];
+  entity.position.set(s[0], 0, s[1]);
+  entity.visible = true;
+  entityChasing = true; chaseSpeed = speed; chaseLeft = dur; hbTimer = 0;
+  if (droneNodes) droneNodes.g.gain.value = 0.11;
+}
 function updateLevel0(dt) {
   if (LEVEL !== 0) return;
   const t = performance.now() * 0.001;
-  hemi.intensity = 0.05; hemiL0.intensity = 0.32;
-  // 灯管闪烁
+  hemi.intensity = 0.02; hemiL0.intensity = 0.12;
+  // 灯管闪烁（烧毁的偶尔抽搐一下）
   for (const L of l0Lights) {
-    let f = 0.62 + 0.38 * Math.sin(t * 6.3 + L.i * 1.7) * Math.sin(t * 2.7 + L.i * 3.1);
-    if (Math.random() < 0.012) f = 0.05;
-    const mul = entity.visible ? 0.45 : 1;
+    if (L.dead) {
+      const spark = Math.random() < 0.005 ? 0.9 : 0;
+      L.light.intensity = 1.3 * spark;
+      L.pmat.emissiveIntensity = 1.1 * Math.max(spark, 0.04);
+      continue;
+    }
+    let f = 0.55 + 0.45 * Math.sin(t * 6.3 + L.i * 1.7) * Math.sin(t * 2.7 + L.i * 3.1);
+    if (Math.random() < 0.015) f = 0.05;
+    const mul = entity.visible ? 0.4 : 1;
     f = Math.max(0.05, Math.min(1, f)) * mul;
-    L.light.intensity = 2.2 * f;
-    L.pmat.emissiveIntensity = 1.5 * f;
+    L.light.intensity = 1.3 * f;
+    L.pmat.emissiveIntensity = 1.1 * f;
   }
   // 保险丝浮动
   for (const f of fusesList) {
@@ -1344,12 +1458,22 @@ function updateLevel0(dt) {
   creakTimer -= dt;
   if (creakTimer <= 0) { synthCreak(); creakTimer = 6 + Math.random() * 10; }
   ambientTimer -= dt;
-  if (ambientTimer <= 0) {
+  if (ambientTimer <= 0 && !entityChasing) {
     ambientTimer = 8 + Math.random() * 14;
     if (Math.random() < 0.45) activateEntity(2.3, 14);
   }
-  // 实体行为
-  if (entity.visible) {
+  // 实体行为：追击 or 潜伏凝视
+  if (entityChasing) {
+    chaseLeft -= dt; hbTimer -= dt;
+    if (hbTimer <= 0) { synthHeartbeat(); hbTimer = 0.62; }
+    const dx = player.x - entity.position.x, dz = player.z - entity.position.z;
+    const d = Math.hypot(dx, dz) || 1;
+    entity.position.x += dx / d * chaseSpeed * dt;
+    entity.position.z += dz / d * chaseSpeed * dt;
+    entity.lookAt(player.x, 0, player.z);
+    if (d < 1.15) { endChase(); jumpscare(); }
+    else if (chaseLeft <= 0) { endChase(); showFlashText('它停下了……消失在墙里'); }
+  } else if (entity.visible) {
     entity.lookAt(player.x, 0, player.z);
     const d = Math.hypot(player.x - entity.position.x, player.z - entity.position.z);
     if (d < 4.6) jumpscare();
@@ -1374,6 +1498,7 @@ function enterPoolrooms() {
   synthWhoosh();
   document.getElementById('level-fade').style.opacity = '1';
   entity.visible = false;
+  entityChasing = false;
   setTimeout(() => {
     LEVEL = 1;
     ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
@@ -1381,10 +1506,15 @@ function enterPoolrooms() {
     scene.background = new THREE.Color(0x0a1014);
     hemi.intensity = 0.5; hemiL0.intensity = 0;
     if (droneNodes) droneNodes.g.gain.value = 0.012;
+    // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
+    poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
+    lurker.visible = false;
+    watcher.position.set(-3, POOLS[0].bottom, -12.2);
+    for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
     player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
     yaw = 0; pitch = 0;
     flashlight.on = false; updateFlashHud();
-    document.getElementById('v-task').textContent = '泳池层 · 自由探索';
+    document.getElementById('v-task').textContent = '泳池层 · 小心池中之物';
     document.getElementById('level-tag').textContent = 'LEVEL 37 · 泳池层';
     showFlashText('Level 37 — 泳池层');
     setTimeout(() => { document.getElementById('level-fade').style.opacity = '0'; transitioning = false; }, 520);
@@ -1516,12 +1646,24 @@ function updatePlayer(dt) {
 
 /* ---------------- 漂浮物交互 ---------------- */
 let nearestPickup = null;
+const _look = new THREE.Vector3();
 function updatePickups(dt) {
   let best = null, bestD = 1.7;
+  camera.getWorldDirection(_look);
   for (const pk of pickups) {
     pk.mesh.position.y = pk.baseY + Math.sin(performance.now() * 0.0014 + pk.phase) * 0.045;
     pk.mesh.rotation.y += dt * 0.5;
-    const d = Math.hypot(player.x - pk.x, player.z - pk.z);
+    const dx = player.x - pk.x, dz = player.z - pk.z;
+    const d = Math.hypot(dx, dz) || 1;
+    // 恐怖机制：处于玩家视野之外时，漂浮物会缓缓向玩家漂移
+    if (LEVEL === 1 && d > 3.2 && d < 15) {
+      const dot = (-dx / d) * _look.x + (-dz / d) * _look.z;
+      if (dot < -0.05) {
+        pk.x += (dx / d) * dt * 0.38;
+        pk.z += (dz / d) * dt * 0.38;
+        pk.mesh.position.x = pk.x; pk.mesh.position.z = pk.z;
+      }
+    }
     if (d < bestD) { bestD = d; best = pk; }
   }
   nearestPickup = best;
@@ -1588,11 +1730,16 @@ function resetGame() {
   hideEndScreen();
   LEVEL = 0;
   ACTIVE_COLLIDERS = COLLIDERS_L0; ACTIVE_BOUNDS = BOUNDS_L0;
-  scene.fog = new THREE.FogExp2(0x0b0a08, 0.055);
+  scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
   scene.background = new THREE.Color(0x060605);
-  hemi.intensity = 0.05; hemiL0.intensity = 0.32;
+  hemi.intensity = 0.02; hemiL0.intensity = 0.12;
   if (droneNodes) droneNodes.g.gain.value = 0.05;
   entity.visible = false;
+  entityChasing = false;
+  poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
+  lurker.visible = false;
+  watcher.position.set(-3, POOLS[0].bottom, -12.2);
+  for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
   // 玩家
   player.x = L0_SPAWN.x; player.z = L0_SPAWN.z; player.y = 0; player.vy = 0;
   yaw = -Math.PI / 2; pitch = 0;
@@ -1650,6 +1797,7 @@ renderer.setAnimationLoop(() => {
   updateFuseProximity();
   updateFlashProximity();
   updateLevel0(dt);
+  updatePoolHorror(dt);
 
   // 手电筒电量 + 光束（Level 0 限定照明）
   if (flashlight.on && flashlight.charge > 0) {
@@ -1658,7 +1806,7 @@ renderer.setAnimationLoop(() => {
   }
   const low = flashlight.charge < 0.25;
   flashLight.intensity = (flashlight.on && LEVEL === 0)
-    ? (low ? 16 + 6 * Math.sin(performance.now() * 0.02) : 22) : 0;
+    ? (low ? 36 + 12 * Math.sin(performance.now() * 0.02) : 56) : 0;
   flashHudT -= dt;
   if (flashHudT <= 0 && flashlight.owned) { updateFlashHud(); flashHudT = 0.5; }
 
