@@ -934,6 +934,7 @@ function makeWatcher() {
   return g;
 }
 const watcher = makeWatcher();
+watcher.scale.setScalar(0.85);   // 缩小：站立池底时头顶也低于水面，杜绝"头顶破面"闪烁黑影
 watcher.position.set(-3, POOLS[0].bottom, -12.2);
 scene.add(watcher);
 const WATCHER_SPOTS = [[-6, -3], [0, 4], [-4.5, -8], [1, 8], [-8, 1], [-1.5, -11]];
@@ -944,14 +945,9 @@ lurker.rotation.x = Math.PI / 2;
 lurker.visible = false; scene.add(lurker);
 const poolDark = { timer: 22 + Math.random() * 18, active: false, dur: 0, moved: false };
 let poolIntroShown = false, dripTimer = 12;
-/* 「水中之物」游动跟随状态 */
-const poolMonster = { swim: false };
-function endSwim() {
-  if (!poolMonster.swim) return;
-  poolMonster.swim = false;
-  lurker.visible = false;
-  watcher.rotation.set(0, 0, 0);
-}
+/* 「水中之物」游动跟随状态机：swim（贴水游弋）→ sink（水平潜沉）→ stand（池底直立凝视）
+   全程身体保持在水面以下，避免穿越 Water 镜面产生的闪烁黑影 */
+const poolMonster = { swim: false, phase: 'stand', vx: 0, vz: 0 };
 function poolScare() {
   synthScare(); stats.scares++;
   const sf = document.getElementById('scare-flash');
@@ -983,8 +979,11 @@ function updatePoolHorror(dt) {
       poolDark.moved = true;
       const s = WATCHER_SPOTS[Math.random() * WATCHER_SPOTS.length | 0];
       watcher.position.set(s[0], P.bottom, s[1]);
+      watcher.rotation.x = 0; watcher.rotation.z = 0;   // 瞬移后立正（若玩家仍在水里会再次转为游姿）
+      poolMonster.phase = poolMonster.swim ? 'swim' : 'stand';
+      poolMonster.vx *= 0.2; poolMonster.vz *= 0.2;
       lurker.visible = true;
-      lurker.position.set(P.x1 + 1.2 + Math.random() * 2.5, P.water - 0.16, P.zDeep1 + 1);
+      lurker.position.set(P.x1 + 1.2 + Math.random() * 2.5, P.water - 0.34, P.zDeep1 + 1);
       lurker.userData.sweep = true;
       synthSplashFar();
     }
@@ -1002,49 +1001,71 @@ function updatePoolHorror(dt) {
       if (hd < 3.4 && vd < 2.8) poolScare();
     }
   } else {
-    // 游动跟随：玩家在任何泳池水域中，「池中人」转水平姿态、贴近水面缓缓追来
+    // ── 水中之物状态机 ──
     const px = player.x, pz = player.z;
-    const inPool = waterLevelAt(px, pz) !== null && player.y < waterLevelAt(px, pz);
+    const wl = waterLevelAt(px, pz);
+    const inPool = wl !== null && player.y < wl;
+    const t = performance.now();
+    watcher.rotation.order = 'YXZ';
     if (inPool) {
       if (!poolMonster.swim) {
-        poolMonster.swim = true;
+        poolMonster.swim = true; poolMonster.phase = 'swim';
         synthSplashFar();
         showFlashText('水面翻涌——它朝你游过来了！');
+        if (droneNodes) droneNodes.g.gain.value = 0.075;
       }
       const dx = px - watcher.position.x, dz = pz - watcher.position.z;
       const dist = Math.hypot(dx, dz) || 1;
-      const speed = Math.min(2.2, 0.9 + dist * 0.12);   // 距离越远游越快
-      watcher.position.x += (dx / dist) * speed * dt;
-      watcher.position.z += (dz / dist) * speed * dt;
-      // 影子始终留在竞赛池边界内（玩家在训练池时它贴池壁游位）
+      // 速度平滑：目标速度缓动（起停不再生硬）
+      const speed = Math.min(2.0, 0.75 + dist * 0.11);
+      const tvx = dx / dist * speed, tvz = dz / dist * speed;
+      poolMonster.vx += (tvx - poolMonster.vx) * Math.min(1, dt * 2.2);
+      poolMonster.vz += (tvz - poolMonster.vz) * Math.min(1, dt * 2.2);
+      watcher.position.x += poolMonster.vx * dt;
+      watcher.position.z += poolMonster.vz * dt;
+      // 影子始终留在竞赛池边界内（玩家在训练池时它贴壁"陪游"）
       watcher.position.x = Math.min(P.x2 - 0.45, Math.max(P.x1 + 0.45, watcher.position.x));
       watcher.position.z = Math.min(P.zEnd - 0.45, Math.max(P.zDeep1 + 0.45, watcher.position.z));
-      // 贴近水面游（剪影清晰可见）+ 起伏 + 摆尾
-      watcher.position.y = P.water - 0.85 + Math.sin(performance.now() * 0.0014) * 0.14;
-      watcher.rotation.order = 'YXZ';
-      const ang = Math.atan2(dx, dz);
-      const dAng = (ang - watcher.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI;  // 最短角平滑转身
-      watcher.rotation.y += dAng * Math.min(1, dt * 5);
-      watcher.rotation.x = 1.25;
-      watcher.rotation.z = Math.sin(performance.now() * 0.004) * 0.16;
-      // 水下伴影：一团黑随其身后贴近水面滑过
+      // 深度：贴水下游弋（0.85 缩小后全身最低点也在水面下，缓慢呼吸式起伏）
+      const ty = P.water - 0.78 + Math.sin(t * 0.0011) * 0.12;
+      watcher.position.y += (ty - watcher.position.y) * Math.min(1, dt * 2);
+      // 航向 = 速度方向（最短角缓转，丝滑）
+      const yawT = Math.atan2(poolMonster.vx, poolMonster.vz);
+      watcher.rotation.y += ((yawT - watcher.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 2.6);
+      // 俯仰/摆尾平滑趋近水平游姿
+      watcher.rotation.x += (1.3 - watcher.rotation.x) * Math.min(1, dt * 1.8);
+      watcher.rotation.z = Math.sin(t * 0.0028) * 0.13;
+      // 水下伴影
       lurker.visible = true; lurker.userData.sweep = false;
-      lurker.position.x += ((watcher.position.x - dx / dist * 1.3) - lurker.position.x) * Math.min(1, dt * 2.2);
-      lurker.position.z += ((watcher.position.z - dz / dist * 1.3) - lurker.position.z) * Math.min(1, dt * 2.2);
-      lurker.position.y += ((P.water - 0.4) - lurker.position.y) * Math.min(1, dt * 2.2);
-      if (droneNodes) droneNodes.g.gain.value = 0.075;
-      if (dist < 1.35) { endSwim(); poolScare(); if (droneNodes) droneNodes.g.gain.value = 0.012; }
+      lurker.position.x += ((watcher.position.x - poolMonster.vx * 0.7) - lurker.position.x) * Math.min(1, dt * 1.6);
+      lurker.position.z += ((watcher.position.z - poolMonster.vz * 0.7) - lurker.position.z) * Math.min(1, dt * 1.6);
+      lurker.position.y += ((P.water - 0.42) - lurker.position.y) * Math.min(1, dt * 1.6);
+      if (dist < 1.35) {
+        poolScare();
+        poolMonster.swim = false; poolMonster.phase = 'sink';
+        lurker.visible = false;
+        if (droneNodes) droneNodes.g.gain.value = 0.012;
+      }
     } else {
       if (poolMonster.swim) {
-        endSwim();
-        if (droneNodes) droneNodes.g.gain.value = 0.012;
+        poolMonster.swim = false; poolMonster.phase = 'sink';
+        poolMonster.vx *= 0.2; poolMonster.vz *= 0.2;
+        lurker.visible = false;
         poolDark.timer = Math.min(poolDark.timer, 8 + Math.random() * 8);  // 上岸后很快会停电
+        if (droneNodes) droneNodes.g.gain.value = 0.012;
         showFlashText('它停了……沉回水底');
       }
-      watcher.rotation.order = 'XYZ';
-      watcher.position.y += (P.bottom - watcher.position.y) * Math.min(1, dt * 1.6);
-      watcher.rotation.z = 0;
-      watcher.lookAt(player.x, watcher.position.y + 0.7, player.z);
+      if (poolMonster.phase === 'sink') {
+        // 保持水平姿态缓慢下沉（身体不穿水面）
+        watcher.position.y += (P.bottom - watcher.position.y) * Math.min(1, dt * 0.9);
+        if (Math.abs(watcher.position.y - P.bottom) < 0.1) { poolMonster.phase = 'stand'; watcher.position.y = P.bottom; }
+      } else {
+        // 池底缓缓立正（立直后头顶仍低于水面）
+        watcher.rotation.x += (0 - watcher.rotation.x) * Math.min(1, dt * 1.6);
+      }
+      watcher.rotation.z += (0 - watcher.rotation.z) * Math.min(1, dt * 3);
+      const ax = px - watcher.position.x, az = pz - watcher.position.z;
+      watcher.rotation.y += ((Math.atan2(ax, az) - watcher.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 1.5);
     }
   }
 }
@@ -1560,6 +1581,8 @@ function enterPoolrooms() {
     // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     lurker.visible = false;
+    poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
+    watcher.rotation.set(0, 0, 0);
     watcher.position.set(-3, POOLS[0].bottom, -12.2);
     for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
     player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
@@ -1789,7 +1812,7 @@ function resetGame() {
   entityChasing = false;
   poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
   lurker.visible = false;
-  poolMonster.swim = false;
+  poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
   watcher.rotation.set(0, 0, 0);
   watcher.position.set(-3, POOLS[0].bottom, -12.2);
   for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
