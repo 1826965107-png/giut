@@ -136,7 +136,7 @@
   </div>
 </div>
 
-<div id="hint">WASD 移动 · Shift 奔跑 · 空格 跳/上浮 · E 拾取 · Esc 调参 · H 面板</div>
+<div id="hint">WASD 移动 · Shift 奔跑 · 空格 跳（池边任意处可跳水！）· E 拾取 · F 手电 · Esc 调参 · H 面板</div>
 <div id="pickup-hint">按 E 拾取</div>
 <div id="level-tag">LEVEL 0 · 后室</div>
 <div id="level-fade"></div>
@@ -810,12 +810,12 @@ function buildPool(p) {
     }
   }
 
-  // 碰撞：北墙/东西墙封闭 + 南墙（台阶口除外）
-  COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.15, z2: p.zDeep1 + 0.15 });
-  COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x1 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2 });
-  COLLIDERS.push({ x1: p.x2 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2 });
+  // 碰撞：池壁"仅站立时阻挡"（poolSide）——腾空/跳跃可越过池沿入水；台阶侧短墙保持实体
+  COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.15, z2: p.zDeep1 + 0.15, poolSide: true });
+  COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x1 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2, poolSide: true });
+  COLLIDERS.push({ x1: p.x2 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2, poolSide: true });
   COLLIDERS.push({ x1: stair.x1 - 0.2, x2: stair.x1 + 0.05, z1: p.zEnd - 0.2, z2: p.zEnd + 0.2 });
-  COLLIDERS.push({ x1: stair.x2, x2: p.x2 + 0.15, z1: p.zEnd - 0.15, z2: p.zEnd + 0.15 });
+  COLLIDERS.push({ x1: stair.x2, x2: p.x2 + 0.15, z1: p.zEnd - 0.15, z2: p.zEnd + 0.15, poolSide: true });
 
   // 水面（室内静水）：极低扰动 + 时间推进压缩到 4%，低频大波纹
   const water = new Water(new THREE.PlaneGeometry(W + 0.35, fullLen + 0.35), {
@@ -1628,6 +1628,7 @@ function enterPoolrooms() {
 const RADIUS = 0.35, EYE = 1.62;
 const player = { x: L0_SPAWN.x, y: 0, z: L0_SPAWN.z, vy: 0, grounded: true };
 let yaw = -Math.PI / 2, pitch = 0;
+let prevFeetY = 0;   // 入水水花检测
 const keys = new Set();
 let sensitivity = 1.8;
 let cameraBob = 0, moveAmount = 0;
@@ -1669,6 +1670,8 @@ function toggleHud() {
 
 function collideCircle(x, z, r) {
   for (const c of ACTIVE_COLLIDERS) {
+    // 池沿逻辑：腾空（跳跃/跳水）时可越过池壁；站地时不可走进行驶——水下仍被挡住，出口靠台阶
+    if (c.poolSide && !player.grounded) continue;
     const cx = Math.max(c.x1, Math.min(x, c.x2));
     const cz = Math.max(c.z1, Math.min(z, c.z2));
     const dx = x - cx, dz = z - cz;
@@ -1722,6 +1725,10 @@ function updatePlayer(dt) {
     if (player.grounded && keys.has('Space')) player.vy = 4.7;
   }
   player.y += player.vy * dt;
+  // 入水水花：脚从水面上方穿越到下方且下坠足够快
+  const wlNew = waterLevelAt(player.x, player.z);
+  if (wlNew !== null && prevFeetY > wlNew && player.y <= wlNew && player.vy < -1.2) synthSplashFar();
+  prevFeetY = player.y;
   const ground = groundAt(player.x, player.z);
   if (player.y <= ground) { player.y = ground; player.vy = 0; player.grounded = true; }
   else player.grounded = false;
