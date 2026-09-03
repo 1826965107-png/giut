@@ -822,7 +822,14 @@ function buildPool(p) {
     textureWidth: 1024, textureHeight: 1024,
     waterNormals: makeAINormalTexture('textures/water-surface.png', 7, 5),
     sunDirection: new THREE.Vector3(0, 1, 0),
-    sunColor: 0xfff6e0, waterColor: 0x1a6ab4, distortionScale: 0.6, fog: true });
+    sunColor: 0xfff6e0, waterColor: 0x1a6ab4, distortionScale: 0.45, fog: true });
+  // 关键修复：该版 Water 着色器为纯镜面反射（无折射、alpha=1 不透明），
+  // 水面-池壁交界处的"倒影墙"与真实墙体重合，随波纹抖动 = 贴图闪烁带。
+  // 改为半透明后，水面线以下直接透出真实池壁/池底贴图，交界处恢复稳定。
+  water.material.transparent = true;
+  water.material.uniforms.alpha.value = 0.55;
+  water.material.depthWrite = false;
+  water.material.needsUpdate = true;
   water.rotation.x = -Math.PI / 2;
   water.position.set(cx, p.water, zc);
   scene.add(water);
