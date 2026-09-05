@@ -1772,7 +1772,7 @@ function enterPoolrooms() {
     // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     applyRoomSound(1); startAmbience(1);
-    setPanelDefaults(1.28, 0.55, 0.016);
+    setPanelDefaults(0.48, 0.36, 0.016);
     lurker.visible = false;
     poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
     wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
@@ -2043,7 +2043,7 @@ bind('c-fog', 'v-fog', v => scene.fog.density = v);
 bind('c-sens', 'v-sens', v => sensitivity = v);
 bind('c-volume', 'v-volume', v => { if (audioMaster) audioMaster.gain.value = v; });
 
-/* 面板预设：按关卡应用曝光/泛光/雾气（Level 0 昏暗预设 = 0.31/0.12/0.016；泳池层 = 1.28/0.55/0.016） */
+/* 面板预设：按关卡应用曝光/泛光/雾气（Level 0 昏暗预设 = 0.31/0.12/0.016；泳池层 = 0.48/0.36/0.016） */
 function setPanelDefaults(exposure, bloom, fog) {
   renderer.toneMappingExposure = exposure;
   bloomPass.strength = bloom;
