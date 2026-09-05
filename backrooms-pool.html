@@ -119,9 +119,9 @@
 
 <div id="hud">
   <h1>POOLROOMS</h1>
-  <p class="sub">后室 · 泳池层 — 自由行走</p>
-  <label><span>曝光</span><input id="c-exposure" type="range" min="0.2" max="2.6" step="0.01" value="1.28"><b class="val" id="v-exposure">1.28</b></label>
-  <label><span>泛光</span><input id="c-bloom" type="range" min="0" max="2" step="0.01" value="0.55"><b class="val" id="v-bloom">0.55</b></label>
+  <p class="sub">类后室 — 自由行走</p>
+  <label><span>曝光</span><input id="c-exposure" type="range" min="0.2" max="2.6" step="0.01" value="0.31"><b class="val" id="v-exposure">0.31</b></label>
+  <label><span>泛光</span><input id="c-bloom" type="range" min="0" max="2" step="0.01" value="0.12"><b class="val" id="v-bloom">0.12</b></label>
   <label><span>雾气</span><input id="c-fog" type="range" min="0" max="0.06" step="0.001" value="0.016"><b class="val" id="v-fog">0.016</b></label>
   <label><span>灵敏度</span><input id="c-sens" type="range" min="0.5" max="4" step="0.05" value="1.8"><b class="val" id="v-sens">1.8</b></label>
   <label><span>音量</span><input id="c-volume" type="range" min="0" max="1" step="0.01" value="0.7"><b class="val" id="v-volume">0.70</b></label>
@@ -183,13 +183,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.28;
+renderer.toneMappingExposure = 0.31;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x060605);
-scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
+scene.fog = new THREE.FogExp2(0x0b0a08, 0.016);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.08, 140);
 camera.rotation.order = 'YXZ';
@@ -204,7 +204,7 @@ flashLight.target.position.set(0, 0, -9);
 /* ============================================================ 后处理 */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.85, 0.8);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.12, 0.85, 0.8);
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
@@ -1772,6 +1772,7 @@ function enterPoolrooms() {
     // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     applyRoomSound(1); startAmbience(1);
+    setPanelDefaults(1.28, 0.55, 0.016);
     lurker.visible = false;
     poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
     wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
@@ -2004,7 +2005,7 @@ function resetGame() {
   hideEndScreen();
   LEVEL = 0;
   ACTIVE_COLLIDERS = COLLIDERS_L0; ACTIVE_BOUNDS = BOUNDS_L0;
-  scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
+  scene.fog = new THREE.FogExp2(0x0b0a08, 0.016);
   scene.background = new THREE.Color(0x060605);
   hemi.intensity = 0.02; hemiL0.intensity = 0.12;
   if (droneNodes) droneNodes.g.gain.value = 0.05;
@@ -2012,6 +2013,7 @@ function resetGame() {
   entityChasing = false;
   poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
   applyRoomSound(0); startAmbience(0);
+  setPanelDefaults(0.31, 0.12, 0.016);
   lurker.visible = false;
   poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
   wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
@@ -2040,6 +2042,15 @@ bind('c-bloom', 'v-bloom', v => bloomPass.strength = v);
 bind('c-fog', 'v-fog', v => scene.fog.density = v);
 bind('c-sens', 'v-sens', v => sensitivity = v);
 bind('c-volume', 'v-volume', v => { if (audioMaster) audioMaster.gain.value = v; });
+
+/* 面板预设：按关卡应用曝光/泛光/雾气（Level 0 昏暗预设 = 0.31/0.12/0.016；泳池层 = 1.28/0.55/0.016） */
+function setPanelDefaults(exposure, bloom, fog) {
+  renderer.toneMappingExposure = exposure;
+  bloomPass.strength = bloom;
+  scene.fog.density = fog;
+  const set = (id, v) => { const el = $(id); if (el) el.value = v; const lb = $('v-' + id.slice(2)); if (lb) lb.textContent = String(v); };
+  set('c-exposure', exposure); set('c-bloom', bloom); set('c-fog', fog);
+}
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
