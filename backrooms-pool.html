@@ -122,7 +122,7 @@
   <p class="sub">类后室 — 自由行走</p>
   <label><span>曝光</span><input id="c-exposure" type="range" min="0.2" max="2.6" step="0.01" value="0.31"><b class="val" id="v-exposure">0.31</b></label>
   <label><span>泛光</span><input id="c-bloom" type="range" min="0" max="2" step="0.01" value="0.12"><b class="val" id="v-bloom">0.12</b></label>
-  <label><span>雾气</span><input id="c-fog" type="range" min="0" max="0.06" step="0.001" value="0.016"><b class="val" id="v-fog">0.016</b></label>
+  <label><span>雾气</span><input id="c-fog" type="range" min="0" max="0.12" step="0.001" value="0.075"><b class="val" id="v-fog">0.075</b></label>
   <label><span>灵敏度</span><input id="c-sens" type="range" min="0.5" max="4" step="0.05" value="1.8"><b class="val" id="v-sens">1.8</b></label>
   <label><span>音量</span><input id="c-volume" type="range" min="0" max="1" step="0.01" value="0.7"><b class="val" id="v-volume">0.70</b></label>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
@@ -189,7 +189,7 @@ container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x060605);
-scene.fog = new THREE.FogExp2(0x0b0a08, 0.016);
+scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.08, 140);
 camera.rotation.order = 'YXZ';
@@ -2005,7 +2005,7 @@ function resetGame() {
   hideEndScreen();
   LEVEL = 0;
   ACTIVE_COLLIDERS = COLLIDERS_L0; ACTIVE_BOUNDS = BOUNDS_L0;
-  scene.fog = new THREE.FogExp2(0x0b0a08, 0.016);
+  scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
   scene.background = new THREE.Color(0x060605);
   hemi.intensity = 0.02; hemiL0.intensity = 0.12;
   if (droneNodes) droneNodes.g.gain.value = 0.05;
@@ -2013,7 +2013,7 @@ function resetGame() {
   entityChasing = false;
   poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
   applyRoomSound(0); startAmbience(0);
-  setPanelDefaults(0.31, 0.12, 0.016);
+  setPanelDefaults(0.31, 0.12, 0.075);
   lurker.visible = false;
   poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
   wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
@@ -2043,7 +2043,7 @@ bind('c-fog', 'v-fog', v => scene.fog.density = v);
 bind('c-sens', 'v-sens', v => sensitivity = v);
 bind('c-volume', 'v-volume', v => { if (audioMaster) audioMaster.gain.value = v; });
 
-/* 面板预设：按关卡应用曝光/泛光/雾气（Level 0 昏暗预设 = 0.31/0.12/0.016；泳池层 = 0.48/0.36/0.016） */
+/* 面板预设：按关卡应用曝光/泛光/雾气（Level 0 昏暗预设 = 0.31/0.12/0.075；泳池层 = 0.48/0.36/0.016） */
 function setPanelDefaults(exposure, bloom, fog) {
   renderer.toneMappingExposure = exposure;
   bloomPass.strength = bloom;
