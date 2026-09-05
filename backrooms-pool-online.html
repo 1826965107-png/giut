@@ -1664,6 +1664,7 @@ function activateEntity(dur, minDist) {
   entity.position.set(p[0], 0, p[1]);
   entity.visible = true;
   entityUntil = performance.now() + dur * 1000;
+  synthKnock();
 }
 function jumpscare() {
   synthScare();
@@ -1690,6 +1691,7 @@ function startChase(speed, dur) {
   entity.visible = true;
   entityChasing = true; chaseSpeed = speed; chaseLeft = dur; hbTimer = 0;
   if (droneNodes) droneNodes.g.gain.value = 0.11;
+  synthKnock();
 }
 function updateLevel0(dt) {
   if (LEVEL !== 0) return;
