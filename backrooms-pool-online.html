@@ -1123,16 +1123,31 @@ function updatePoolHorror(dt) {
   }
 }
 
-/* ============================================================ 合成音频（脚步 + 回声） */
-let audioCtx = null, audioMaster = null, audioDry = null, stepTimer = 0;
-function makeImpulse(duration, decay) {
-  const rate = audioCtx.sampleRate, len = Math.floor(rate * duration);
+/* ============================================================ 合成音频引擎（分层拟音 · 双场景混响 · 环境声床） */
+let audioCtx = null, audioMaster = null, audioDry = null, audioWet = null, audioConv = null, stepTimer = 0;
+let IR_L0 = null, IR_POOL = null, stepSide = 0;
+
+function makeNoiseBuf(sec) {
+  const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * sec), audioCtx.sampleRate);
+  const d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+// 房间脉冲响应：sec 时长 / decay 衰减 / bright 高频保留 / spikes 早期反射数量
+function makeIR(sec, decay, bright, spikes) {
+  const rate = audioCtx.sampleRate, len = Math.floor(rate * sec);
   const buf = audioCtx.createBuffer(2, len, rate);
   for (let ch = 0; ch < 2; ch++) {
     const d = buf.getChannelData(ch);
     for (let i = 0; i < len; i++) {
       const t = i / len;
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+      const dark = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+      const brightN = (Math.random() * 2 - 1) * Math.pow(1 - t, decay * 1.7);
+      d[i] = dark * (1 - bright) + brightN * bright;
+    }
+    for (let s = 0; s < spikes; s++) {
+      const idx = Math.floor(rate * (0.01 + Math.random() * 0.16));
+      if (idx < len) d[idx] += (Math.random() - 0.5) * 0.85;
     }
   }
   return buf;
@@ -1142,81 +1157,200 @@ function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioMaster = audioCtx.createGain(); audioMaster.gain.value = vol; audioMaster.connect(audioCtx.destination);
-    audioDry = audioCtx.createGain(); audioDry.gain.value = 0.7; audioDry.connect(audioMaster);
-    const conv = audioCtx.createConvolver(); conv.buffer = makeImpulse(2.8, 2.4);
-    const wet = audioCtx.createGain(); wet.gain.value = 0.5; conv.connect(wet); wet.connect(audioMaster);
-    audioCtx._conv = conv;
+    audioDry = audioCtx.createGain(); audioDry.gain.value = 0.8; audioDry.connect(audioMaster);
+    audioWet = audioCtx.createGain(); audioWet.gain.value = 0.4; audioWet.connect(audioMaster);
+    IR_L0 = makeIR(1.5, 3.0, 0.25, 5);     // 后室：压抑紧窄的暗混响
+    IR_POOL = makeIR(4.0, 1.9, 0.55, 9);   // 泳池：宽大明亮的瓷砖大厅混响
+    audioConv = audioCtx.createConvolver(); audioConv.buffer = IR_L0;
+    audioConv.connect(audioWet);
+    audioCtx._conv = audioConv;
     startDrone();
+    startAmbience(LEVEL);
   } else if (audioCtx.state === 'suspended') audioCtx.resume();
 }
-let droneNodes = null;
-function makeNoiseBuffer(len) {
-  const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * len), audioCtx.sampleRate);
-  const d = b.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  return b;
+function applyRoomSound(level) {
+  if (!audioCtx) return;
+  audioConv.buffer = level === 1 ? IR_POOL : IR_L0;
+  audioWet.gain.value = level === 1 ? 0.62 : 0.4;
 }
+let droneNodes = null;
 function startDrone() {
   if (!audioCtx || droneNodes) return;
   const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = 47;
-  const n = audioCtx.createBufferSource(); n.buffer = makeNoiseBuffer(2); n.loop = true;
+  const n = audioCtx.createBufferSource(); n.buffer = makeNoiseBuf(2); n.loop = true;
   const f = audioCtx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 240;
   const g = audioCtx.createGain(); g.gain.value = 0.05;
   o.connect(g); n.connect(f); f.connect(g); g.connect(audioMaster);
   o.start(); n.start();
   droneNodes = { o, n, g };
 }
+/* 环境声床：Level 0 = 荧光嗡鸣(闪断感) + 空气嘶声；泳池 = 水波轻拍 + 空调低鸣 */
+let ambNodes = null;
+function startAmbience(level) {
+  if (!audioCtx) return;
+  stopAmbience();
+  const out = audioCtx.createGain();
+  out.gain.setValueAtTime(0, audioCtx.currentTime);
+  out.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 2.5);
+  out.connect(audioMaster);
+  const stops = [];
+  if (level === 0) {
+    const buzz = audioCtx.createOscillator(); buzz.type = 'sawtooth'; buzz.frequency.value = 100.5;
+    const bf = audioCtx.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 1250; bf.Q.value = 5;
+    const bg = audioCtx.createGain(); bg.gain.value = 0.015;
+    const lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.7;
+    const lg = audioCtx.createGain(); lg.gain.value = 0.013;
+    lfo.connect(lg); lg.connect(bg.gain);
+    buzz.connect(bf); bf.connect(bg); bg.connect(out);
+    buzz.start(); lfo.start(); stops.push(buzz, lfo);
+    const air = audioCtx.createBufferSource(); air.buffer = makeNoiseBuf(2.5); air.loop = true;
+    const af = audioCtx.createBiquadFilter(); af.type = 'lowpass'; af.frequency.value = 320;
+    const ag = audioCtx.createGain(); ag.gain.value = 0.02;
+    air.connect(af); af.connect(ag); ag.connect(out); air.start(); stops.push(air);
+  } else {
+    const lap = audioCtx.createBufferSource(); lap.buffer = makeNoiseBuf(3); lap.loop = true;
+    const lf = audioCtx.createBiquadFilter(); lf.type = 'bandpass'; lf.frequency.value = 760; lf.Q.value = 1.1;
+    const lg2 = audioCtx.createGain(); lg2.gain.value = 0.028;
+    const lfo1 = audioCtx.createOscillator(); lfo1.frequency.value = 0.11;
+    const lg1g = audioCtx.createGain(); lg1g.gain.value = 0.022;
+    lfo1.connect(lg1g); lg1g.connect(lg2.gain); lfo1.start(); stops.push(lfo1);
+    const lfo2 = audioCtx.createOscillator(); lfo2.frequency.value = 0.031;
+    const lf2g = audioCtx.createGain(); lf2g.gain.value = 150;
+    lfo2.connect(lf2g); lf2g.connect(lf.frequency); lfo2.start(); stops.push(lfo2);
+    lap.connect(lf); lf.connect(lg2); lg2.connect(out); lap.start(); stops.push(lap);
+    const hvac = audioCtx.createBufferSource(); hvac.buffer = makeNoiseBuf(2); hvac.loop = true;
+    const hf = audioCtx.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 230;
+    const hg = audioCtx.createGain(); hg.gain.value = 0.03;
+    hvac.connect(hf); hf.connect(hg); hg.connect(out); hvac.start(); stops.push(hvac);
+    const hum = audioCtx.createOscillator(); hum.type = 'sine'; hum.frequency.value = 54;
+    const hmg = audioCtx.createGain(); hmg.gain.value = 0.016;
+    hum.connect(hmg); hmg.connect(out); hum.start(); stops.push(hum);
+  }
+  ambNodes = { out, stops };
+}
+function stopAmbience() {
+  if (!ambNodes) return;
+  const n = ambNodes; ambNodes = null;
+  try { n.out.gain.setValueAtTime(n.out.gain.value, audioCtx.currentTime); n.out.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6); } catch (e) {}
+  setTimeout(() => { for (const s of n.stops) { try { s.stop(); } catch (e) {} } try { n.out.disconnect(); } catch (e) {} }, 900);
+}
+/* 通用发声单元：延迟排程 / 声像 / 滤波扫频 / 独立湿量 / 音高随机 */
 function burst(o) {
   if (!audioCtx) return;
-  const t = audioCtx.currentTime, dur = o.dur || 0.09;
+  const t = audioCtx.currentTime + (o.delay || 0);
+  const dur = o.dur || 0.09;
+  const rnd = o.rand ? (0.88 + Math.random() * 0.24) : 1;
   let src;
-  if (o.type === 'noise') {
-    const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur), audioCtx.sampleRate);
-    const d = b.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    src = audioCtx.createBufferSource(); src.buffer = b;
+  if (!o.type || o.type === 'noise') {
+    src = audioCtx.createBufferSource(); src.buffer = makeNoiseBuf(dur + 0.05);
   } else {
     src = audioCtx.createOscillator(); src.type = o.type;
-    src.frequency.setValueAtTime(o.f0 || 150, t);
-    if (o.f1) src.frequency.exponentialRampToValueAtTime(o.f1, t + dur);
+    src.frequency.setValueAtTime((o.f0 || 150) * rnd, t);
+    if (o.f1) src.frequency.exponentialRampToValueAtTime(Math.max(20, o.f1 * rnd), t + dur);
   }
   const flt = audioCtx.createBiquadFilter();
-  flt.type = o.filter || 'bandpass'; flt.frequency.value = o.freq || 600; flt.Q.value = o.q || 0.8;
+  flt.type = o.filter || 'bandpass';
+  flt.frequency.setValueAtTime((o.freq || 600) * rnd, t);
+  if (o.sweep) flt.frequency.exponentialRampToValueAtTime(Math.max(40, o.sweep * rnd), t + dur);
+  flt.Q.value = o.q == null ? 0.8 : o.q;
   const g = audioCtx.createGain();
-  g.gain.setValueAtTime(o.gain || 0.5, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(o.gain == null ? 0.5 : o.gain, t + (o.attack == null ? 0.004 : o.attack));
+  g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
   src.connect(flt); flt.connect(g);
-  g.connect(audioDry); g.connect(audioCtx._conv);
-  src.start(t); src.stop(t + dur + 0.02);
+  let tail = g;
+  if (o.pan && audioCtx.createStereoPanner) {
+    const p = audioCtx.createStereoPanner(); p.pan.value = o.pan;
+    g.connect(p); tail = p;
+  }
+  tail.connect(audioDry);
+  const send = audioCtx.createGain(); send.gain.value = o.wet == null ? 1 : o.wet;
+  tail.connect(send); send.connect(audioCtx._conv);
+  src.start(t); src.stop(t + dur + 0.06);
 }
+/* 脚步：左右脚交替声像 + 每次随机音高；瓷砖=陶瓷硬亮三层 */
 function synthStep(surface) {
+  stepSide ^= 1;
+  const pan = stepSide ? 0.15 : -0.15;
   if (surface === 'water') {
-    burst({ type: 'noise', dur: 0.15, freq: 950, q: 0.5, gain: 0.34 });
-    burst({ type: 'sine', f0: 320, f1: 110, dur: 0.12, gain: 0.2, filter: 'lowpass' });
+    burst({ dur: 0.16, freq: 1150, q: 0.45, gain: 0.26, sweep: 430, pan, wet: 1.2, rand: true });
+    burst({ type: 'sine', f0: 300, f1: 110, dur: 0.11, gain: 0.14, filter: 'lowpass', pan, rand: true });
   } else if (surface === 'carpet') {
-    burst({ type: 'noise', dur: 0.06, freq: 300, q: 0.6, gain: 0.38, filter: 'lowpass' });
-    burst({ type: 'sine', f0: 75, f1: 45, dur: 0.07, gain: 0.3, filter: 'lowpass' });
+    burst({ dur: 0.06, freq: 330, q: 0.6, gain: 0.26, filter: 'lowpass', pan, wet: 0.4, rand: true });
+    burst({ type: 'sine', f0: 76, f1: 44, dur: 0.07, gain: 0.2, filter: 'lowpass', pan, rand: true });
   } else if (surface === 'concrete') {
-    burst({ type: 'noise', dur: 0.07, freq: 380, q: 0.9, gain: 0.5 });
-    burst({ type: 'sine', f0: 95, f1: 55, dur: 0.08, gain: 0.4, filter: 'lowpass' });
+    burst({ dur: 0.06, freq: 500, q: 0.9, gain: 0.32, pan, wet: 0.8, rand: true });
+    burst({ type: 'sine', f0: 100, f1: 52, dur: 0.08, gain: 0.34, filter: 'lowpass', pan, rand: true });
   } else {
-    burst({ type: 'noise', dur: 0.07, freq: 720, q: 0.7, gain: 0.42 });
-    burst({ type: 'sine', f0: 150, f1: 70, dur: 0.08, gain: 0.34, filter: 'lowpass' });
+    burst({ dur: 0.045, freq: 2200, q: 0.9, gain: 0.28, pan, wet: 1.0, rand: true });
+    burst({ dur: 0.075, freq: 620, q: 1.6, gain: 0.24, pan, rand: true });
+    burst({ type: 'sine', f0: 190, f1: 85, dur: 0.06, gain: 0.24, filter: 'lowpass', pan, rand: true });
   }
 }
-function synthPickup() {
-  burst({ type: 'sine', f0: 660, f1: 990, dur: 0.12, gain: 0.3, filter: 'lowpass' });
-  burst({ type: 'sine', f0: 880, f1: 1320, dur: 0.16, gain: 0.22, filter: 'lowpass' });
+function synthPickup() { // 橡皮鸭哨：上滑回落 + 气声
+  burst({ type: 'sine', f0: 500, f1: 1150, dur: 0.09, gain: 0.24, filter: 'lowpass', wet: 1.1 });
+  burst({ type: 'sine', f0: 1150, f1: 560, dur: 0.13, gain: 0.2, filter: 'lowpass', delay: 0.09, wet: 1.2 });
+  burst({ dur: 0.04, freq: 3400, gain: 0.06, delay: 0.2 });
 }
-function synthFuse()   { burst({ type: 'sine', f0: 640, f1: 800, dur: 0.08, gain: 0.22, filter: 'lowpass' }); burst({ type: 'sine', f0: 900, f1: 1200, dur: 0.1, gain: 0.18, filter: 'lowpass' }); }
-function synthUnlock() { burst({ type: 'sine', f0: 420, f1: 420, dur: 0.1, gain: 0.28, filter: 'lowpass' }); burst({ type: 'sine', f0: 630, f1: 630, dur: 0.14, gain: 0.24, filter: 'lowpass' }); }
-function synthCreak()  { burst({ type: 'sine', f0: 240, f1: 130, dur: 0.5, gain: 0.12, freq: 320, q: 6 }); }
-function synthWhoosh() { burst({ type: 'noise', dur: 1.0, freq: 640, q: 0.25, gain: 0.55 }); }
-function synthScare()  { burst({ type: 'noise', dur: 0.55, freq: 1500, q: 1.0, gain: 0.9 }); burst({ type: 'sawtooth', f0: 950, f1: 70, dur: 0.5, gain: 0.5, filter: 'lowpass' }); }
-function synthHeartbeat() { burst({ type: 'sine', f0: 64, f1: 38, dur: 0.14, gain: 0.26, filter: 'lowpass' }); }
-function synthBlackout() { burst({ type: 'noise', dur: 0.05, freq: 3800, q: 1.2, gain: 0.3 }); burst({ type: 'sawtooth', f0: 150, f1: 35, dur: 0.35, gain: 0.22, filter: 'lowpass' }); }
-function synthDrip()  { burst({ type: 'sine', f0: 1400, f1: 480, dur: 0.07, gain: 0.12, filter: 'bandpass' }); }
-function synthSplashFar() { burst({ type: 'noise', dur: 0.4, freq: 1150, q: 0.3, gain: 0.15 }); burst({ type: 'sine', f0: 230, f1: 85, dur: 0.25, gain: 0.08, filter: 'lowpass' }); }
+function synthFuse() { // 玻璃保险丝：金属叮 + 泛音
+  burst({ type: 'square', f0: 2050, f1: 1780, dur: 0.16, gain: 0.1, filter: 'bandpass', freq: 2300, q: 3.2, wet: 1.3 });
+  burst({ type: 'sine', f0: 1330, f1: 880, dur: 0.22, gain: 0.09, delay: 0.03, wet: 1.4 });
+  burst({ dur: 0.04, freq: 4300, gain: 0.09 });
+}
+function synthUnlock() { // 重闩 clunk + 电流伺服上升
+  burst({ type: 'sine', f0: 130, f1: 42, dur: 0.24, gain: 0.5, filter: 'lowpass', wet: 1.2 });
+  burst({ dur: 0.08, freq: 950, gain: 0.3, delay: 0.06 });
+  burst({ type: 'sawtooth', f0: 300, f1: 920, dur: 0.5, gain: 0.06, filter: 'bandpass', freq: 900, q: 2.5, delay: 0.16, wet: 1.2 });
+}
+function synthCreak() { // 弓弦吱嘎 + 耳语，随机声像
+  const pan = (Math.random() - 0.5) * 0.9;
+  burst({ type: 'sawtooth', f0: 216, f1: 128, dur: 0.65, gain: 0.07, filter: 'bandpass', freq: 430, q: 9, delay: Math.random() * 0.15, pan, wet: 1.7 });
+  burst({ dur: 0.42, freq: 2600, sweep: 900, q: 2, gain: 0.045, pan, wet: 1.5 });
+}
+function synthWhoosh() { // 穿越：双向扫带涌起涌落 + 低频下潜
+  burst({ dur: 0.9, freq: 380, sweep: 2600, q: 0.6, gain: 0.34, wet: 1.3 });
+  burst({ dur: 0.9, freq: 2600, sweep: 320, q: 0.6, gain: 0.34, wet: 1.3 });
+  burst({ type: 'sine', f0: 90, f1: 32, dur: 0.8, gain: 0.3, filter: 'lowpass', delay: 0.5 });
+}
+function synthScare() { // 低频滚雷 + 撞击 + 小二度不谐和 + 金属余鸣
+  burst({ type: 'sawtooth', f0: 68, f1: 34, dur: 1.0, gain: 0.5, filter: 'lowpass' });
+  burst({ dur: 0.5, freq: 1900, sweep: 280, q: 1.2, gain: 0.62, wet: 1.4 });
+  burst({ type: 'sawtooth', f0: 622, dur: 0.8, gain: 0.09, filter: 'bandpass', freq: 900, q: 1.4, delay: 0.05, wet: 1.5 });
+  burst({ type: 'sawtooth', f0: 666, dur: 0.85, gain: 0.09, filter: 'bandpass', freq: 1100, q: 1.4, delay: 0.05, wet: 1.5 });
+  burst({ type: 'square', f0: 2500, f1: 1800, dur: 0.4, gain: 0.06, filter: 'bandpass', freq: 2700, q: 2, delay: 0.12, wet: 1.6 });
+}
+function synthHeartbeat() { // lub-dub 双击
+  burst({ type: 'sine', f0: 66, f1: 40, dur: 0.11, gain: 0.26, filter: 'lowpass' });
+  burst({ type: 'sine', f0: 58, f1: 34, dur: 0.14, gain: 0.2, filter: 'lowpass', delay: 0.17 });
+}
+function synthBlackout() { // 接触器 clunk + 电流坠落 + 白噪塌落
+  burst({ type: 'square', f0: 110, f1: 48, dur: 0.1, gain: 0.42, filter: 'bandpass', freq: 640, q: 3.5 });
+  burst({ type: 'sawtooth', f0: 100, f1: 46, dur: 0.5, gain: 0.1, filter: 'bandpass', freq: 300, q: 2, delay: 0.02 });
+  burst({ dur: 0.4, freq: 1700, sweep: 180, gain: 0.2, delay: 0.04, wet: 1.3 });
+}
+function synthDrip() { // 双段滴水，随机声像
+  const pan = (Math.random() - 0.5) * 0.8;
+  burst({ type: 'sine', f0: 1500, f1: 430, dur: 0.07, gain: 0.1, filter: 'bandpass', freq: 1300, q: 1.6, pan, wet: 1.6 });
+  burst({ type: 'sine', f0: 700, f1: 220, dur: 0.12, gain: 0.04, filter: 'lowpass', pan, delay: 0.05, wet: 1.7 });
+}
+function synthSplashFar() {
+  const pan = (Math.random() - 0.5) * 0.9;
+  burst({ dur: 0.35, freq: 1250, sweep: 380, q: 0.35, gain: 0.14, pan, wet: 1.7 });
+  burst({ type: 'sine', f0: 240, f1: 80, dur: 0.22, gain: 0.08, filter: 'lowpass', pan, wet: 1.5 });
+}
+function synthDive() { // 跳水：破水 + 下潜轰鸣 + 气泡串
+  burst({ dur: 0.1, freq: 2800, q: 0.7, gain: 0.42, sweep: 900, wet: 1.2 });
+  burst({ dur: 0.4, freq: 800, sweep: 230, gain: 0.34, wet: 1.5 });
+  burst({ type: 'sine', f0: 200, f1: 48, dur: 0.28, gain: 0.38, filter: 'lowpass' });
+  for (let i = 0; i < 5; i++) burst({ type: 'sine', f0: 800 + Math.random() * 1000, f1: 1600, dur: 0.05, gain: 0.05, filter: 'bandpass', freq: 1500, delay: 0.08 + i * 0.05, wet: 1.4 });
+}
+function synthKnock() { // 黑影现身：右后方三声闷敲
+  for (let i = 0; i < 3; i++) burst({ type: 'sine', f0: 150, f1: 58, dur: 0.18, gain: 0.3, filter: 'lowpass', delay: i * 0.45, pan: 0.5, wet: 1.8 });
+}
+function synthLap() { // 池中人追逐划水
+  const pan = (Math.random() - 0.5) * 0.6;
+  burst({ dur: 0.3, freq: 700, sweep: 260, gain: 0.16, wet: 1.6, pan });
+}
 
 /* ============================================================ 漂浮物（救生圈 / 鸭子） */
 const pickups = [], PICK_TOTAL = 6;
@@ -1752,7 +1886,7 @@ function updatePlayer(dt) {
   player.y += player.vy * dt;
   // 入水水花：脚从水面上方穿越到下方且下坠足够快
   const wlNew = waterLevelAt(player.x, player.z);
-  if (wlNew !== null && prevFeetY > wlNew && player.y <= wlNew && player.vy < -1.2) synthSplashFar();
+  if (wlNew !== null && prevFeetY > wlNew && player.y <= wlNew && player.vy < -1.2) synthDive();
   prevFeetY = player.y;
   const ground = groundAt(player.x, player.z);
   if (player.y <= ground) { player.y = ground; player.vy = 0; player.grounded = true; }
