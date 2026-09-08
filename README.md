@@ -76,6 +76,7 @@ node server.js            # 需 Node.js ≥ 18
 - 瓷砖：逐砖色差 + 釉面渐变 + 烘焙 AO + 微裂纹 + 无缝大尺度斑驳
 - 由高度图 Sobel 生成法线贴图；粗糙度贴图同步生成
 - 水面法线：周期 fbm（可平铺）
+- **怪物建模**：分节四肢 / 关节 / 手指 / 驼背脊柱 / 湿发遮面；皮肤与湿发贴图为 AI 生成材质，建模参考图存于 `refs/`
 
 **AI 贴图包**（`textures/`，生图模型产出，2K/1K 可平铺）
 - `wallpaper-yellow.png` 黄墙纸 · `carpet-dark.png` 湿地毯 · `ceiling-dark.png` 暗顶
@@ -98,7 +99,8 @@ node server.js            # 需 Node.js ≥ 18
 ├── server.js                  # 零依赖静态服务器（Node ≥18）
 ├── vendor/three/              # Three.js r160 + addons（离线依赖）
 ├── tools/download-three.mjs   # vendor 重新生成脚本
-└── textures/                  # AI 生成贴图包 + index.html 画廊
+├── textures/                  # AI 生成贴图包 + index.html 画廊
+└── refs/                      # 怪物建模参考图（生图模型 turnaround，供模型重制对照）
 ```
 
 ---
