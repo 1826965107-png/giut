@@ -945,6 +945,199 @@ for (const x of [16, 20]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
   panel.position.set(-20, H - 0.05, 1); panel.rotation.x = Math.PI / 2; scene.add(panel);
 })();
 
+/* ---------------- 更衣室 / 淋浴区（西侧房间 · 新恐怖场景） ---------------- */
+const lockerLights = [], showerSprays = [], lockerDoors = [], steamPlanes = [];
+let lockerFigure = null;
+const lockerState = { nextShower: 7, activeShower: -1, showerT: 0, nextSlam: 9, nextDrip: 4, figureOn: false, figureT: 0, lookT: 0 };
+
+(function buildLockerRoom() {
+  // 更衣柜门贴图（单扇门，横向重复）
+  const dc = makeCanvas(128, 256), dg = dc.getContext('2d');
+  dg.fillStyle = '#7f868b'; dg.fillRect(0, 0, 128, 256);
+  const grd = dg.createLinearGradient(0, 0, 128, 0);
+  grd.addColorStop(0, 'rgba(255,255,255,0.16)');
+  grd.addColorStop(0.5, 'rgba(0,0,0,0.10)');
+  grd.addColorStop(1, 'rgba(0,0,0,0.28)');
+  dg.fillStyle = grd; dg.fillRect(0, 0, 128, 256);
+  dg.fillStyle = 'rgba(0,0,0,0.45)'; dg.fillRect(0, 0, 3, 256); dg.fillRect(125, 0, 3, 256);
+  dg.fillStyle = 'rgba(0,0,0,0.35)';
+  for (let i = 0; i < 4; i++) dg.fillRect(46, 26 + i * 9, 36, 3);
+  dg.fillStyle = '#3a3f42'; dg.fillRect(96, 120, 14, 5);
+  dg.fillStyle = 'rgba(0,0,0,0.25)'; dg.fillRect(0, 248, 128, 8);
+  const dTex = new THREE.CanvasTexture(dc); dTex.colorSpace = THREE.SRGBColorSpace;
+  dTex.wrapS = dTex.wrapT = THREE.RepeatWrapping;
+  const lockerMat = new THREE.MeshStandardMaterial({ map: dTex, color: 0xdfe4e7, roughness: 0.42, metalness: 0.55 });
+  function lockerRow(x, zc, len) {
+    const geo = new THREE.BoxGeometry(0.55, 1.9, len);
+    const uv = geo.attributes.uv;
+    const su = len / 0.45;
+    for (let i = 0; i < 24; i++) {
+      const face = Math.floor(i / 4);
+      const u = (face === 0 || face === 1) ? su : 1;
+      uv.setXY(i, uv.getX(i) * u, uv.getY(i));
+    }
+    uv.needsUpdate = true;
+    const m = new THREE.Mesh(geo, lockerMat);
+    m.position.set(x, 0.95, zc); m.castShadow = true; m.receiveShadow = true;
+    scene.add(m);
+    addBox(0.62, 0.06, len + 0.04, x, 1.93, zc, lockerMat);
+    COLLIDERS.push({ x1: x - 0.3, x2: x + 0.3, z1: zc - len / 2 - 0.1, z2: zc + len / 2 + 0.1 });
+  }
+  lockerRow(-23.6, -8, 14);
+  lockerRow(-16.4, -8, 14);
+  // 会自行甩动的柜门
+  const doorMat = new THREE.MeshStandardMaterial({ map: dTex, color: 0xe6eaec, roughness: 0.4, metalness: 0.6, side: THREE.DoubleSide });
+  [[-23.35, -12], [-23.35, -8], [-23.35, -4], [-16.65, -11], [-16.65, -7], [-16.65, -3]].forEach(([x, z]) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(x, 0.95, z);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.82, 0.45), doorMat);
+    door.position.set(0, 0, 0.225);
+    pivot.add(door);
+    pivot.userData.swing = 0;
+    scene.add(pivot);
+    lockerDoors.push(pivot);
+  });
+  // 长凳
+  const wood = new THREE.MeshStandardMaterial({ color: 0x4a3a29, roughness: 0.8 });
+  [[-20, -9], [-20, -4]].forEach(([x, z]) => {
+    addBox(2.4, 0.12, 0.55, x, 0.46, z, wood);
+    addBox(0.14, 0.46, 0.5, x - 1.05, 0.23, z, wood);
+    addBox(0.14, 0.46, 0.5, x + 1.05, 0.23, z, wood);
+    COLLIDERS.push({ x1: x - 1.25, x2: x + 1.25, z1: z - 0.35, z2: z + 0.35 });
+  });
+  // 淋浴隔间（瓷砖隔板 + 花洒 + 排水）
+  const sprayMat = new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.3, depthWrite: false });
+  const metal = new THREE.MeshStandardMaterial({ color: 0xd7dde0, metalness: 0.9, roughness: 0.28 });
+  const drainMat = new THREE.MeshStandardMaterial({ color: 0x2b2f31, roughness: 0.7 });
+  [2, 4, 6, 8, 10, 12].forEach(z => {
+    addBox(2.4, 2.2, 0.12, -22.8, 1.1, z, poolMatShared, poolMosaic.coverageX);
+    COLLIDERS.push({ x1: -24, x2: -21.6, z1: z - 0.12, z2: z + 0.12 });
+  });
+  [3, 5, 7, 9, 11].forEach(z => {
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 12), metal);
+    head.position.set(-23.6, 2.16, z); head.rotation.z = Math.PI / 2; scene.add(head);
+    const spray = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.11, 2.1, 8, 1, true), sprayMat.clone());
+    spray.position.set(-23.6, 1.05, z); spray.visible = false; scene.add(spray);
+    showerSprays.push(spray);
+    const drain = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.4), drainMat);
+    drain.position.set(-23.2, 0.012, z); scene.add(drain);
+  });
+  // 蒸汽
+  const sc = makeCanvas(256, 256), sg = sc.getContext('2d');
+  const sgr = sg.createRadialGradient(128, 128, 8, 128, 128, 128);
+  sgr.addColorStop(0, 'rgba(255,255,255,0.55)');
+  sgr.addColorStop(0.55, 'rgba(240,250,255,0.22)');
+  sgr.addColorStop(1, 'rgba(255,255,255,0)');
+  sg.fillStyle = sgr; sg.fillRect(0, 0, 256, 256);
+  const sTex = new THREE.CanvasTexture(sc); sTex.colorSpace = THREE.SRGBColorSpace;
+  for (let i = 0; i < 9; i++) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6),
+      new THREE.MeshBasicMaterial({ map: sTex, transparent: true, opacity: 0.13, depthWrite: false, side: THREE.DoubleSide }));
+    m.position.set(-23.4 + Math.random() * 1.8, 0.6 + Math.random() * 1.6, 2.5 + Math.random() * 9);
+    m.rotation.z = Math.random() * Math.PI;
+    scene.add(m);
+    steamPlanes.push(m);
+  }
+  // 房间灯（可闪烁 + 纳入停电系统）
+  [-13, -7, -1, 5].forEach((z, i) => {
+    const l = new THREE.PointLight(0xeef4ff, 1.8, 8, 2);
+    l.position.set(-20, 3.5, z); scene.add(l);
+    const fx = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x0c0c0c, emissive: 0xeaf2ff, emissiveIntensity: 2.2 }));
+    fx.position.set(-20, H - 0.05, z); fx.rotation.x = Math.PI / 2; scene.add(fx);
+    lockerLights.push({ light: l, fxMat: fx.material, base: 1.8, i });
+    poolLights.push({ light: l, fxMat: fx.material, base: 1.8 });
+  });
+  lockerFigure = makeEntity();
+  lockerFigure.visible = false;
+})();
+
+function resetLockerHorror() {
+  lockerState.figureOn = false; lockerState.figureT = 0; lockerState.lookT = 0;
+  lockerState.activeShower = -1; lockerState.showerT = 0;
+  lockerState.nextShower = 7; lockerState.nextSlam = 9; lockerState.nextDrip = 4;
+  if (lockerFigure) lockerFigure.visible = false;
+  for (const s of showerSprays) s.visible = false;
+  for (const d of lockerDoors) { d.userData.swing = 0; d.rotation.y = 0; }
+}
+
+function updateLockerRoom(dt) {
+  if (LEVEL !== 1) return;
+  const t = performance.now() * 0.001;
+  const inRoom = player.x < -16.2;
+  for (const L of lockerLights) {
+    let f = 0.55 + 0.45 * Math.sin(t * 5.1 + L.i * 2.3) * Math.sin(t * 2.1 + L.i * 1.7);
+    if (Math.random() < 0.006) f = 0.05;
+    L.light.intensity = L.base * f;
+    if (L.fxMat) L.fxMat.emissiveIntensity = 2.2 * f;
+  }
+  // 淋浴自行开启
+  lockerState.nextShower -= dt;
+  if (lockerState.activeShower < 0 && lockerState.nextShower <= 0) {
+    lockerState.activeShower = Math.floor(Math.random() * showerSprays.length);
+    lockerState.showerT = 5 + Math.random() * 7;
+    synthSplashFar();
+  }
+  if (lockerState.activeShower >= 0) {
+    lockerState.showerT -= dt;
+    const sp = showerSprays[lockerState.activeShower];
+    sp.visible = true;
+    sp.material.opacity = 0.3 + Math.abs(Math.sin(t * 9)) * 0.12;
+    if (Math.random() < dt * 0.6) synthLap();
+    if (lockerState.showerT <= 0) { sp.visible = false; lockerState.activeShower = -1; lockerState.nextShower = 8 + Math.random() * 14; }
+  }
+  // 蒸汽上浮
+  for (const s of steamPlanes) {
+    s.position.y += dt * 0.13;
+    s.rotation.z += dt * 0.06;
+    if (s.position.y > 2.5) s.position.y = 0.5;
+  }
+  // 柜门甩动
+  lockerState.nextSlam -= dt;
+  if (lockerState.nextSlam <= 0) {
+    lockerState.nextSlam = 9 + Math.random() * 16;
+    const d = lockerDoors[Math.floor(Math.random() * lockerDoors.length)];
+    if (d) { d.userData.swing = 1; synthFuse(); }
+  }
+  for (const d of lockerDoors) {
+    if (d.userData.swing > 0) {
+      d.userData.swing = Math.max(0, d.userData.swing - dt * 5);
+      d.rotation.y = -1.2 * d.userData.swing;
+    }
+  }
+  // 柜间人影
+  if (inRoom && !lockerState.figureOn && Math.random() < dt * 0.22) {
+    lockerState.figureOn = true; lockerState.figureT = 0; lockerState.lookT = 0;
+    lockerFigure.position.set(-20 + (Math.random() < 0.5 ? -1.5 : 1.5), 0, -13 + Math.random() * 11);
+    lockerFigure.visible = true;
+    synthKnock();
+  }
+  if (lockerState.figureOn) {
+    lockerState.figureT += dt;
+    lockerFigure.lookAt(player.x, 0, player.z);
+    const dx = player.x - lockerFigure.position.x, dz = player.z - lockerFigure.position.z;
+    const dist = Math.hypot(dx, dz) || 1;
+    const facing = (dx / dist) * _look.x + (dz / dist) * _look.z;
+    if (facing < -0.55) lockerState.lookT += dt; else lockerState.lookT = 0;
+    if (lockerState.lookT > 0.55 || lockerState.figureT > 10) {
+      lockerState.figureOn = false; lockerFigure.visible = false;
+      synthCreak();
+      showFlashText('柜门后……空了');
+    }
+    if (dist < 2.4) {
+      lockerState.figureOn = false; lockerFigure.visible = false;
+      synthScare(); stats.scares++;
+      const sf = document.getElementById('scare-flash');
+      sf.style.opacity = '1'; setTimeout(() => { sf.style.opacity = '0'; }, 150);
+      showFlashText('更衣柜里的东西抓住了你……');
+      player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0; yaw = 0; pitch = 0;
+    }
+  }
+  // 滴水
+  lockerState.nextDrip -= dt;
+  if (lockerState.nextDrip <= 0) { if (inRoom) synthDrip(); lockerState.nextDrip = 3 + Math.random() * 7; }
+}
+
 /* ---------------- 环境与基础光 ---------------- */
 const hemi = new THREE.HemisphereLight(0xfff1dd, 0x84989a, 0.5);
 scene.add(hemi);
@@ -1778,6 +1971,7 @@ function enterPoolrooms() {
     // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     applyRoomSound(1); startAmbience(1);
+    resetLockerHorror();
     setPanelDefaults(0.48, 0.36, 0.016);
     lurker.visible = false;
     poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
@@ -2051,6 +2245,7 @@ function resetGame() {
   entityChasing = false;
   poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
   applyRoomSound(0); startAmbience(0);
+  resetLockerHorror();
   setPanelDefaults(0.31, 0.12, 0.075);
   lurker.visible = false;
   poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
@@ -2133,6 +2328,7 @@ renderer.setAnimationLoop(() => {
   updateFlashProximity();
   updateLevel0(dt);
   updatePoolHorror(dt);
+  updateLockerRoom(dt);
 
   // 手电筒电量 + 光束（Level 0 限定照明）
   if (flashlight.on && flashlight.charge > 0) {
