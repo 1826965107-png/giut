@@ -115,6 +115,9 @@
     WASD 移动 · 鼠标 观察 · Shift 奔跑 · 空格 跳跃 · E 交互拾取<br>
     Esc 释放光标调参 · H 面板 · 小心黑暗中的东西…
   </div>
+  <div class="keys" id="ov-best" style="color:#7fc9c4;margin-top:10px;"></div>
+  <div style="display:none">
+  </div>
 </div>
 
 <div id="hud">
@@ -148,9 +151,12 @@
     <div class="sub">你逃出了后室，又穿过了泳池层</div>
     <div class="stat">总用时&nbsp; <b id="e-time">--:--</b></div>
     <div class="stat">碰见黑影&nbsp; <b id="e-scares">0</b> 次 · 保险丝 <b id="e-fuses">3/3</b> · 漂浮物 <b id="e-floats">6/6</b></div>
+    <div class="stat" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.14);">历史最佳：<b id="e-best-time">--:--</b> · 最少惊吓 <b id="e-best-scares">—</b> · 已通关 <b id="e-clears">0</b> 次</div>
+    <div id="e-newrec" style="margin-top:6px;color:#ffd98a;font-size:13px;letter-spacing:2px;display:none;">🏆 本次刷新纪录！</div>
     <div class="btns">
       <button id="btn-replay">再玩一次</button>
       <button id="btn-continue">继续漫游</button>
+      <button id="btn-clearrc" style="border-color:rgba(255,255,255,0.22);background:rgba(255,255,255,0.05);color:#cfe0dc;">清除记录</button>
     </div>
   </div>
 </div>
@@ -291,7 +297,7 @@ let ACTIVE_BOUNDS = BOUNDS_L0;
 let fuses = 0;
 let exitUnlocked = false;
 let transitioning = false;
-const stats = { start: performance.now(), scares: 0 };
+const stats = { start: performance.now(), scares: 0, started: false };
 
 function insidePoolArea(x, z, pad = 0.4) {
   for (const p of POOLS) {
@@ -1806,6 +1812,7 @@ const keysMap = {
 
 document.getElementById('play-overlay').addEventListener('click', () => {
   initAudio();
+  if (!stats.started) { stats.started = true; stats.start = performance.now(); }
   renderer.domElement.requestPointerLock();
 });
 document.addEventListener('pointerlockchange', () => {
@@ -1963,6 +1970,24 @@ function tryInteract() {
   }
 }
 
+/* ============================================================ 通关存档（localStorage） */
+const REC_KEY = 'poolrooms.records.v1';
+function loadRecords() {
+  try {
+    const r = JSON.parse(localStorage.getItem(REC_KEY) || 'null');
+    if (r && typeof r === 'object') return { bestTime: (r.bestTime == null ? null : r.bestTime), bestScares: (r.bestScares == null ? null : r.bestScares), clears: r.clears || 0 };
+  } catch (e) {}
+  return { bestTime: null, bestScares: null, clears: 0 };
+}
+function saveRecords(r) { try { localStorage.setItem(REC_KEY, JSON.stringify(r)); } catch (e) {} }
+function updateOverlayRecord() {
+  const r = loadRecords(), el = document.getElementById('ov-best');
+  if (!el) return;
+  el.textContent = r.clears > 0
+    ? ('最佳记录：最快 ' + fmtTime(r.bestTime) + ' · 最少惊吓 ' + r.bestScares + ' 次 · 已通关 ' + r.clears + ' 次')
+    : '暂无通关记录 — 去打破它';
+}
+
 /* ============================================================ 通关结算 / 重玩 */
 let endScreenOpen = false;
 function fmtTime(ms) {
@@ -1975,7 +2000,20 @@ function showEndScreen() {
   document.getElementById('e-time').textContent = fmtTime(performance.now() - stats.start);
   document.getElementById('e-scares').textContent = stats.scares;
   document.getElementById('e-fuses').textContent = `${Math.min(fuses, 3)}/3`;
-  document.getElementById('e-floats').textContent = `${pickedCount}/${PICK_TOTAL}`;
+  document.getElementById('e-floats').textContent = pickedCount + '/' + PICK_TOTAL;
+  // —— 写入历史最佳 ——
+  const elapsed = Math.round(performance.now() - stats.start);
+  const rec = loadRecords();
+  let newRec = false;
+  if (rec.bestTime == null || elapsed < rec.bestTime) { rec.bestTime = elapsed; newRec = true; }
+  if (rec.bestScares == null || stats.scares < rec.bestScares) { rec.bestScares = stats.scares; newRec = true; }
+  rec.clears += 1;
+  saveRecords(rec);
+  document.getElementById('e-best-time').textContent = fmtTime(rec.bestTime);
+  document.getElementById('e-best-scares').textContent = rec.bestScares;
+  document.getElementById('e-clears').textContent = rec.clears;
+  document.getElementById('e-newrec').style.display = newRec ? 'block' : 'none';
+  updateOverlayRecord();
   document.getElementById('end-overlay').style.display = 'flex';
 }
 function hideEndScreen() {
@@ -2029,10 +2067,18 @@ function resetGame() {
   document.getElementById('level-tag').textContent = 'LEVEL 0 · 后室';
   updateFlashHud();
   // 统计
-  stats.start = performance.now(); stats.scares = 0;
+  stats.start = performance.now(); stats.scares = 0; stats.started = true;
 }
 document.getElementById('btn-replay').addEventListener('click', resetGame);
 document.getElementById('btn-continue').addEventListener('click', hideEndScreen);
+document.getElementById('btn-clearrc').addEventListener('click', () => {
+  saveRecords({ bestTime: null, bestScares: null, clears: 0 });
+  document.getElementById('e-best-time').textContent = '--:--';
+  document.getElementById('e-best-scares').textContent = '—';
+  document.getElementById('e-clears').textContent = '0';
+  document.getElementById('e-newrec').style.display = 'none';
+  updateOverlayRecord();
+});
 
 /* ============================================================ UI */
 const $ = id => document.getElementById(id);
@@ -2117,6 +2163,7 @@ renderer.setAnimationLoop(() => {
 player.y = groundAt(player.x, player.z);
 camera.position.set(player.x, player.y + EYE, player.z);
 camera.rotation.set(0, yaw, 0);
+updateOverlayRecord();
 </script>
 </body>
 </html>
