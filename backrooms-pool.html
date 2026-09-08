@@ -139,7 +139,7 @@
   </div>
 </div>
 
-<div id="hint">WASD 移动 · Shift 奔跑 · 空格 跳（池边任意处可跳水！）· E 拾取 · F 手电 · Esc 调参 · H 面板</div>
+<div id="hint">WASD 移动 · Shift 奔跑 · 空格 跳（池边任意处可跳水！）· E 拾取 · F 手电 · R 复位 · Esc 调参 · H 面板</div>
 <div id="pickup-hint">按 E 拾取</div>
 <div id="level-tag">LEVEL 0 · 后室</div>
 <div id="level-fade"></div>
@@ -1548,6 +1548,10 @@ function synthDive() { // 跳水：破水 + 下潜轰鸣 + 气泡串
 function synthKnock() { // 黑影现身：右后方三声闷敲
   for (let i = 0; i < 3; i++) burst({ type: 'sine', f0: 150, f1: 58, dur: 0.18, gain: 0.3, filter: 'lowpass', delay: i * 0.45, pan: 0.5, wet: 1.8 });
 }
+function synthPing(pan, near) { // 保险丝方位提示音（越近越高越急）
+  burst({ type: 'sine', f0: near ? 900 : 640, f1: near ? 1250 : 520, dur: 0.15, gain: 0.09, filter: 'lowpass', pan: pan || 0, wet: 1.5 });
+}
+
 function synthLap() { // 池中人追逐划水
   const pan = (Math.random() - 0.5) * 0.6;
   burst({ dur: 0.3, freq: 700, sweep: 260, gain: 0.16, wet: 1.6, pan });
@@ -1555,6 +1559,15 @@ function synthLap() { // 池中人追逐划水
 
 /* ============================================================ 漂浮物（救生圈 / 鸭子） */
 const pickups = [], PICK_TOTAL = 6;
+const haloTex = (() => {
+  const c = makeCanvas(128, 128), g = c.getContext('2d');
+  const gr = g.createRadialGradient(64, 64, 2, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(210,245,255,0.85)');
+  gr.addColorStop(0.45, 'rgba(150,225,255,0.35)');
+  gr.addColorStop(1, 'rgba(120,200,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
 let pickedCount = 0;
 function ringTexture() {
   const c = makeCanvas(128, 64), g = c.getContext('2d');
@@ -1587,7 +1600,12 @@ function spawnPickup(kind, x, z, waterY) {
   mesh.position.set(x, waterY + 0.04, z);
   mesh.rotation.y = Math.random() * Math.PI * 2;
   scene.add(mesh);
-  pickups.push({ kind, mesh, x, z, baseY: waterY + 0.04, phase: Math.random() * Math.PI * 2 });
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1),
+    new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
+  halo.rotation.x = -Math.PI / 2;
+  halo.position.set(x, waterY + 0.02, z);
+  scene.add(halo);
+  pickups.push({ kind, mesh, x, z, halo, baseY: waterY + 0.04, phase: Math.random() * Math.PI * 2 });
 }
 const PICKUP_DEFS = [
   ['duck', 0.5, 0.5, -0.30],     // 竞赛池
@@ -1798,6 +1816,8 @@ function tryFuse() {
 const FLASHLIGHT_DEF = { x: -105, z: 12 };
 let flashlight = { owned: false, on: false, charge: 1.0 };
 let flashMesh = null, nearestFlash = null;
+const batteryList = [];
+let nearestBattery = null;
 function makeFlashMesh() {
   const g = new THREE.Group();
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0x23262a, metalness: 0.7, roughness: 0.4 });
@@ -1814,6 +1834,40 @@ function spawnFlash() {
   scene.add(flashMesh);
 }
 spawnFlash();
+/* 备用电池：补充手电筒电量（Level 0） */
+function makeBatteryMesh() {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.2, 12),
+    new THREE.MeshStandardMaterial({ color: 0x2b2f33, metalness: 0.6, roughness: 0.4 }));
+  body.rotation.z = Math.PI / 2; body.position.y = 0.12; g.add(body);
+  const led = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.03, 8),
+    new THREE.MeshStandardMaterial({ color: 0x0a1a0a, emissive: 0x35ff6e, emissiveIntensity: 2.5 }));
+  led.rotation.z = Math.PI / 2; led.position.set(0.11, 0.12, 0); g.add(led);
+  return g;
+}
+function spawnBattery(x, z) {
+  const m = makeBatteryMesh(); m.position.set(x, 0, z); scene.add(m);
+  batteryList.push({ mesh: m, x, z, ph: Math.random() * 6.28 });
+}
+const BATTERY_DEFS = [[-104, 13.5], [-90, -16.5]];
+BATTERY_DEFS.forEach(d => spawnBattery(d[0], d[1]));
+function updateBatteryProximity() {
+  let best = null, bd = 1.9;
+  for (const b of batteryList) {
+    const dd = Math.hypot(player.x - b.x, player.z - b.z);
+    if (dd < bd) { bd = dd; best = b; }
+  }
+  nearestBattery = best;
+}
+function pickBattery() {
+  if (!nearestBattery) return;
+  scene.remove(nearestBattery.mesh);
+  batteryList.splice(batteryList.indexOf(nearestBattery), 1);
+  flashlight.charge = Math.min(1, flashlight.charge + 0.55);
+  synthFuse(); updateFlashHud();
+  showFlashText('装上备用电池 +55%');
+  nearestBattery = null;
+}
 function updateFlashProximity() {
   if (flashlight.owned) { nearestFlash = null; return; }
   nearestFlash = Math.hypot(player.x - FLASHLIGHT_DEF.x, player.z - FLASHLIGHT_DEF.z) < 1.9 ? flashMesh : null;
@@ -1856,7 +1910,7 @@ function makeEntity() {
   g.visible = false; scene.add(g); return g;
 }
 const entity = makeEntity();
-let entityUntil = 0, creakTimer = 7, ambientTimer = 9;
+let entityUntil = 0, creakTimer = 7, ambientTimer = 9, pingT = 1.2;
 function activateEntity(dur, minDist) {
   const cands = ENTITY_POINTS.filter(p => Math.hypot(player.x - p[0], player.z - p[1]) > minDist);
   const p = cands.length ? cands[Math.floor(Math.random() * cands.length)] : ENTITY_POINTS[0];
@@ -1916,9 +1970,26 @@ function updateLevel0(dt) {
     f.mesh.position.y = 0.42 + Math.sin(t * 2.1 + f.ph) * 0.05;
     f.mesh.rotation.y += dt * 1.2;
   }
+  // 备用电池浮动
+  for (const b of batteryList) {
+    b.mesh.position.y = 0.1 + Math.sin(t * 1.7 + b.ph) * 0.05;
+    b.mesh.rotation.y += dt * 0.8;
+  }
   // 环境杂音 / 远处黑影
   creakTimer -= dt;
   if (creakTimer <= 0) { synthCreak(); creakTimer = 6 + Math.random() * 10; }
+  // 保险丝方位感蜂鸣（越近越急，声像指示左右）
+  pingT -= dt;
+  if (pingT <= 0) {
+    let nf = null, nd = 1e9;
+    for (const f of fusesList) { const dd = Math.hypot(f.x - player.x, f.z - player.z); if (dd < nd) { nd = dd; nf = f; } }
+    if (nf) {
+      const dx = nf.x - player.x, dz = nf.z - player.z, len = Math.hypot(dx, dz) || 1;
+      const lateral = dx * (-_look.z) + dz * (_look.x);
+      synthPing(Math.max(-1, Math.min(1, lateral / len * 1.5)), nd < 8);
+      pingT = Math.max(0.34, Math.min(1.8, nd * 0.085));
+    } else pingT = 1.2;
+  }
   ambientTimer -= dt;
   if (ambientTimer <= 0 && !entityChasing) {
     ambientTimer = 8 + Math.random() * 14;
@@ -2013,6 +2084,8 @@ document.addEventListener('pointerlockchange', () => {
   const locked = document.pointerLockElement === renderer.domElement;
   if (endScreenOpen) { document.getElementById('play-overlay').style.display = 'none'; return; }
   document.getElementById('play-overlay').style.display = locked ? 'none' : 'flex';
+  const _pb = document.querySelector('#play-overlay .btn');
+  if (_pb) _pb.textContent = locked ? '点击进入' : (stats.started ? '点击继续（已暂停）' : '点击进入');
 });
 document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== renderer.domElement) return;
@@ -2026,8 +2099,15 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyE' && !e.repeat) tryInteract();
   if (e.code === 'KeyF' && !e.repeat) toggleFlash();
   if (e.code === 'KeyP') { if (document.pointerLockElement) document.exitPointerLock(); }
+  if (e.code === 'KeyR' && !e.repeat) respawnToLevelStart();
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+function respawnToLevelStart() {
+  if (LEVEL === 0) { player.x = L0_SPAWN.x; player.z = L0_SPAWN.z; player.y = 0; player.vy = 0; yaw = -Math.PI / 2; pitch = 0; }
+  else { player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0; yaw = 0; pitch = 0; }
+  showFlashText('已复位到本关起点');
+}
 
 function toggleHud() {
   const hud = document.getElementById('hud');
@@ -2128,6 +2208,10 @@ function updatePickups(dt) {
   camera.getWorldDirection(_look);
   for (const pk of pickups) {
     pk.mesh.position.y = pk.baseY + Math.sin(performance.now() * 0.0014 + pk.phase) * 0.045;
+    if (pk.halo) {
+      pk.halo.position.set(pk.mesh.position.x, pk.halo.position.y, pk.mesh.position.z);
+      pk.halo.material.opacity = 0.16 + Math.abs(Math.sin(performance.now() * 0.0018 + pk.phase)) * 0.14;
+    }
     pk.mesh.rotation.y += dt * 0.5;
     const dx = player.x - pk.x, dz = player.z - pk.z;
     const d = Math.hypot(dx, dz) || 1;
@@ -2147,6 +2231,7 @@ function updatePickups(dt) {
 function tryPickup() {
   if (!nearestPickup) return;
   scene.remove(nearestPickup.mesh);
+  if (nearestPickup.halo) scene.remove(nearestPickup.halo);
   const idx = pickups.indexOf(nearestPickup);
   if (idx >= 0) pickups.splice(idx, 1);
   pickedCount++;
@@ -2157,6 +2242,7 @@ function tryPickup() {
 }
 function tryInteract() {
   if (LEVEL === 0) {
+    if (nearestBattery) { pickBattery(); return; }
     if (nearestFlash && !flashlight.owned) { pickFlash(); return; }
     tryFuse();
   } else {
@@ -2217,7 +2303,7 @@ function hideEndScreen() {
 }
 function resetGame() {
   // 清空泳池漂浮物并重新生成
-  for (const pk of pickups) scene.remove(pk.mesh);
+  for (const pk of pickups) { scene.remove(pk.mesh); if (pk.halo) scene.remove(pk.halo); }
   pickups.length = 0; pickedCount = 0;
   PICKUP_DEFS.forEach(d => spawnPickup(d[0], d[1], d[2], d[3]));
   // 保险丝
@@ -2228,6 +2314,9 @@ function resetGame() {
   if (flashMesh) { scene.remove(flashMesh); flashMesh = null; }
   flashlight = { owned: false, on: false, charge: 1.0 };
   spawnFlash();
+  for (const b of batteryList) scene.remove(b.mesh);
+  batteryList.length = 0;
+  BATTERY_DEFS.forEach(d => spawnBattery(d[0], d[1]));
   // 出口门
   exitUnlocked = false;
   if (exitPanel) exitPanel.position.y = 1.18;
@@ -2315,25 +2404,30 @@ function showErr(msg) {
 window.addEventListener('error', (e) => showErr(e.message || String(e.type)));
 
 const clock = new THREE.Clock();
-let flashHudT = 0;
+let flashHudT = 0, lowBeepT = 2.5;
 renderer.setAnimationLoop(() => {
  try {
   const dt = Math.min(0.05, clock.getDelta());
   refractionUniforms.uTime.value += dt;
   for (const ca of causticAnims) { ca.t.offset.x += dt * ca.sx; ca.t.offset.y += dt * ca.sy; }
   for (const m of waterMats) if (m.uniforms && m.uniforms.time) m.uniforms.time.value += dt * 0.03;   // 室内静水：极慢波纹
-  if (document.pointerLockElement === renderer.domElement) updatePlayer(dt);
-  updatePickups(dt);
-  updateFuseProximity();
-  updateFlashProximity();
-  updateLevel0(dt);
-  updatePoolHorror(dt);
-  updateLockerRoom(dt);
+  const locked = document.pointerLockElement === renderer.domElement;
+  if (locked) {
+    updatePlayer(dt);
+    updatePickups(dt);
+    updateFuseProximity();
+    updateFlashProximity();
+    updateBatteryProximity();
+    updateLevel0(dt);
+    updatePoolHorror(dt);
+    updateLockerRoom(dt);
+  }
 
   // 手电筒电量 + 光束（Level 0 限定照明）
-  if (flashlight.on && flashlight.charge > 0) {
+  if (locked && flashlight.on && flashlight.charge > 0) {
     flashlight.charge = Math.max(0, flashlight.charge - dt / 100);
     if (flashlight.charge <= 0) { flashlight.on = false; showFlashText('手电筒没电了…'); }
+    if (flashlight.charge < 0.2) { lowBeepT -= dt; if (lowBeepT <= 0) { synthPing(0, false); lowBeepT = 2.5; } }
   }
   const low = flashlight.charge < 0.25;
   flashLight.intensity = (flashlight.on && LEVEL === 0)
@@ -2344,7 +2438,8 @@ renderer.setAnimationLoop(() => {
   // 交互提示（按目标类型显示）
   let hintTarget = null, hintText = '按 E 拾取';
   if (LEVEL === 0) {
-    if (nearestFlash && !flashlight.owned) { hintTarget = nearestFlash; hintText = '按 E 拾取手电筒'; }
+    if (nearestBattery) { hintTarget = nearestBattery; hintText = '按 E 拾取备用电池'; }
+    else if (nearestFlash && !flashlight.owned) { hintTarget = nearestFlash; hintText = '按 E 拾取手电筒'; }
     else if (nearestFuse) { hintTarget = nearestFuse; hintText = '按 E 拾取保险丝'; }
   } else if (nearestPickup) { hintTarget = nearestPickup; }
   const hintEl = document.getElementById('pickup-hint');
