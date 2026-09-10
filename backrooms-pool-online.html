@@ -1160,14 +1160,17 @@ function makeWatcher() {
     map: texFrom('textures/monster-hair.png', 1, 2), color: 0x120f0d, roughness: 0.5, metalness: 0.05
   });
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.146, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), hairMat);
-  cap.position.y = 1.9; cap.scale.set(0.88, 1.34, 0.98); g.add(cap);
+  cap.position.set(0, 1.98, -0.02); cap.scale.set(0.78, 1.1, 0.86); g.add(cap);
   const strands = [];
-  for (let i = 0; i < 7; i++) {
-    const len = 0.34 + Math.random() * 0.26;
-    const st = new THREE.Mesh(new THREE.ConeGeometry(0.036, len, 6), hairMat);
-    const ang = (i / 7) * Math.PI * 2;
-    st.position.set(Math.sin(ang) * 0.115, 1.86 - len / 2, Math.cos(ang) * 0.1);
-    st.rotation.x = Math.cos(ang) * 0.12; st.rotation.z = -Math.sin(ang) * 0.12;
+  for (let i = 0; i < 12; i++) {                       // 概念图：湿发贴脸垂落，前额遮面
+    const front = i < 6;
+    const len = front ? (0.42 + Math.random() * 0.24) : (0.3 + Math.random() * 0.3);
+    const st = new THREE.Mesh(new THREE.ConeGeometry(0.03, len, 6), hairMat);
+    const ang = front ? (i / 5 - 0.5) * 0.3 : Math.PI * (0.5 + (i - 6) / 5 * 0.95);
+    st.position.set(Math.sin(ang) * 0.108, 1.94 - len / 2, -0.02 + Math.cos(ang) * 0.108);
+    st.scale.set(1.5, 1, 0.45);                        // 扁平=发绺，不是尖刺
+    st.rotation.x = 0.1 * Math.cos(ang) + 0.08;
+    st.rotation.z = 0.12 * Math.sin(ang);
     st.userData.bx = st.rotation.x;
     g.add(st); strands.push(st);
   }
@@ -1180,7 +1183,7 @@ function makeWatcher() {
   return g;
 }
 const watcher = makeWatcher();
-watcher.scale.setScalar(0.82);   // 缩小：站立池底时头顶也低于水面，杜绝"头顶破面"闪烁黑影
+watcher.scale.setScalar(0.78);   // 缩小：站立池底时头顶也低于水面，杜绝"头顶破面"闪烁黑影
 watcher.position.set(-3, POOLS[0].bottom, -12.2);
 scene.add(watcher);
 const WATCHER_SPOTS = [[-6, -3], [0, 4], [-4.5, -8], [1, 8], [-8, 1], [-1.5, -11]];
@@ -1921,17 +1924,35 @@ function buildDweller(mat) {
 
   const hips = add(new THREE.SphereGeometry(0.115, 14, 10)); hips.position.y = 1.0; g.add(hips);
   P.torso = add(new THREE.CapsuleGeometry(0.13, 0.4, 6, 14)); P.torso.position.y = 1.3; g.add(P.torso);
-  P.chest = add(new THREE.SphereGeometry(0.15, 14, 10)); P.chest.position.y = 1.55; g.add(P.chest);
-  const neck = add(new THREE.CylinderGeometry(0.032, 0.045, 0.14, 8)); neck.position.y = 1.73; g.add(neck);
-  P.head = add(new THREE.SphereGeometry(0.135, 16, 12));
-  P.head.scale.set(0.82, 1.28, 0.92); P.head.position.y = 1.88; g.add(P.head);
+  P.chest = add(new THREE.SphereGeometry(0.148, 14, 10)); P.chest.position.y = 1.56; g.add(P.chest);
+  const wetFront = new THREE.MeshBasicMaterial({ color: 0x6b6f70, transparent: true, opacity: 0.3, depthWrite: false });
+  const wetBelly = new THREE.Mesh(new THREE.CircleGeometry(0.125, 16), wetFront);
+  wetBelly.position.set(0, 1.34, 0.125); wetBelly.scale.set(1.0, 1.35, 1); g.add(wetBelly);
+  const ribMat = new THREE.MeshBasicMaterial({ color: 0x9aa0a0, transparent: true, opacity: 0.18, depthWrite: false });
+  for (const s of [-1, 1]) {
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.008, 6, 14, Math.PI * 0.85), ribMat);
+    rib.position.set(s * 0.03, 1.48, 0.115);
+    rib.rotation.set(Math.PI / 2, 0, s * 0.5);
+    g.add(rib);
+  }
+  const neck = add(new THREE.CylinderGeometry(0.034, 0.05, 0.16, 8)); neck.position.set(0, 1.79, 0.03); neck.rotation.x = 0.22; g.add(neck);
+  P.head = add(new THREE.SphereGeometry(0.115, 16, 12));
+  P.head.scale.set(0.8, 1.45, 0.94); P.head.position.y = 1.93; P.head.rotation.x = 0.16; g.add(P.head);
+  const jaw = add(new THREE.SphereGeometry(0.072, 12, 10));
+  jaw.scale.set(0.92, 0.78, 1.05); jaw.position.set(0, 1.84, 0.045); jaw.rotation.x = 0.3; g.add(jaw);
 
   function arm(side) {
     const a = new THREE.Group(); a.position.set(side * 0.185, 1.62, 0);
     const up = add(new THREE.CapsuleGeometry(0.046, 0.42, 4, 8)); up.position.y = -0.24; a.add(up);
     const el = add(new THREE.SphereGeometry(0.05, 8, 6)); el.position.y = -0.48; a.add(el);
     const fo = add(new THREE.CapsuleGeometry(0.036, 0.48, 4, 8)); fo.position.y = -0.76; a.add(fo);
-    const hd = add(new THREE.ConeGeometry(0.05, 0.18, 8)); hd.position.y = -1.08; hd.rotation.x = Math.PI; a.add(hd);
+    const hd = add(new THREE.ConeGeometry(0.042, 0.14, 8)); hd.position.y = -1.1; hd.rotation.x = Math.PI; a.add(hd);
+    for (let f = 0; f < 4; f++) {
+      const fg = add(new THREE.CapsuleGeometry(0.011, 0.13, 3, 5));
+      fg.position.set((f - 1.5) * 0.022, -1.22, -0.01);
+      fg.rotation.x = 0.38;
+      a.add(fg);
+    }
     g.add(a); return a;
   }
   P.armL = arm(-1); P.armR = arm(1);
@@ -1940,7 +1961,7 @@ function buildDweller(mat) {
     const l = new THREE.Group(); l.position.set(side * 0.085, 1.0, 0);
     const th = add(new THREE.CapsuleGeometry(0.068, 0.4, 4, 8)); th.position.y = -0.24; l.add(th);
     const kn = add(new THREE.SphereGeometry(0.06, 8, 6)); kn.position.y = -0.48; l.add(kn);
-    const sh = add(new THREE.CapsuleGeometry(0.048, 0.4, 4, 8)); sh.position.y = -0.72; l.add(sh);
+    const sh = add(new THREE.CapsuleGeometry(0.046, 0.44, 4, 8)); sh.position.y = -0.74; l.add(sh);
     const ft = add(new THREE.BoxGeometry(0.085, 0.05, 0.2)); ft.position.set(0, -0.95, 0.05); l.add(ft);
     g.add(l); return l;
   }
@@ -1956,7 +1977,7 @@ function animateDweller(g, dt, mode) {
   const a = g.userData.anim; a.t += dt;
   if (mode === 'walk') {
     a.stride = Math.min(1, a.stride + dt * 2.5);
-    const s = a.t * 4.2, sw = Math.sin(s) * 0.55 * a.stride;
+    const s = a.t * 3.6, sw = Math.sin(s) * 0.42 * a.stride;
     P.legL.rotation.x = sw; P.legR.rotation.x = -sw;
     P.armL.rotation.x = -sw * 0.7 - 0.12; P.armR.rotation.x = sw * 0.7 - 0.12;
     P.torso.rotation.x = 0.16 + Math.sin(s * 2) * 0.02;
