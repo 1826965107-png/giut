@@ -1115,6 +1115,7 @@ function updateLockerRoom(dt) {
   if (lockerState.figureOn) {
     lockerState.figureT += dt;
     lockerFigure.lookAt(player.x, 0, player.z);
+    animateDweller(lockerFigure, dt, "idle");
     const dx = player.x - lockerFigure.position.x, dz = player.z - lockerFigure.position.z;
     const dist = Math.hypot(dx, dz) || 1;
     const facing = (dx / dist) * _look.x + (dz / dist) * _look.z;
@@ -1149,36 +1150,37 @@ scene.add(hemi);
 /* ---------------- 泳池层恐怖元素 ---------------- */
 // 「池中人」：苍白人影立于深水区池底，每次全馆停电换位；来电瞬间离你太近 → 惊吓
 function makeWatcher() {
-  // 参照 refs/drowned-ref.png：溺水苍白人形 + 湿滑皮肤 + 遮面湿发 + 深陷眼窝红芒
   const skin = new THREE.MeshPhysicalMaterial({
-    map: texFrom('textures/monster-skin.png', 2, 2), color: 0xb8b2a4,
-    roughness: 0.4, clearcoat: 0.45, clearcoatRoughness: 0.3,
-    emissive: 0x1b2024, emissiveIntensity: 0.18
+    map: texFrom('textures/monster-skin.png', 2, 2), color: 0xc4bdb0,
+    roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.35,
+    emissive: 0x141a1e, emissiveIntensity: 0.15
   });
-  const g = buildHumanoid(skin, { lean: 0.2 });
-  // 湿发：一圈垂落发绺，正面遮住脸
+  const g = buildDweller(skin);
   const hairMat = new THREE.MeshStandardMaterial({
-    map: texFrom('textures/monster-hair.png', 1, 3), color: 0x15110f, roughness: 0.5, metalness: 0.06
+    map: texFrom('textures/monster-hair.png', 1, 2), color: 0x120f0d, roughness: 0.5, metalness: 0.05
   });
-  for (let i = 0; i < 18; i++) {
-    const len = 0.3 + Math.random() * 0.38;
-    const hh = new THREE.Mesh(new THREE.BoxGeometry(0.042, len, 0.018), hairMat);
-    const a = (i / 18) * Math.PI * 2;
-    hh.position.set(Math.sin(a) * 0.1, 1.88 - len / 2, -0.05 + Math.cos(a) * 0.095);
-    hh.rotation.z = Math.sin(a) * 0.22;
-    hh.rotation.x = Math.cos(a) * 0.16;
-    g.add(hh);
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.146, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), hairMat);
+  cap.position.y = 1.9; cap.scale.set(0.88, 1.34, 0.98); g.add(cap);
+  const strands = [];
+  for (let i = 0; i < 7; i++) {
+    const len = 0.34 + Math.random() * 0.26;
+    const st = new THREE.Mesh(new THREE.ConeGeometry(0.036, len, 6), hairMat);
+    const ang = (i / 7) * Math.PI * 2;
+    st.position.set(Math.sin(ang) * 0.115, 1.86 - len / 2, Math.cos(ang) * 0.1);
+    st.rotation.x = Math.cos(ang) * 0.12; st.rotation.z = -Math.sin(ang) * 0.12;
+    st.userData.bx = st.rotation.x;
+    g.add(st); strands.push(st);
   }
-  // 眼窝（保留红光，追逐时由 glow 逻辑拉到 7 倍）
+  g.userData.strands = strands;
   const eyeM = new THREE.MeshStandardMaterial({ color: 0x140202, emissive: 0xff2a14, emissiveIntensity: 1.5 });
-  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), eyeM);
-  e1.position.set(-0.045, 1.86, 0.065); g.add(e1);
-  const e2 = e1.clone(); e2.position.x = 0.045; g.add(e2);
+  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), eyeM);
+  e1.position.set(-0.048, 1.89, 0.095); g.add(e1);
+  const e2 = e1.clone(); e2.position.x = 0.048; g.add(e2);
   g.userData.skin = skin; g.userData.eyes = eyeM;
   return g;
 }
 const watcher = makeWatcher();
-watcher.scale.setScalar(0.85);   // 缩小：站立池底时头顶也低于水面，杜绝"头顶破面"闪烁黑影
+watcher.scale.setScalar(0.82);   // 缩小：站立池底时头顶也低于水面，杜绝"头顶破面"闪烁黑影
 watcher.position.set(-3, POOLS[0].bottom, -12.2);
 scene.add(watcher);
 const WATCHER_SPOTS = [[-6, -3], [0, 4], [-4.5, -8], [1, 8], [-8, 1], [-1.5, -11]];
@@ -1292,6 +1294,7 @@ function updatePoolHorror(dt) {
       // 俯仰/摆尾平滑趋近水平游姿
       watcher.rotation.x += (1.3 - watcher.rotation.x) * Math.min(1, dt * 1.8);
       watcher.rotation.z = Math.sin(t * 0.0028) * 0.13;
+      animateDweller(watcher, dt, "swim");
       // 水下伴影
       lurker.visible = true; lurker.userData.sweep = false;
       lurker.position.x += ((watcher.position.x - poolMonster.vx * 0.7) - lurker.position.x) * Math.min(1, dt * 1.6);
@@ -1332,6 +1335,7 @@ function updatePoolHorror(dt) {
       watcher.rotation.z += (0 - watcher.rotation.z) * Math.min(1, dt * 3);
       const ax = px - watcher.position.x, az = pz - watcher.position.z;
       watcher.rotation.y += ((Math.atan2(ax, az) - watcher.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 1.5);
+      animateDweller(watcher, dt, "idle");
     }
   }
 }
@@ -1909,60 +1913,90 @@ function updateFlashHud() {
 
 /* ---------------- 黑影实体（恐怖事件） ---------------- */
 const ENTITY_POINTS = [[-140, 10], [-122, -7], [-104, 12], [-90, -1], [-128, 17], [-112, -15], [-84, -16], [-69, 1]];
-/* 人形骨架构建器：分节四肢 + 关节 + 手指（两个怪物共用，参照 refs/ 建模参考图） */
-function buildHumanoid(mat, opts) {
+/* 怪物骨架：部件在肩/髋枢轴上互相重叠成连续剪影；含 walk/swim/idle 程序动画 */
+function buildDweller(mat) {
   const g = new THREE.Group();
-  const o = opts || {};
-  const lean = o.lean == null ? 0.14 : o.lean;
-  const add = (geo, x, y, z, rx, rz, m) => {
-    const mm = new THREE.Mesh(geo, m || mat);
-    mm.position.set(x, y, z);
-    if (rx) mm.rotation.x = rx;
-    if (rz) mm.rotation.z = rz;
-    mm.castShadow = true;
-    g.add(mm); return mm;
-  };
-  // 躯干：上宽下窄，前倾驼背
-  add(new THREE.CylinderGeometry(0.19, 0.12, 0.66, 12), 0, 1.3, 0, -lean, 0);
-  // 肩
-  add(new THREE.SphereGeometry(0.085, 10, 8), -0.19, 1.6, 0, 0, 0);
-  add(new THREE.SphereGeometry(0.085, 10, 8), 0.19, 1.6, 0, 0, 0);
-  // 颈 + 细长颅骨
-  add(new THREE.CylinderGeometry(0.045, 0.055, 0.12, 8), 0, 1.68, -0.02, -lean, 0);
-  const head = add(new THREE.SphereGeometry(0.13, 14, 12), 0, 1.83, -0.04, 0.12, 0);
-  head.scale.set(0.82, 1.35, 0.95);
-  // 手臂：上臂 → 肘 → 前臂 → 掌 → 四指
-  for (const s of [-1, 1]) {
-    add(new THREE.CapsuleGeometry(0.042, 0.3, 4, 8), s * 0.2, 1.42, 0, 0.06, s * 0.07);
-    add(new THREE.SphereGeometry(0.046, 8, 6), s * 0.212, 1.25, 0.02, 0, 0);
-    add(new THREE.CapsuleGeometry(0.034, 0.36, 4, 8), s * 0.216, 1.05, 0.07, 0.14, 0);
-    add(new THREE.BoxGeometry(0.07, 0.1, 0.035), s * 0.222, 0.82, 0.11, 0.2, 0);
-    for (let f = 0; f < 4; f++) {
-      add(new THREE.CapsuleGeometry(0.011, 0.085, 3, 5), s * 0.222 + (f - 1.5) * 0.019, 0.735, 0.12, 0.3, 0);
-    }
+  const P = {};
+  const add = geo => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; return m; };
+
+  const hips = add(new THREE.SphereGeometry(0.115, 14, 10)); hips.position.y = 1.0; g.add(hips);
+  P.torso = add(new THREE.CapsuleGeometry(0.13, 0.4, 6, 14)); P.torso.position.y = 1.3; g.add(P.torso);
+  P.chest = add(new THREE.SphereGeometry(0.15, 14, 10)); P.chest.position.y = 1.55; g.add(P.chest);
+  const neck = add(new THREE.CylinderGeometry(0.032, 0.045, 0.14, 8)); neck.position.y = 1.73; g.add(neck);
+  P.head = add(new THREE.SphereGeometry(0.135, 16, 12));
+  P.head.scale.set(0.82, 1.28, 0.92); P.head.position.y = 1.88; g.add(P.head);
+
+  function arm(side) {
+    const a = new THREE.Group(); a.position.set(side * 0.185, 1.62, 0);
+    const up = add(new THREE.CapsuleGeometry(0.046, 0.42, 4, 8)); up.position.y = -0.24; a.add(up);
+    const el = add(new THREE.SphereGeometry(0.05, 8, 6)); el.position.y = -0.48; a.add(el);
+    const fo = add(new THREE.CapsuleGeometry(0.036, 0.48, 4, 8)); fo.position.y = -0.76; a.add(fo);
+    const hd = add(new THREE.ConeGeometry(0.05, 0.18, 8)); hd.position.y = -1.08; hd.rotation.x = Math.PI; a.add(hd);
+    g.add(a); return a;
   }
-  // 腿：大腿 → 膝 → 小腿 → 足
-  for (const s of [-1, 1]) {
-    add(new THREE.CapsuleGeometry(0.072, 0.4, 4, 8), s * 0.09, 0.74, 0, 0, 0);
-    add(new THREE.SphereGeometry(0.062, 8, 6), s * 0.09, 0.5, 0.01, 0, 0);
-    add(new THREE.CapsuleGeometry(0.05, 0.4, 4, 8), s * 0.09, 0.28, 0.02, -0.03, 0);
-    add(new THREE.BoxGeometry(0.09, 0.05, 0.2), s * 0.09, 0.03, 0.05, 0, 0);
+  P.armL = arm(-1); P.armR = arm(1);
+
+  function leg(side) {
+    const l = new THREE.Group(); l.position.set(side * 0.085, 1.0, 0);
+    const th = add(new THREE.CapsuleGeometry(0.068, 0.4, 4, 8)); th.position.y = -0.24; l.add(th);
+    const kn = add(new THREE.SphereGeometry(0.06, 8, 6)); kn.position.y = -0.48; l.add(kn);
+    const sh = add(new THREE.CapsuleGeometry(0.048, 0.4, 4, 8)); sh.position.y = -0.72; l.add(sh);
+    const ft = add(new THREE.BoxGeometry(0.085, 0.05, 0.2)); ft.position.set(0, -0.95, 0.05); l.add(ft);
+    g.add(l); return l;
   }
+  P.legL = leg(-1); P.legR = leg(1);
+
+  g.userData.rig = P;
+  g.userData.anim = { t: Math.random() * 10, stride: 0 };
   return g;
 }
 
+function animateDweller(g, dt, mode) {
+  const P = g.userData.rig; if (!P) return;
+  const a = g.userData.anim; a.t += dt;
+  if (mode === 'walk') {
+    a.stride = Math.min(1, a.stride + dt * 2.5);
+    const s = a.t * 4.2, sw = Math.sin(s) * 0.55 * a.stride;
+    P.legL.rotation.x = sw; P.legR.rotation.x = -sw;
+    P.armL.rotation.x = -sw * 0.7 - 0.12; P.armR.rotation.x = sw * 0.7 - 0.12;
+    P.torso.rotation.x = 0.16 + Math.sin(s * 2) * 0.02;
+    P.chest.position.y = 1.55 + Math.abs(Math.sin(s)) * 0.015;
+  } else if (mode === 'swim') {
+    a.stride = Math.min(1, a.stride + dt * 2);
+    const s = a.t * 2.6;
+    P.legL.rotation.x = 0.15 + Math.sin(s) * 0.3 * a.stride;
+    P.legR.rotation.x = 0.15 + Math.sin(s + 0.35) * 0.3 * a.stride;
+    P.armL.rotation.x = -0.25 + Math.sin(s + 1.2) * 0.18 * a.stride;
+    P.armR.rotation.x = -0.25 + Math.sin(s + 1.5) * 0.18 * a.stride;
+    P.torso.rotation.x = Math.sin(s * 0.5) * 0.05;
+  } else {
+    a.stride = Math.max(0, a.stride - dt * 2);
+    const b = Math.sin(a.t * 1.6);
+    P.chest.scale.setScalar(1 + b * 0.022);
+    P.torso.rotation.x = 0.05 + b * 0.015;
+    P.head.rotation.x = 0.1 + b * 0.03;
+    P.armL.rotation.x *= 0.95; P.armR.rotation.x *= 0.95;
+    P.legL.rotation.x *= 0.95; P.legR.rotation.x *= 0.95;
+  }
+  if (g.userData.strands) {
+    for (let i = 0; i < g.userData.strands.length; i++) {
+      const st = g.userData.strands[i];
+      st.rotation.x = (st.userData.bx || 0) + Math.sin(a.t * 1.8 + i) * 0.05 * (a.stride + 0.3);
+    }
+  }
+}
+
+
 function makeEntity() {
-  // 参照 refs/lurker-ref.png：纯黑虚空人形 + 暗湿皮肤细节 + 两点红眼
-  const mat = new THREE.MeshStandardMaterial({
-    map: texFrom('textures/monster-skin.png', 2, 2), color: 0x111114,
-    roughness: 0.95, metalness: 0.02, emissive: 0x120404, emissiveIntensity: 0.22
-  });
-  const g = buildHumanoid(mat, { lean: 0.16 });
-  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x140202, emissive: 0xff2a14, emissiveIntensity: 1.5 });
-  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 6), eyeMat);
-  e1.position.set(-0.045, 1.86, 0.075); g.add(e1);
-  const e2 = e1.clone(); e2.position.x = 0.045; g.add(e2);
-  g.userData.skin = mat; g.userData.eyes = eyeMat;
+  const mat = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 1, metalness: 0 });
+  const g = buildDweller(mat);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0202, emissive: 0xff2010, emissiveIntensity: 6 });
+  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), eyeMat);
+  e1.position.set(-0.05, 1.9, 0.1); g.add(e1);
+  const e2 = e1.clone(); e2.position.x = 0.05; g.add(e2);
+  const glow = new THREE.PointLight(0xff2a14, 0.5, 2.6, 2);
+  glow.position.set(0, 1.9, 0.12); g.add(glow);
+  g.userData.eyes = eyeMat;
   g.visible = false; scene.add(g); return g;
 }
 const entity = makeEntity();
@@ -2060,10 +2094,12 @@ function updateLevel0(dt) {
     entity.position.x += dx / d * chaseSpeed * dt;
     entity.position.z += dz / d * chaseSpeed * dt;
     entity.lookAt(player.x, 0, player.z);
+    animateDweller(entity, dt, "walk");
     if (d < 1.15) { endChase(); jumpscare(); }
     else if (chaseLeft <= 0) { endChase(); showFlashText('它停下了……消失在墙里'); }
   } else if (entity.visible) {
     entity.lookAt(player.x, 0, player.z);
+    animateDweller(entity, dt, "idle");
     const d = Math.hypot(player.x - entity.position.x, player.z - entity.position.z);
     if (d < 4.6) jumpscare();
     else if (performance.now() > entityUntil) entity.visible = false;
