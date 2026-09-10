@@ -1927,11 +1927,11 @@ function buildDweller(mat) {
   P.chest = add(new THREE.SphereGeometry(0.148, 14, 10)); P.chest.position.y = 1.56; g.add(P.chest);
   const wetFront = new THREE.MeshBasicMaterial({ color: 0x6b6f70, transparent: true, opacity: 0.3, depthWrite: false });
   const wetBelly = new THREE.Mesh(new THREE.CircleGeometry(0.125, 16), wetFront);
-  wetBelly.position.set(0, 1.34, 0.125); wetBelly.scale.set(1.0, 1.35, 1); g.add(wetBelly);
+  wetBelly.position.set(0, 1.34, 0.138); wetBelly.scale.set(1.0, 1.35, 1); g.add(wetBelly);
   const ribMat = new THREE.MeshBasicMaterial({ color: 0x9aa0a0, transparent: true, opacity: 0.18, depthWrite: false });
   for (const s of [-1, 1]) {
     const rib = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.008, 6, 14, Math.PI * 0.85), ribMat);
-    rib.position.set(s * 0.03, 1.48, 0.115);
+    rib.position.set(s * 0.03, 1.48, 0.14);
     rib.rotation.set(Math.PI / 2, 0, s * 0.5);
     g.add(rib);
   }
