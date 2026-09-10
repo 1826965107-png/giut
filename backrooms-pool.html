@@ -658,7 +658,7 @@ scene.environment = pmrem.fromScene(buildEnvScene(), 0.04).texture;
 const skyLight = new THREE.DirectionalLight(0xfff4e2, 0);
 skyLight.position.set(9, 17, -10);
 skyLight.target.position.set(-1, 0, 3);
-skyLight.castShadow = true;
+skyLight.castShadow = false;
 skyLight.shadow.mapSize.set(2048, 2048);
 skyLight.shadow.camera.left = -34; skyLight.shadow.camera.right = 34;
 skyLight.shadow.camera.top = 34; skyLight.shadow.camera.bottom = -34;
