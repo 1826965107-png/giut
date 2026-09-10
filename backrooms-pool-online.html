@@ -185,7 +185,7 @@ RectAreaLightUniformsLib.init();
 /* ============================================================ 基础渲染器 */
 const container = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.4));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -208,7 +208,7 @@ camera.add(flashLight);
 camera.add(flashLight.target);
 flashLight.target.position.set(0, 0, -9);
 flashLight.castShadow = true;
-flashLight.shadow.mapSize.set(1024, 1024);
+flashLight.shadow.mapSize.set(512, 512);
 flashLight.shadow.camera.near = 0.12;
 flashLight.shadow.camera.far = 26;
 flashLight.shadow.camera.fov = 58;
@@ -218,7 +218,7 @@ flashLight.shadow.normalBias = 0.022;
 /* ============================================================ 后处理 */
 let composer;
 try {
-  const composerRT = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: 4, type: THREE.HalfFloatType });
+  const composerRT = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: 2, type: THREE.HalfFloatType });
   composer = new EffectComposer(renderer, composerRT);
 } catch (e) {
   composer = new EffectComposer(renderer);   // 老显卡降级：无 MSAA/HDR 缓冲
@@ -553,13 +553,22 @@ function aiMaps(path, rx, ry) {
   }
   const rec = { normalMap: nrm, roughnessMap: rgh };
   aiMapCache.set(key, rec);
-  new THREE.TextureLoader().load(path, tex => {
+  aiMapQueue.push({ rec, path, rx, ry });
+  pumpAiMaps();
+  return rec;
+}
+
+/* 派生贴图分帧生成：每帧只做一张，避免异步贴图加载时主线程卡死 */
+const aiMapQueue = [];
+let aiMapBusy = false;
+function buildAiMaps(job) {
+  new THREE.TextureLoader().load(job.path, tex => {
     const img = tex.image; if (!img || !img.width) return;
-    const max = 1024, sc = Math.min(1, max / Math.max(img.width, img.height));
+    const max = 512, sc = Math.min(1, max / Math.max(img.width, img.height));   // 512 降采样：JS 循环量降到 1/4
     const w = Math.max(4, Math.round(img.width * sc)), hh = Math.max(4, Math.round(img.height * sc));
     const c = makeCanvas(w, hh), g = c.getContext('2d');
     g.drawImage(img, 0, 0, w, hh);
-    nrm.image = computeNormalMap(c, 2.7); nrm.needsUpdate = true;
+    job.rec.normalMap.image = computeNormalMap(c, 2.7); job.rec.normalMap.needsUpdate = true;
     const id = g.getImageData(0, 0, w, hh), d = id.data;
     for (let i = 0; i < d.length; i += 4) {
       const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255;
@@ -568,9 +577,16 @@ function aiMaps(path, rx, ry) {
     }
     const rc = makeCanvas(w, hh), rg = rc.getContext('2d');
     rg.putImageData(id, 0, 0);
-    rgh.image = rc; rgh.needsUpdate = true;
+    job.rec.roughnessMap.image = rc; job.rec.roughnessMap.needsUpdate = true;
   });
-  return rec;
+}
+function pumpAiMaps() {
+  if (aiMapBusy) return;
+  const job = aiMapQueue.shift();
+  if (!job) return;
+  aiMapBusy = true;
+  const run = () => { buildAiMaps(job); aiMapBusy = false; setTimeout(pumpAiMaps, 90); };
+  if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 500 }); else setTimeout(run, 60);
 }
 
 /* ============================================================ 材质工厂 */
@@ -659,7 +675,7 @@ const skyLight = new THREE.DirectionalLight(0xfff4e2, 0);
 skyLight.position.set(9, 17, -10);
 skyLight.target.position.set(-1, 0, 3);
 skyLight.castShadow = false;
-skyLight.shadow.mapSize.set(2048, 2048);
+skyLight.shadow.mapSize.set(1024, 1024);
 skyLight.shadow.camera.left = -34; skyLight.shadow.camera.right = 34;
 skyLight.shadow.camera.top = 34; skyLight.shadow.camera.bottom = -34;
 skyLight.shadow.camera.near = 2; skyLight.shadow.camera.far = 70;
@@ -925,7 +941,7 @@ function buildPool(p) {
 
   // 水面（室内静水）：极低扰动 + 时间推进压缩到 4%，低频大波纹
   const water = new Water(new THREE.PlaneGeometry(W + 0.35, fullLen + 0.35), {
-    textureWidth: 1024, textureHeight: 1024,
+    textureWidth: 512, textureHeight: 512,
     waterNormals: makeAINormalTexture('textures/water-surface.png', 7, 5),
     sunDirection: new THREE.Vector3(0, 1, 0),
     sunColor: 0xfff6e0, waterColor: 0x1a6ab4, distortionScale: 0.45, fog: true });
@@ -1447,10 +1463,15 @@ function updatePoolHorror(dt) {
 let audioCtx = null, audioMaster = null, audioDry = null, audioWet = null, audioConv = null, stepTimer = 0;
 let IR_L0 = null, IR_POOL = null, stepSide = 0;
 
+const noiseCache = new Map();
 function makeNoiseBuf(sec) {
-  const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * sec), audioCtx.sampleRate);
+  const key = Math.max(1, Math.round(sec * 20));      // 0.05s 粒度归并
+  const hit = noiseCache.get(key);
+  if (hit) return hit;
+  const b = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * (key / 20)), audioCtx.sampleRate);
   const d = b.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  if (noiseCache.size < 14) noiseCache.set(key, b);
   return b;
 }
 // 房间脉冲响应：sec 时长 / decay 衰减 / bright 高频保留 / spikes 早期反射数量
@@ -2626,10 +2647,15 @@ scene.traverse(o => {
   if (!o.isMesh || !o.geometry) return;
   o.receiveShadow = true;
   const t = o.geometry.type;
-  o.castShadow = (t !== 'PlaneGeometry' && t !== 'ShapeGeometry' && o.material !== undefined);
+  if (t === 'PlaneGeometry' || t === 'ShapeGeometry') { o.castShadow = false; return; }
+  if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+  const bs = o.geometry.boundingSphere;
+  const r = bs ? bs.radius * Math.max(o.scale.x, o.scale.y, o.scale.z) : 0;
+  o.castShadow = r > 0.22;      // 小物件不投影，显著削减阴影贴图绘制量
 });
 
 let flashHudT = 0, lowBeepT = 2.5;
+let ftAcc = 0, ftN = 0, qStep = 0, skyShadowTick = 0;
 renderer.setAnimationLoop(() => {
  try {
   const dt = Math.min(0.05, clock.getDelta());
@@ -2672,6 +2698,30 @@ renderer.setAnimationLoop(() => {
   if (hintTarget) { hintEl.style.display = 'block'; hintEl.textContent = hintText; }
   else hintEl.style.display = 'none';
 
+  // 天光阴影节流：每 3 帧刷新一次（静态场景几乎无感，省 2/3 阴影开销）
+  if (LEVEL === 1 && skyLight.castShadow) {
+    skyLight.shadow.autoUpdate = false;
+    skyShadowTick = (skyShadowTick + 1) % 3;
+    if (skyShadowTick === 0) skyLight.shadow.needsUpdate = true;
+  }
+  // 自适应画质：持续低于 ~38fps 时逐级降档，保证不卡
+  ftAcc += dt; ftN++;
+  if (ftN >= 45) {
+    const avg = ftAcc / ftN; ftAcc = 0; ftN = 0;
+    if (avg > 0.026 && qStep < 3) {
+      qStep++;
+      if (qStep === 1) {
+        renderer.setPixelRatio(Math.max(0.85, renderer.getPixelRatio() * 0.82));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+      } else if (qStep === 2) {
+        bloomPass.strength *= 0.6;
+        if (gradePass.uniforms) gradePass.uniforms.uAmount.value = 0.55;
+      } else {
+        skyLight.castShadow = false;
+      }
+    }
+  }
   composer.render();
  } catch (err) { showErr(err && err.message ? err.message : String(err)); }
 });
