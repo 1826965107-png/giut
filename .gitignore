@@ -8,3 +8,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 无关文件（考试资料）
+_exam_extract/
+_exam_grade/

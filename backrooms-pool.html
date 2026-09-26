@@ -5,102 +5,275 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>后室 · 泳池 Poolrooms — 自由行走</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #05080a;
-    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
-  #app { position: fixed; inset: 0; }
+  :root {
+    --accent: #7fe3dd; --accent-dim: rgba(111,212,208,0.55);
+    --danger: #ff4b45; --warn: #ffd98a;
+    --text: #e8f2ef; --dim: #8fa7a4;
+    --card: rgba(10,15,17,0.62); --card-border: rgba(255,255,255,0.12);
+  }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; background: #05080a;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app { position: fixed; inset: 0; transition: filter .3s ease; }
+  body.scare #app { filter: contrast(1.3) brightness(1.18); transition: filter .07s; }
   canvas { display: block; }
 
   #crosshair {
-    position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px;
-    background: rgba(255,255,255,0.55); border-radius: 50%; z-index: 8; pointer-events: none;
-    box-shadow: 0 0 4px rgba(0,0,0,0.6);
+    position: fixed; left: 50%; top: 50%; width: 20px; height: 20px;
+    margin: -10px 0 0 -10px; z-index: 8; pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.38); border-radius: 50%;
+    background: transparent; display: flex; align-items: center; justify-content: center;
+    transition: opacity .3s, transform .12s;
+    box-shadow: 0 0 6px rgba(0,0,0,0.55), inset 0 0 6px rgba(0,0,0,0.35);
   }
+  #crosshair::after {
+    content: ''; width: 3px; height: 3px; border-radius: 50%;
+    background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8);
+  }
+  body:not(.locked) #crosshair { opacity: 0; }
+
+  .letterbox {
+    position: fixed; left: 0; width: 100%; height: 0; background: #000;
+    z-index: 25; pointer-events: none;
+    transition: height .55s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 24px rgba(0,0,0,0.5);
+  }
+  .letterbox.top { top: 0; }
+  .letterbox.bottom { bottom: 0; }
+  body.chase .letterbox { height: 7.5vh; }
+  body.chase #level-tag {
+    border-color: rgba(255,75,69,0.65); color: var(--danger);
+    box-shadow: 0 0 18px rgba(255,75,69,0.35);
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  body.chase #hud { border-color: rgba(255,75,69,0.35); }
+  @keyframes pulse { 50% { opacity: .55; } }
 
   #play-overlay {
     position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 8px;
-    padding: 18px 28px; border-radius: 16px; text-align: center; user-select: none;
-    pointer-events: none; color: #dfe7e5;
-    background: rgba(8, 14, 16, 0.86); border: 1px solid rgba(255,255,255,0.14);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+    z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 26px 38px; border-radius: 18px; text-align: center; user-select: none;
+    pointer-events: none; color: var(--text);
+    background: linear-gradient(165deg, rgba(12,20,23,0.9), rgba(6,11,13,0.92));
+    border: 1px solid rgba(111,212,208,0.28);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   }
-  #play-overlay h1 { margin: 0; font-size: 22px; letter-spacing: 6px; color: #eef6f1; font-weight: 300; }
-  #play-overlay .sub { color: #7fc9c4; letter-spacing: 3px; font-size: 11px; }
+  #play-overlay h1 {
+    margin: 0; font-size: 26px; letter-spacing: 9px; font-weight: 200;
+    background: linear-gradient(180deg, #ffffff, #a8e6e0);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 34px rgba(111,212,208,0.35);
+  }
+  #play-overlay .sub { color: var(--accent); letter-spacing: 4px; font-size: 11px; }
   #play-overlay .btn {
-    pointer-events: auto; margin-top: 8px; padding: 10px 28px; font-size: 15px; letter-spacing: 2px;
-    background: rgba(111,212,208,0.16); color: #d8faf6; border: 1px solid rgba(111,212,208,0.55);
-    border-radius: 30px; cursor: pointer;
+    pointer-events: auto; margin-top: 10px; padding: 12px 34px;
+    font-size: 15px; letter-spacing: 3px; font-weight: 500;
+    background: linear-gradient(180deg, rgba(111,212,208,0.3), rgba(111,212,208,0.14));
+    color: #eafffb; border: 1px solid rgba(111,212,208,0.7);
+    border-radius: 32px; cursor: pointer;
+    transition: all .22s;
+    animation: breathe 2.8s ease-in-out infinite;
+    font-family: inherit;
   }
-  #play-overlay .keys { margin-top: 6px; font-size: 11px; color: #8fa7a4; line-height: 1.8; letter-spacing: 1px; }
+  #play-overlay .btn:hover {
+    background: linear-gradient(180deg, rgba(111,212,208,0.5), rgba(111,212,208,0.28));
+    box-shadow: 0 0 26px rgba(111,212,208,0.5); transform: translateY(-2px);
+    animation: none;
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(111,212,208,0); }
+    50% { box-shadow: 0 0 24px 3px rgba(111,212,208,0.4); }
+  }
+  #play-overlay .keys { margin-top: 10px; font-size: 11px; color: var(--dim); line-height: 2.1; letter-spacing: 1px; }
+
+  kbd {
+    display: inline-block; padding: 2px 8px; margin: 0 1px; border-radius: 6px;
+    background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.2);
+    border-bottom-width: 2px; font-family: inherit; font-size: 10px;
+    color: var(--text); letter-spacing: 1px; vertical-align: baseline;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
 
   #pickup-hint {
     position: fixed; left: 50%; top: 68%; transform: translateX(-50%); z-index: 9;
-    color: #eafff9; font-size: 14px; letter-spacing: 2px; padding: 7px 18px; border-radius: 18px;
-    background: rgba(8,14,16,0.66); border: 1px solid rgba(111,212,208,0.5); display: none;
+    color: #eafff9; font-size: 13px; letter-spacing: 2px;
+    padding: 9px 22px; border-radius: 22px;
+    background: linear-gradient(180deg, rgba(12,20,23,0.82), rgba(8,14,16,0.85));
+    border: 1px solid rgba(111,212,208,0.55);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 16px rgba(111,212,208,0.18);
+    display: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: opacity .25s;
   }
 
   #level-tag {
     position: fixed; top: 14px; right: 14px; z-index: 10;
-    color: #ffd98a; font-size: 13px; letter-spacing: 3px;
-    background: rgba(10,14,16,0.55); border: 1px solid rgba(255,255,255,0.12);
-    padding: 6px 12px; border-radius: 8px; user-select: none;
+    color: var(--warn); font-size: 12px; letter-spacing: 3px; font-weight: 500;
+    background: rgba(10,14,16,0.55); border: 1px solid var(--card-border);
+    padding: 7px 14px; border-radius: 10px; user-select: none;
+    transition: all .3s;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
+
+  #level-card {
+    position: fixed; inset: 0; z-index: 33;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: #000; opacity: 0; pointer-events: none;
+    transition: opacity .7s ease;
+  }
+  #level-card .lc-title {
+    font-size: 46px; letter-spacing: 16px; color: var(--text); font-weight: 200;
+    text-shadow: 0 0 42px rgba(111,212,208,0.55);
+  }
+  #level-card .lc-sub {
+    color: var(--accent); letter-spacing: 7px; font-size: 13px;
+  }
+  #level-card.show { opacity: 1; }
+
   #level-fade {
     position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none;
     z-index: 30; transition: opacity .45s linear;
   }
+
   #scare-flash {
     position: fixed; inset: 0; pointer-events: none; z-index: 31; opacity: 0;
-    background: radial-gradient(circle at 50% 45%, rgba(255,255,255,0.75), rgba(170,20,20,0.55));
+    background: radial-gradient(circle at 50% 45%, rgba(255,255,255,0.8), rgba(170,20,20,0.6));
     transition: opacity .1s linear;
+    mix-blend-mode: screen;
   }
   #flash-text {
     position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
-    color: #ffdede; font-size: 26px; letter-spacing: 5px; z-index: 32; pointer-events: none;
-    opacity: 0; text-align: center; text-shadow: 0 0 18px rgba(255,0,40,0.85);
-    transition: opacity .8s; white-space: nowrap;
+    color: #ffdede; font-size: 26px; letter-spacing: 6px; z-index: 32; pointer-events: none;
+    opacity: 0; text-align: center; white-space: nowrap;
+    text-shadow: 0 0 22px rgba(255,0,40,0.9), 0 2px 12px rgba(0,0,0,0.8);
+    transition: opacity .8s;
   }
 
   #end-overlay {
-    position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
-    background: radial-gradient(ellipse at 50% 40%, rgba(8,16,18,0.88), rgba(3,6,8,0.96));
-    color: #eaf4f0; text-align: center; user-select: none;
+    position: fixed; inset: 0; z-index: 40; display: none;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(8,16,18,0.85), rgba(3,6,8,0.97));
+    color: var(--text); text-align: center; user-select: none;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
   #end-overlay .card {
-    background: rgba(10,16,18,0.72); border: 1px solid rgba(111,212,208,0.35);
-    border-radius: 18px; padding: 30px 44px; box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+    background: linear-gradient(170deg, rgba(12,20,23,0.85), rgba(7,12,14,0.92));
+    border: 1px solid rgba(111,212,208,0.4);
+    border-radius: 22px; padding: 34px 52px;
+    box-shadow: 0 26px 80px rgba(0,0,0,0.65), 0 0 42px rgba(111,212,208,0.12), inset 0 1px 0 rgba(255,255,255,0.09);
   }
-  #end-overlay h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: 8px; color: #bdf5ee; font-weight: 300; }
-  #end-overlay .sub { color: #7fc9c4; letter-spacing: 3px; font-size: 12px; margin-bottom: 20px; }
-  #end-overlay .stat { font-size: 15px; color: #d5e5e1; line-height: 2.1; letter-spacing: 1px; }
-  #end-overlay .stat b { color: #9fe8e2; font-variant-numeric: tabular-nums; }
-  #end-overlay .btns { margin-top: 22px; display: flex; gap: 12px; justify-content: center; }
+  #end-overlay h1 {
+    margin: 0 0 8px; font-size: 30px; letter-spacing: 11px; font-weight: 200;
+    background: linear-gradient(180deg, #ffffff, #9fe8e2);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  #end-overlay .sub { color: var(--accent); letter-spacing: 4px; font-size: 12px; margin-bottom: 22px; }
+  #end-overlay .stat { font-size: 15px; color: #d5e5e1; line-height: 2.2; letter-spacing: 1px; }
+  #end-overlay .stat b { color: var(--accent); font-variant-numeric: tabular-nums; }
+  #end-overlay .btns { margin-top: 24px; display: flex; gap: 12px; justify-content: center; }
   #end-overlay button {
-    padding: 11px 26px; font-size: 15px; letter-spacing: 2px; cursor: pointer;
-    border-radius: 26px; border: 1px solid rgba(111,212,208,0.55);
-    background: rgba(111,212,208,0.16); color: #d8faf6;
+    padding: 11px 28px; font-size: 15px; letter-spacing: 2px; cursor: pointer;
+    border-radius: 28px; border: 1px solid var(--accent-dim);
+    background: linear-gradient(180deg, rgba(111,212,208,0.22), rgba(111,212,208,0.1));
+    color: var(--text); transition: all .2s;
+    font-family: inherit;
   }
-  #end-overlay button:hover { background: rgba(111,212,208,0.3); }
+  #end-overlay button:hover {
+    background: linear-gradient(180deg, rgba(111,212,208,0.4), rgba(111,212,208,0.22));
+    box-shadow: 0 0 20px rgba(111,212,208,0.35); transform: translateY(-2px);
+  }
+  #end-overlay button:active { transform: translateY(1px) scale(0.98); }
 
   #hud {
     position: fixed; top: 14px; left: 14px; z-index: 10;
-    background: rgba(10, 14, 16, 0.6);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px; padding: 12px 15px; color: #dfe7e5;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    font-size: 12px; min-width: 228px; user-select: none;
+    background: linear-gradient(168deg, rgba(12,18,21,0.72), rgba(8,13,15,0.68));
+    border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 13px 16px; color: var(--text);
+    backdrop-filter: blur(16px) saturate(1.25); -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    box-shadow: 0 12px 38px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.07);
+    font-size: 12px; min-width: 236px; user-select: none;
+    transition: border-color .3s;
   }
-  #hud h1 { margin: 0 0 2px; font-size: 14px; letter-spacing: 3px; color: #eaf4f0; }
-  #hud .sub { margin: 0 0 10px; color: #8fa7a4; font-size: 11px; letter-spacing: 1px; }
-  #hud label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; }
-  #hud label span { flex: 0 0 auto; width: 52px; color: #cfe0dc; }
-  #hud input[type=range] { flex: 1; accent-color: #6fd4d0; cursor: pointer; }
-  #hud .val { width: 36px; text-align: right; color: #9fe8e2; font-variant-numeric: tabular-nums; }
-  #hint { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
-    z-index: 10; color: #9fb6b2; font-size: 11px; letter-spacing: 1px;
-    background: rgba(10,14,16,0.5); padding: 5px 12px; border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.1); }
+  #hud h1 {
+    margin: 0 0 2px; font-size: 13px; letter-spacing: 4px; color: #eaf7f3; font-weight: 500;
+  }
+  #hud .sub { margin: 0 0 11px; color: var(--dim); font-size: 10px; letter-spacing: 2px; }
+  #hud label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+  #hud label span { flex: 0 0 auto; width: 48px; color: #cfe0dc; font-size: 11px; letter-spacing: 1px; }
+  #hud .val { width: 38px; text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; font-size: 11px; }
+
+  #hud input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    flex: 1; height: 4px; border-radius: 4px; cursor: pointer; outline: none;
+    background: linear-gradient(90deg,
+      var(--accent) 0%, var(--accent) var(--fill, 0%),
+      rgba(255,255,255,0.13) var(--fill, 0%), rgba(255,255,255,0.13) 100%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  #hud input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%; border: none; cursor: pointer;
+    background: radial-gradient(circle at 34% 28%, #ffffff, var(--accent) 62%);
+    box-shadow: 0 0 10px rgba(111,212,208,0.85), 0 1px 5px rgba(0,0,0,0.55);
+    transition: transform .13s;
+  }
+  #hud input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.22); }
+  #hud input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%; border: none; cursor: pointer;
+    background: radial-gradient(circle at 34% 28%, #ffffff, var(--accent) 62%);
+    box-shadow: 0 0 10px rgba(111,212,208,0.85), 0 1px 5px rgba(0,0,0,0.55);
+  }
+
+  .hud-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 7px; gap: 8px; flex-wrap: wrap;
+  }
+  .hud-row .lbl { color: #cfe0dc; font-size: 11px; letter-spacing: 1px; }
+  .hud-row .rv { color: var(--warn); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  .slots { display: inline-flex; gap: 5px; margin-left: auto; }
+  .slots i {
+    width: 11px; height: 11px; border-radius: 3.5px; display: block;
+    background: rgba(255,255,255,0.11); border: 1px solid rgba(255,255,255,0.2);
+    transition: all .4s cubic-bezier(.2,.8,.3,1.2);
+  }
+  .slots i.on {
+    background: linear-gradient(135deg, var(--warn), #ffb066);
+    border-color: rgba(255,217,138,0.7);
+    box-shadow: 0 0 9px rgba(255,217,138,0.65);
+    transform: scale(1.12);
+  }
+  .slots.float i.on {
+    background: linear-gradient(135deg, var(--accent), #4fb8d8);
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 9px rgba(111,212,208,0.6);
+    transform: scale(1.12);
+  }
+
+  .battery {
+    width: 84px; height: 8px; border-radius: 5px; overflow: hidden;
+    background: rgba(255,255,255,0.11); border: 1px solid rgba(255,255,255,0.2);
+    margin-left: 6px;
+  }
+  .battery b {
+    display: block; height: 100%; width: 0; border-radius: 5px;
+    background: linear-gradient(90deg, var(--accent), #b1f4ee);
+    transition: width .35s ease, background .35s;
+  }
+  .battery.low b {
+    background: linear-gradient(90deg, var(--danger), var(--warn));
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  #hint {
+    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 10; color: var(--dim); font-size: 11px; letter-spacing: 1px;
+    background: rgba(10,14,16,0.55); padding: 7px 16px; border-radius: 18px;
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
 </style>
 </head>
 <body>
@@ -112,8 +285,8 @@
   <div class="sub">Level 0 · 后室 — 收集 3 枚保险丝，逃往泳池层</div>
   <div class="btn">点击进入</div>
   <div class="keys">
-    WASD 移动 · 鼠标 观察 · Shift 奔跑 · 空格 跳跃 · E 交互拾取<br>
-    Esc 释放光标调参 · H 面板 · 小心黑暗中的东西…
+    <kbd>WASD</kbd> 移动 · 鼠标 观察 · <kbd>Shift</kbd> 奔跑 · <kbd>空格</kbd> 跳跃 · <kbd>E</kbd> 交互拾取<br>
+    <kbd>Esc</kbd> 释放光标调参 · <kbd>H</kbd> 面板 · 小心黑暗中的东西…
   </div>
   <div class="keys" id="ov-best" style="color:#7fc9c4;margin-top:10px;"></div>
   <div style="display:none">
@@ -128,22 +301,34 @@
   <label><span>雾气</span><input id="c-fog" type="range" min="0" max="0.12" step="0.001" value="0.075"><b class="val" id="v-fog">0.075</b></label>
   <label><span>灵敏度</span><input id="c-sens" type="range" min="0.5" max="4" step="0.05" value="1.8"><b class="val" id="v-sens">1.8</b></label>
   <label><span>音量</span><input id="c-volume" type="range" min="0" max="1" step="0.01" value="0.7"><b class="val" id="v-volume">0.70</b></label>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
-    <span style="color:#cfe0dc;">任务</span><b id="v-task" style="color:#ffd98a;">收集保险丝 0/3</b>
+  <div class="hud-row">
+    <span class="lbl">任务</span>
+    <span class="slots" id="fuse-slots"><i></i><i></i><i></i></span>
+    <b class="rv" id="v-task" style="width:100%;text-align:left;margin-top:2px;">收集保险丝 0/3</b>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
-    <span style="color:#cfe0dc;">手电筒</span><b id="v-flash" style="color:#ffd98a;">未拾取 · F 开关</b>
+  <div class="hud-row">
+    <span class="lbl">手电筒</span>
+    <b class="rv" id="v-flash">未拾取</b>
+    <span class="battery" id="batt"><b id="batt-fill"></b></span>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-    <span style="color:#cfe0dc;">漂浮物</span><b id="v-pick" style="color:#9fe8e2;">0 / 6</b>
+  <div class="hud-row">
+    <span class="lbl">漂浮物</span>
+    <b class="rv" id="v-pick">0 / 6</b>
+    <span class="slots float" id="float-slots"><i></i><i></i><i></i><i></i><i></i><i></i></span>
   </div>
 </div>
 
-<div id="hint">WASD 移动 · Shift 奔跑 · 空格 跳（池边任意处可跳水！）· E 拾取 · F 手电 · R 复位 · Esc 调参 · H 面板</div>
+<div id="hint"><kbd>WASD</kbd> 移动 · <kbd>Shift</kbd> 奔跑 · <kbd>空格</kbd> 跳（池边任意处可跳水！）· <kbd>E</kbd> 拾取 · <kbd>F</kbd> 手电 · <kbd>R</kbd> 复位 · <kbd>Esc</kbd> 调参 · <kbd>H</kbd> 面板</div>
 <div id="pickup-hint">按 E 拾取</div>
 <div id="level-tag">LEVEL 0 · 后室</div>
 <div id="level-fade"></div>
 <div id="scare-flash"></div>
+<div class="letterbox top"></div>
+<div class="letterbox bottom"></div>
+<div id="level-card">
+  <div class="lc-title" id="lc-title">LEVEL 0</div>
+  <div class="lc-sub" id="lc-sub">类后室 · 收集保险丝</div>
+</div>
 <div id="flash-text"></div>
 <div id="end-overlay">
   <div class="card">
@@ -1245,7 +1430,9 @@ function updateLockerRoom(dt) {
       lockerState.figureOn = false; lockerFigure.visible = false;
       synthScare(); stats.scares++;
       const sf = document.getElementById('scare-flash');
-      sf.style.opacity = '1'; setTimeout(() => { sf.style.opacity = '0'; }, 150);
+      sf.style.opacity = '1';
+  document.body.classList.add('scare');
+  setTimeout(() => document.body.classList.remove('scare'), 220); setTimeout(() => { sf.style.opacity = '0'; }, 150);
       showFlashText('更衣柜里的东西抓住了你……');
       player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0; yaw = 0; pitch = 0;
     }
@@ -1322,6 +1509,8 @@ function poolScare() {
   synthScare(); stats.scares++;
   const sf = document.getElementById('scare-flash');
   sf.style.opacity = '1';
+  document.body.classList.add('scare');
+  setTimeout(() => document.body.classList.remove('scare'), 220);
   setTimeout(() => { sf.style.opacity = '0'; }, 150);
   showFlashText('它一直站在水里看着你……');
   player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
@@ -1935,6 +2124,7 @@ function tryFuse() {
   fuses++;
   synthFuse();
   document.getElementById('v-task').textContent = `收集保险丝 ${fuses}/3`;
+  document.querySelectorAll('#fuse-slots i').forEach((s, i) => s.classList.toggle('on', i < fuses));
   if (fuses >= 3) {
     exitUnlocked = true;
     synthUnlock();
@@ -2030,9 +2220,20 @@ function toggleFlash() {
 }
 function updateFlashHud() {
   const el = document.getElementById('v-flash');
-  if (!flashlight.owned) { el.textContent = '未拾取 · F 开关'; return; }
+  const batt = document.getElementById('batt'), fill = document.getElementById('batt-fill');
+  if (!el) return;
+  if (!flashlight.owned) {
+    el.textContent = '未拾取';
+    if (batt) batt.style.opacity = '0.35';
+    return;
+  }
   const pct = Math.round(flashlight.charge * 100);
-  el.textContent = flashlight.on ? `开 · ${pct}%` : (pct > 0 ? `关 · ${pct}%` : '没电');
+  el.textContent = flashlight.on ? `开 · ${pct}%` : `关 · ${pct}%`;
+  if (batt) batt.style.opacity = '1';
+  if (fill) {
+    fill.style.width = Math.max(2, flashlight.charge * 100) + '%';
+    batt.classList.toggle('low', flashlight.charge < 0.25);
+  }
 }
 
 /* ---------------- 黑影实体（恐怖事件） ---------------- */
@@ -2156,6 +2357,8 @@ function jumpscare() {
   stats.scares++;
   const sf = document.getElementById('scare-flash');
   sf.style.opacity = '1';
+  document.body.classList.add('scare');
+  setTimeout(() => document.body.classList.remove('scare'), 220);
   setTimeout(() => { sf.style.opacity = '0'; }, 150);
   showFlashText('它发现了你……');
   entity.visible = false;
@@ -2166,7 +2369,8 @@ function jumpscare() {
 /* ---------------- Level 0 每帧逻辑 ---------------- */
 let entityChasing = false, chaseSpeed = 0, chaseLeft = 0, hbTimer = 0;
 function endChase() {
-  entityChasing = false; entity.visible = false;
+  entityChasing = false;
+  document.body.classList.remove('chase'); entity.visible = false;
   if (droneNodes) droneNodes.g.gain.value = 0.05;
 }
 function startChase(speed, dur) {
@@ -2174,7 +2378,8 @@ function startChase(speed, dur) {
   const s = cands.length ? cands[Math.random() * cands.length | 0] : ENTITY_POINTS[0];
   entity.position.set(s[0], 0, s[1]);
   entity.visible = true;
-  entityChasing = true; chaseSpeed = speed; chaseLeft = dur; hbTimer = 0;
+  entityChasing = true;
+  document.body.classList.add('chase'); chaseSpeed = speed; chaseLeft = dur; hbTimer = 0;
   if (droneNodes) droneNodes.g.gain.value = 0.11;
   synthKnock();
 }
@@ -2254,6 +2459,16 @@ function openExitDoor() {
   exitSignMat.emissive.set(0x37ff6e);
   exitLight.color.set(0x37ff6e); exitLight.intensity = 7;
 }
+function showLevelCard(title, sub) {
+  const t = document.getElementById('lc-title'), s = document.getElementById('lc-sub');
+  if (t) t.textContent = title;
+  if (s) s.textContent = sub;
+  const c = document.getElementById('level-card');
+  if (!c) return;
+  c.classList.add('show');
+  setTimeout(() => c.classList.remove('show'), 1900);
+}
+
 function showFlashText(msg) {
   const el = document.getElementById('flash-text');
   el.textContent = msg; el.style.opacity = '1';
@@ -2266,6 +2481,7 @@ function enterPoolrooms() {
   document.getElementById('level-fade').style.opacity = '1';
   entity.visible = false;
   entityChasing = false;
+  document.body.classList.remove('chase');
   setTimeout(() => {
     LEVEL = 1;
     ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
@@ -2276,6 +2492,7 @@ function enterPoolrooms() {
     // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     applyRoomSound(1); startAmbience(1);
+    showLevelCard('LEVEL 37', '泳池层 · 游泳馆');
     skyLight.intensity = 1.15; skyLight.castShadow = true;
     flashLight.castShadow = false;
     resetLockerHorror();
@@ -2322,6 +2539,7 @@ document.addEventListener('pointerlockchange', () => {
   document.getElementById('play-overlay').style.display = locked ? 'none' : 'flex';
   const _pb = document.querySelector('#play-overlay .btn');
   if (_pb) _pb.textContent = locked ? '点击进入' : (stats.started ? '点击继续（已暂停）' : '点击进入');
+  document.body.classList.toggle('locked', locked);
 });
 document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== renderer.domElement) return;
@@ -2472,6 +2690,7 @@ function tryPickup() {
   if (idx >= 0) pickups.splice(idx, 1);
   pickedCount++;
   document.getElementById('v-pick').textContent = `${pickedCount} / ${PICK_TOTAL}`;
+  document.querySelectorAll('#float-slots i').forEach((s, i) => s.classList.toggle('on', i < pickedCount));
   synthPickup();
   nearestPickup = null;
   if (pickedCount >= PICK_TOTAL) showEndScreen();
@@ -2568,8 +2787,10 @@ function resetGame() {
   if (droneNodes) droneNodes.g.gain.value = 0.05;
   entity.visible = false;
   entityChasing = false;
+  document.body.classList.remove('chase');
   poolIntroShown = false; poolDark.active = false; poolDark.timer = 22 + Math.random() * 18;
   applyRoomSound(0); startAmbience(0);
+  showLevelCard('LEVEL 0', '类后室 · 收集保险丝');
   skyLight.intensity = 0; skyLight.castShadow = false;
   flashLight.castShadow = true;
   resetLockerHorror();
@@ -2604,7 +2825,19 @@ document.getElementById('btn-clearrc').addEventListener('click', () => {
 
 /* ============================================================ UI */
 const $ = id => document.getElementById(id);
-const bind = (id, valId, fn) => $(id).addEventListener('input', e => { $(valId).textContent = e.target.value; fn(parseFloat(e.target.value)); });
+function bind(id, labelId, cb) {
+  const el = $(id), lb = $(labelId);
+  if (!el) return;
+  const dec = { 'c-exposure': 2, 'c-bloom': 2, 'c-fog': 3, 'c-sens': 1, 'c-volume': 2 }[id] || 2;
+  const sync = () => {
+    const v = parseFloat(el.value);
+    if (lb) lb.textContent = v.toFixed(dec);
+    el.style.setProperty('--fill', ((v - el.min) / (el.max - el.min) * 100) + '%');
+  };
+  el.addEventListener('input', () => { sync(); cb(parseFloat(el.value)); });
+  sync();
+}
+
 bind('c-exposure', 'v-exposure', v => renderer.toneMappingExposure = v);
 bind('c-bloom', 'v-bloom', v => bloomPass.strength = v);
 bind('c-fog', 'v-fog', v => scene.fog.density = v);
@@ -2616,7 +2849,12 @@ function setPanelDefaults(exposure, bloom, fog) {
   renderer.toneMappingExposure = exposure;
   bloomPass.strength = bloom;
   scene.fog.density = fog;
-  const set = (id, v) => { const el = $(id); if (el) el.value = v; const lb = $('v-' + id.slice(2)); if (lb) lb.textContent = String(v); };
+  const set = (id, v) => {
+    const el = $(id); if (!el) return;
+    el.value = v;
+    el.style.setProperty('--fill', ((v - el.min) / (el.max - el.min) * 100) + '%');
+    const lb = $('v-' + id.slice(2)); if (lb) lb.textContent = String(v);
+  };
   set('c-exposure', exposure); set('c-bloom', bloom); set('c-fog', fog);
 }
 
