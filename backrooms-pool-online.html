@@ -2567,11 +2567,11 @@ scene.add(l3Group);
 (function buildLevel3() {
   const _before = new Set(scene.children);
   const floorMat = matFor({ diffuse: 'textures/station-floor.png' }, 6, 26, { roughness: 0.66, metalness: 0.05, env: 0.85 });
-  const wallMat = matFor({ diffuse: 'textures/station-wall.png' }, 12, 2.4, { roughness: 0.34, metalness: 0.06, env: 1.15 });
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e2124, roughness: 0.85, metalness: 0.1 });
+  const wallMat = matFor({ diffuse: 'textures/station-wall-old.png' }, 12, 2.4, { roughness: 0.34, metalness: 0.06, env: 1.15 });
+  const darkMat = matFor({ diffuse: 'textures/tunnel-concrete.png' }, 6, 6, { roughness: 0.9, metalness: 0.08, env: 0.6 });
   const trenchMat = new THREE.MeshStandardMaterial({ color: 0x282b2f, roughness: 0.9, metalness: 0.08 });
   const metalMat = new THREE.MeshStandardMaterial({ color: 0x54595e, roughness: 0.38, metalness: 0.82 });
-  const rustMat = new THREE.MeshStandardMaterial({ color: 0x5a3a28, roughness: 0.82, metalness: 0.45 });
+  const rustMat = matFor({ diffuse: 'textures/rust-metal.png' }, 2, 2, { roughness: 0.8, metalness: 0.5 });
   const yellowMat = new THREE.MeshStandardMaterial({ color: 0xc8a027, roughness: 0.55, metalness: 0.15, emissive: 0x2a2002, emissiveIntensity: 0.5 });
   const puddleMat = new THREE.MeshStandardMaterial({ color: 0x05070a, roughness: 0.06, metalness: 0.9, envMapIntensity: 1.6 });
 
@@ -2611,10 +2611,14 @@ scene.add(l3Group);
   addBox(0.06, 2.0, 1.1, 5.9, 1.0, 1.9, metalMat);                  // 敞开的铁网门叶
   addBox(0.06, 2.0, 1.1, 5.9, 1.0, -1.9, metalMat);
   // —— 立柱 / 长椅 / 设备 ——
+  const colMat = matFor({ diffuse: 'textures/station-wall-old.png' }, 2, 4, { roughness: 0.5, metalness: 0.05, env: 1.0 });
   for (let i = 0; i < 10; i++) {
     const z = -40 + i * 8;
-    addBox(0.55, 5.5, 0.55, 3.2, 2.75, z, wallMat, 1.2);
-    COLLIDERS_L3.push({ x1: 2.8, x2: 3.6, z1: z - 0.4, z2: z + 0.4 });
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 5.5, 14), colMat);
+    col.position.set(3.2, 2.75, z); col.castShadow = true; col.receiveShadow = true; scene.add(col);
+    addBox(0.9, 0.35, 0.9, 3.2, 0.175, z, darkMat, 0.9);
+    addBox(0.8, 0.25, 0.8, 3.2, 5.38, z, darkMat, 0.8);
+    COLLIDERS_L3.push({ x1: 2.82, x2: 3.58, z1: z - 0.42, z2: z + 0.42 });
   }
   const benchMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.5, metalness: 0.6 });
   for (const z of [-32, -20, -8, 4, 16, 28]) {
@@ -2689,6 +2693,46 @@ scene.add(l3Group);
     addBox(0.06, 0.9, 0.06, 0, 5.0, z - 1.4, metalMat);
     addBox(0.06, 0.9, 0.06, 0, 5.0, z + 1.4, metalMat);
   }
+  // —— 铁轨 / 枕木 / 第三轨（轨槽最大穿帮点修复） ——
+  const railMat = new THREE.MeshStandardMaterial({ color: 0x6a6f74, roughness: 0.3, metalness: 0.9 });
+  for (const rx of [-7.2, -9.8]) addBox(0.09, 0.14, 85, rx, -1.18, -2.5, railMat);
+  addBox(0.1, 0.16, 85, -6.1, -1.12, -2.5, new THREE.MeshStandardMaterial({ color: 0x3a2020, emissive: 0x200505, emissiveIntensity: 0.4, roughness: 0.6, metalness: 0.5 }));
+  const sleepers = new THREE.InstancedMesh(new THREE.BoxGeometry(2.6, 0.09, 0.26), trenchMat, 43);
+  const mtx = new THREE.Matrix4();
+  for (let i = 0; i < 43; i++) { mtx.setPosition(-8.5, -1.28, -44 + i * 2); sleepers.setMatrixAt(i, mtx); }
+  sleepers.instanceMatrix.needsUpdate = true; scene.add(sleepers);
+  // —— 顶棚横梁 / 电缆桥架 / 管道 ——
+  for (let i = 0; i < 12; i++) addBox(29.5, 0.35, 0.3, -3.75, 5.3, -42 + i * 7.6, darkMat, 2.0);
+  addBox(0.4, 0.1, 85, -2, 5.05, -2.5, metalMat, 1.0);
+  addBox(0.4, 0.1, 85, 4, 5.05, -2.5, metalMat, 1.0);
+  for (const [py, pr] of [[4.7, 0.09], [4.45, 0.06]]) {
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(pr, pr, 85, 8), metalMat);
+    pipe.rotation.x = Math.PI / 2; pipe.position.set(5.3, py, -2.5);
+    pipe.castShadow = true; scene.add(pipe);
+  }
+  // —— 复古海报（背墙） ——
+  const posterMat = new THREE.MeshStandardMaterial({ map: texFrom('textures/poster-vintage.png', 1, 1, true), roughness: 0.85, metalness: 0 });
+  for (const z of [-36, -24, -12, 12, 24, 36]) {
+    addPlane(1.2, 1.6, 5.47, 1.9, z, 0, -Math.PI / 2, posterMat);
+    addBox(1.34, 1.74, 0.06, 5.52, 1.9, z, metalMat, 0.5);
+  }
+  // —— 垃圾桶 / 灭火器箱 ——
+  for (const z of [-14, 10, 26]) {
+    const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.75, 12), metalMat);
+    bin.position.set(4.6, 0.375, z); bin.castShadow = true; bin.receiveShadow = true; scene.add(bin);
+    COLLIDERS_L3.push({ x1: 4.3, x2: 4.9, z1: z - 0.3, z2: z + 0.3 });
+  }
+  const feMat = new THREE.MeshStandardMaterial({ color: 0x8a1a14, roughness: 0.5, metalness: 0.3 });
+  for (const z of [-32, -8, 16]) addBox(0.18, 0.62, 0.28, 2.78, 1.25, z + 0.5, feMat);
+  // —— 夹层闸机 + 售票窗卷帘 ——
+  for (const gx of [-2.2, 0, 2.2]) addBox(0.35, 1.05, 1.4, gx, 3.72, 46.5, metalMat, 0.5);
+  COLLIDERS_L3.push({ x1: -2.6, x2: -1.8, z1: 45.6, z2: 47.4 });
+  COLLIDERS_L3.push({ x1: -0.4, x2: 0.4, z1: 45.6, z2: 47.4 });
+  COLLIDERS_L3.push({ x1: 1.8, x2: 2.6, z1: 45.6, z2: 47.4 });
+  addBox(4.2, 1.5, 0.1, 0, 4.6, 57.9, matFor({ diffuse: 'textures/rust-metal.png' }, 2, 1, { roughness: 0.7, metalness: 0.6 }));
+  // —— 站台缘石 ——
+  addBox(0.3, 0.06, 85, -4.85, 0.03, -2.5, darkMat, 1.0);
+
   // —— 碰撞 ——
   COLLIDERS_L3.push({ x1: 5.3, x2: 6.2, z1: -46, z2: -1.2 });
   COLLIDERS_L3.push({ x1: 5.3, x2: 6.2, z1: 1.2, z2: 60 });
@@ -2704,7 +2748,7 @@ scene.add(l3Group);
   COLLIDERS_L3.push({ x1: 6, x2: 11.5, z1: 11.9, z2: 12.6 });
   // —— 列车（终局） ——
   l3Train = new THREE.Group();
-  const trainMat = new THREE.MeshStandardMaterial({ color: 0x9aa2a8, roughness: 0.32, metalness: 0.85 });
+  const trainMat = matFor({ diffuse: 'textures/train-skin.png' }, 4, 1, { roughness: 0.35, metalness: 0.8, env: 1.2 });
   const trainDark = new THREE.MeshStandardMaterial({ color: 0x30363c, roughness: 0.5, metalness: 0.7 });
   const winMat = new THREE.MeshStandardMaterial({ color: 0x101418, emissive: 0xffd9a0, emissiveIntensity: 1.6, roughness: 0.2, metalness: 0.3 });
   for (const [z1, z2] of [[-14, -1.7], [1.7, 14]]) {
