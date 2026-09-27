@@ -2564,6 +2564,74 @@ const l3State = {
 const l3Group = new THREE.Group();
 scene.add(l3Group);
 
+/* 「检票员」：车站原生实体——制服/大檐帽/提灯/打孔钳，与 L0 黑影、泳池溺者剪影完全不同 */
+function buildConductor() {
+  const g = new THREE.Group();
+  const coatMat = new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.85, metalness: 0.05 });
+  const capMat = new THREE.MeshStandardMaterial({ color: 0x101218, roughness: 0.8 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 });
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, emissive: 0xd8e8ff, emissiveIntensity: 2.2 });
+  const brassMat = new THREE.MeshStandardMaterial({ color: 0x8a6a2a, roughness: 0.35, metalness: 0.9 });
+  const legL = new THREE.Group(); legL.position.set(-0.12, 0.75, 0);
+  const legR = new THREE.Group(); legR.position.set(0.12, 0.75, 0);
+  for (const lg of [legL, legR]) {
+    const th = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.4, 4, 8), coatMat); th.position.y = -0.24; lg.add(th);
+    const ft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.24), capMat); ft.position.set(0, -0.72, 0.05); lg.add(ft);
+    g.add(lg);
+  }
+  const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.44, 1.35, 14), coatMat);
+  coat.position.y = 1.15; g.add(coat);
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), coatMat); chest.position.y = 1.72; g.add(chest);
+  for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), brassMat); b.position.set(0, 1.5 - i * 0.18, 0.25); g.add(b); }
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 12), skinMat);
+  head.position.y = 1.98; head.scale.set(0.85, 1.15, 0.95); g.add(head);
+  const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.1, 12), capMat); capTop.position.y = 2.08; g.add(capTop);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.02, 12), capMat);
+  brim.position.set(0, 2.03, 0.06); brim.rotation.x = 0.25; g.add(brim);
+  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 6), eyeMat); e1.position.set(-0.045, 1.99, 0.1); g.add(e1);
+  const e2 = e1.clone(); e2.position.x = 0.045; g.add(e2);
+  const armR = new THREE.Group(); armR.position.set(0.26, 1.7, 0);
+  const upR = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.4, 4, 8), coatMat); upR.position.y = -0.22; armR.add(upR);
+  const lantern = new THREE.Group(); lantern.position.y = -0.5;
+  lantern.add(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.12), brassMat));
+  lantern.add(new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6),
+    new THREE.MeshStandardMaterial({ color: 0xffe0a0, emissive: 0xffb060, emissiveIntensity: 4 })));
+  const llight = new THREE.PointLight(0xffb060, 1.4, 7, 2); lantern.add(llight);
+  armR.add(lantern); g.add(armR);
+  const armL = new THREE.Group(); armL.position.set(-0.26, 1.7, 0);
+  const upL = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.42, 4, 8), coatMat); upL.position.y = -0.24; armL.add(upL);
+  const punch = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.05), brassMat); punch.position.y = -0.5; armL.add(punch);
+  g.add(armL);
+  g.userData = { legL, legR, armL, armR, lantern, coat, llight };
+  return g;
+}
+function animateConductor(g, dt, mode, t) {
+  const u = g.userData;
+  if (mode === 'walk') {
+    const s = t * 3.4;
+    u.legL.rotation.x = Math.sin(s) * 0.5;
+    u.legR.rotation.x = -Math.sin(s) * 0.5;
+    u.armL.rotation.x = -Math.sin(s) * 0.3;
+    u.lantern.rotation.z = Math.sin(s) * 0.25;
+    u.coat.rotation.z = Math.sin(s * 0.5) * 0.03;
+  } else {
+    u.legL.rotation.x *= 0.9; u.legR.rotation.x *= 0.9;
+    u.lantern.rotation.z = Math.sin(t * 1.2) * 0.08;
+    u.coat.rotation.z = Math.sin(t * 0.8) * 0.015;
+  }
+  u.llight.intensity = 1.4 + Math.sin(t * 7.3) * 0.15;
+}
+function synthWhistle() {
+  burst({ type: 'square', f0: 1900, f1: 2300, dur: 0.35, gain: 0.16, filter: 'bandpass', freq: 2100, q: 3, wet: 1.8 });
+  burst({ type: 'square', f0: 1500, f1: 1800, dur: 0.25, gain: 0.12, filter: 'bandpass', freq: 1650, q: 3, wet: 1.8, delay: 0.4 });
+}
+function synthConStep(pan, dist) {
+  const g = Math.max(0.05, 0.4 - dist * 0.016);
+  burst({ type: 'sine', f0: 82, f1: 40, dur: 0.14, gain: g, filter: 'lowpass', pan, wet: 1.6 });
+  burst({ dur: 0.05, freq: 2400, q: 2, gain: g * 0.35, pan, wet: 1.8 });   // 提灯金属咔哒
+}
+
+const l3PickedDefs = [];
 (function buildLevel3() {
   const _before = new Set(scene.children);
   const floorMat = matFor({ diffuse: 'textures/station-floor.png' }, 6, 26, { roughness: 0.66, metalness: 0.05, env: 0.85 });
@@ -2778,7 +2846,9 @@ scene.add(l3Group);
   l3Train.position.set(0, 0, -80);
   scene.add(l3Train);
   // —— 黑影 ——
-  l3Entity = makeEntity();
+  l3Entity = buildConductor();
+  l3Entity.visible = false;
+  scene.add(l3Entity);
   // —— 收进组并偏移 ——
   for (const o of scene.children.filter(o => !_before.has(o) && o !== l3Entity)) l3Group.add(o);
   l3Group.position.x = L3_OX;
@@ -2791,19 +2861,20 @@ L3_SPAWN.x += L3_OX;
 for (const td of L3_TICKET_DEFS) td[0] += L3_OX;
 
 const l3TicketMat = new THREE.MeshStandardMaterial({ color: 0xf5e6c8, emissive: 0x8a6a20, emissiveIntensity: 0.9, roughness: 0.6 });
-function spawnL3Ticket(x, z) {
+function spawnL3Ticket(x, z, di) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.11), l3TicketMat);
   m.position.set(x, 0.75, z);
   const glow = new THREE.PointLight(0xffc878, 0.55, 2.2, 2);
   glow.position.set(x, 0.95, z);
   scene.add(m); scene.add(glow);
-  l3Tickets.push({ mesh: m, glow, x, z, baseY: 0.75, ph: Math.random() * 6.28 });
+  l3Tickets.push({ mesh: m, glow, x, z, baseY: 0.75, ph: Math.random() * 6.28, di: di });
 }
 
 function resetL3State() {
   for (const tk of l3Tickets) { scene.remove(tk.mesh); if (tk.glow) scene.remove(tk.glow); }
   l3Tickets.length = 0; l3TicketCount = 0; l3NearestTicket = null;
-  L3_TICKET_DEFS.forEach(d => spawnL3Ticket(d[0], d[1]));
+  L3_TICKET_DEFS.forEach((d, i) => spawnL3Ticket(d[0], d[1], i));
+  l3PickedDefs.length = 0;
   l3State.dark = false; l3State.darkT = 0; l3State.nextFlicker = 14;
   l3State.nextTrainSound = 8; l3State.nextScreen = 2; l3State.stationT = 0;
   l3State.nextDrip = 5; l3State.nextClank = 12; l3State.nextPA = 35;
@@ -2833,6 +2904,7 @@ function tryL3Ticket() {
   if (l3NearestTicket.glow) scene.remove(l3NearestTicket.glow);
   const i = l3Tickets.indexOf(l3NearestTicket);
   if (i >= 0) l3Tickets.splice(i, 1);
+  l3PickedDefs.push(l3NearestTicket.di);
   l3TicketCount++;
   document.getElementById('v-task').textContent = '收集车票 ' + l3TicketCount + '/3';
   document.querySelectorAll('#fuse-slots i').forEach((s, j) => s.classList.toggle('on', j < l3TicketCount));
@@ -2928,39 +3000,86 @@ function updateLevel3(dt) {
     synthTrainPass();
     showFlashText('远处传来列车驶过的声音……');
   }
-  // 黑影
-  if (!l3State.entityOn && l3TicketCount >= 1 && Math.random() < dt * 0.09) {
-    l3State.entityOn = true; l3State.entityT = 0; l3State.lookT = 0;
-    const ez = player.z - 24;
-    l3Entity.position.set(player.x, 0, Math.max(-42, Math.min(38, ez)));
+  // 检票员：巡逻 → 查票 → (无票)追击 / (有票)颔首让行
+  const cd = l3State;
+  if (!cd.entityOn && l3TicketCount >= 1 && Math.random() < dt * 0.09) {
+    cd.entityOn = true; cd.entityT = 0; cd.lookT = 0;
+    cd.mode = 'patrol'; cd.patrolDir = 1; cd.chaseT = 0; cd.inspectT = 0; cd.stepT = 0;
+    l3Entity.position.set(player.x + (Math.random() < 0.5 ? -1 : 1) * 6, 0, Math.max(-42, Math.min(38, player.z - 26)));
     l3Entity.visible = true;
     synthKnock();
+    showFlashText('脚步声……和晃动的提灯光');
   }
-  if (l3State.entityOn) {
-    l3State.entityT += dt;
-    l3Entity.lookAt(player.x, 0, player.z);
-    animateDweller(l3Entity, dt, l3State.dark ? 'walk' : 'idle');
-    const dx = player.x - l3Entity.position.x, dz = player.z - l3Entity.position.z;
+  if (cd.entityOn) {
+    cd.entityT += dt;
+    const ex = l3Entity.position.x, ez = l3Entity.position.z;
+    const dx = player.x - ex, dz = player.z - ez;
     const dist = Math.hypot(dx, dz) || 1;
-    if (l3State.dark) {
-      l3Entity.position.x += dx / dist * 1.15 * dt;
-      l3Entity.position.z += dz / dist * 1.15 * dt;
-    }
     const facing = (dx / dist) * _look.x + (dz / dist) * _look.z;
-    if (facing < -0.55 && dist < 16) l3State.lookT += dt; else l3State.lookT = 0;
-    if (l3State.lookT > 0.7 || l3State.entityT > 26) {
-      l3State.entityOn = false; l3Entity.visible = false;
-      synthCreak();
-      showFlashText('它退回了隧道深处');
+    cd.stepT -= dt;
+    if (cd.stepT <= 0 && dist < 22) {
+      cd.stepT = cd.mode === 'chase' ? 0.45 : 0.8;
+      const pan = Math.max(-1, Math.min(1, (dx * -_look.z + dz * _look.x) / dist * 1.5));
+      synthConStep(pan, dist);
     }
-    if (dist < 1.5) {
-      l3State.entityOn = false; l3Entity.visible = false;
+    if (cd.mode === 'patrol') {
+      l3Entity.position.z += cd.patrolDir * 0.9 * dt;
+      if (l3Entity.position.z > 36) cd.patrolDir = -1;
+      if (l3Entity.position.z < -40) cd.patrolDir = 1;
+      l3Entity.lookAt(ex, 0, ez + cd.patrolDir * 5);
+      animateConductor(l3Entity, dt, 'walk', t * 0.001);
+      if (dist < 12) { cd.mode = 'inspect'; cd.inspectT = 0; synthWhistle(); showFlashText('检票员停下了……查票'); }
+      if (cd.dark && Math.random() < dt * 0.5) {
+        l3Entity.position.z = Math.max(-42, Math.min(38, l3Entity.position.z + Math.sign(dz) * 6));
+        synthCreak();
+      }
+    } else if (cd.mode === 'inspect') {
+      cd.inspectT += dt;
+      l3Entity.lookAt(player.x, 0, player.z);
+      animateConductor(l3Entity, dt, 'idle', t * 0.001);
+      if (cd.inspectT > 1.6) {
+        if (l3TicketCount >= 3) {
+          cd.mode = 'patrol'; cd.entityT = 0;
+          showFlashText('检票员验过你的票……颔首让行');
+          l3Entity.position.x += (l3Entity.position.x > player.x ? 1.5 : -1.5);
+        } else if (dist < 10) {
+          cd.mode = 'chase'; cd.chaseT = 9;
+          synthWhistle(); showFlashText('无票！检票员追来了！');
+        } else { cd.mode = 'patrol'; }
+      }
+    } else {
+      cd.chaseT -= dt;
+      l3Entity.lookAt(player.x, 0, player.z);
+      animateConductor(l3Entity, dt, 'walk', t * 0.0016);
+      l3Entity.position.x += dx / dist * 2.3 * dt;
+      l3Entity.position.z += dz / dist * 2.3 * dt;
+      if (cd.chaseT <= 0) { cd.mode = 'patrol'; showFlashText('它放弃了……回到巡逻'); }
+    }
+    if (cd.mode !== 'chase') {
+      if (facing < -0.55 && dist < 16) cd.lookT += dt; else cd.lookT = 0;
+      if (cd.lookT > 0.7 || cd.entityT > 40) {
+        cd.entityOn = false; l3Entity.visible = false;
+        synthCreak(); showFlashText('它提着灯退回隧道');
+      }
+    }
+    // 被抓 = 「请下车」：丢一张票 + 送到站台远端
+    if (dist < 1.4) {
+      cd.entityOn = false; l3Entity.visible = false; cd.mode = 'patrol';
       synthScare(); stats.scares++;
       const sf = document.getElementById('scare-flash');
       sf.style.opacity = '1'; setTimeout(() => { sf.style.opacity = '0'; }, 150);
-      showFlashText('它抓住了你……');
-      player.x = L3_SPAWN.x; player.z = L3_SPAWN.z;
-      player.y = groundAt(L3_SPAWN.x, L3_SPAWN.z); player.vy = 0;
+      if (l3TicketCount > 0 && l3PickedDefs.length) {
+        const di = l3PickedDefs.pop();
+        l3TicketCount--;
+        document.getElementById('v-task').textContent = '收集车票 ' + l3TicketCount + '/3';
+        document.querySelectorAll('#fuse-slots i').forEach((s, j) => s.classList.toggle('on', j < l3TicketCount));
+        spawnL3Ticket(L3_TICKET_DEFS[di][0], L3_TICKET_DEFS[di][1], di);
+        showFlashText('被「礼貌地」请下车……丢失一张车票');
+      } else {
+        showFlashText('被「礼貌地」请下车……');
+      }
+      player.x = L3_SPAWN.x; player.z = Math.min(38, player.z + 20);
+      player.y = groundAt(player.x, player.z); player.vy = 0;
       yaw = Math.PI; pitch = 0;
     }
   }
