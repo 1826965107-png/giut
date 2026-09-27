@@ -1848,6 +1848,12 @@ function synthStep(surface) {
     burst({ type: 'sine', f0: 190, f1: 85, dur: 0.06, gain: 0.24, filter: 'lowpass', pan, rand: true });
   }
 }
+function synthStepSoft(surface) {
+  stepSide ^= 1;
+  const pan = stepSide ? 0.15 : -0.15;
+  burst({ dur: 0.05, freq: 420, q: 0.8, gain: 0.06, filter: 'lowpass', pan, wet: 0.8, rand: true });
+  burst({ type: 'sine', f0: 70, f1: 40, dur: 0.06, gain: 0.05, filter: 'lowpass', pan, rand: true });
+}
 function synthPickup() { // 橡皮鸭哨：上滑回落 + 气声
   burst({ type: 'sine', f0: 500, f1: 1150, dur: 0.09, gain: 0.24, filter: 'lowpass', wet: 1.1 });
   burst({ type: 'sine', f0: 1150, f1: 560, dur: 0.13, gain: 0.2, filter: 'lowpass', delay: 0.09, wet: 1.2 });
@@ -2553,12 +2559,18 @@ const L3_TICKET_DEFS = [[2.5, -18], [8.5, 0], [0, 52]];   // 站台长椅 / 维�
 const l3Lights = [], l3Strips = [], l3Tickets = [];
 const l3Screen = { ctx: null, tex: null };
 let l3Entity = null, l3Train = null, l3NearestTicket = null;
+let l3PassTrain = null, l3Breaker = null, l3NearestBreaker = null;
+const l3TunLights = [];
+let playerCrouch = false, crouchH = 1, camShake = 0;
+let l3Ending = '', l3RideHint = '';
 let l3TicketCount = 0;
 const l3State = {
   dark: false, darkT: 0, nextFlicker: 15, nextTrainSound: 9, nextScreen: 2.5,
   stationT: 0, entityOn: false, entityT: 0, lookT: 0,
   trainArrived: false, trainT: 0, boarded: false, trainCols: false,
-  nextDrip: 5, nextClank: 12, nextPA: 35
+  nextDrip: 5, nextClank: 12, nextPA: 35,
+  nextPass: 30, passing: false, passT: 0, breakerOn: false,
+  rideT: 0, rideChoice: false, rideDone: false
 };
 
 const l3Group = new THREE.Group();
@@ -2849,6 +2861,33 @@ const l3PickedDefs = [];
   l3Entity = buildConductor();
   l3Entity.visible = false;
   scene.add(l3Entity);
+  // —— 过站列车（时刻表掩护用，快速掠过） ——
+  l3PassTrain = new THREE.Group();
+  const ptMat = new THREE.MeshStandardMaterial({ color: 0x7a8288, roughness: 0.35, metalness: 0.8 });
+  const ptWin = new THREE.MeshStandardMaterial({ color: 0x101418, emissive: 0xcfe0f0, emissiveIntensity: 2.2 });
+  const ptBody = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.6, 60), ptMat);
+  ptBody.position.set(-8.5, 0.05, 0); l3PassTrain.add(ptBody);
+  for (let wz = -28; wz <= 28; wz += 3) {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, 1.8), ptWin);
+    w.position.set(-6.68, 0.5, wz); l3PassTrain.add(w);
+  }
+  l3PassTrain.position.set(0, 0, -150); l3PassTrain.visible = false;
+  scene.add(l3PassTrain);
+  // —— 维修隧道断路器 + 白灯（交互目标） ——
+  l3Breaker = new THREE.Group();
+  const bx = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.7, 0.5), metalMat);
+  l3Breaker.add(bx);
+  const lever = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.4, 0.08), rustMat);
+  lever.position.set(0.2, 0.1, 0); lever.rotation.z = 0.9; l3Breaker.add(lever);
+  l3Breaker.userData.lever = lever;
+  l3Breaker.position.set(10.9, 1.3, 0);
+  scene.add(l3Breaker);
+  for (const z of [-8, 0, 8]) {
+    const wl = new THREE.PointLight(0xe8eef6, 0, 10, 2);
+    wl.position.set(8.5, 2.6, z); scene.add(wl);
+    l3TunLights.push(wl);
+  }
+
   // —— 收进组并偏移 ——
   for (const o of scene.children.filter(o => !_before.has(o) && o !== l3Entity)) l3Group.add(o);
   l3Group.position.x = L3_OX;
@@ -2873,7 +2912,10 @@ function spawnL3Ticket(x, z, di) {
 function resetL3State() {
   for (const tk of l3Tickets) { scene.remove(tk.mesh); if (tk.glow) scene.remove(tk.glow); }
   l3Tickets.length = 0; l3TicketCount = 0; l3NearestTicket = null;
-  L3_TICKET_DEFS.forEach((d, i) => spawnL3Ticket(d[0], d[1], i));
+  L3_TICKET_DEFS.forEach((d, i) => { if (i !== 1) spawnL3Ticket(d[0], d[1], i); });
+  l3State.breakerOn = false;
+  if (l3Breaker) l3Breaker.userData.lever.rotation.z = 0.9;
+  for (const wl of l3TunLights) wl.intensity = 0;
   l3PickedDefs.length = 0;
   l3State.dark = false; l3State.darkT = 0; l3State.nextFlicker = 14;
   l3State.nextTrainSound = 8; l3State.nextScreen = 2; l3State.stationT = 0;
@@ -2881,6 +2923,9 @@ function resetL3State() {
   l3State.entityOn = false; l3State.entityT = 0; l3State.lookT = 0;
   if (l3Entity) l3Entity.visible = false;
   l3State.trainArrived = false; l3State.trainT = 0; l3State.boarded = false;
+  l3State.rideT = 0; l3State.rideChoice = false; l3State.rideDone = false;
+  l3State.passing = false; l3State.passT = 0; l3State.nextPass = 30; l3Ending = ''; l3RideHint = '';
+  camShake = 0;
   if (l3State.trainCols) {
     l3State.trainCols = false;
     for (let i = COLLIDERS_L3.length - 1; i >= 0; i--) if (COLLIDERS_L3[i].train) COLLIDERS_L3.splice(i, 1);
@@ -2890,6 +2935,11 @@ function resetL3State() {
 }
 
 function updateL3Proximity() {
+  l3NearestBreaker = null;
+  if (!l3State.breakerOn && l3Breaker) {
+    const bx = l3Breaker.position.x + L3_OX, bz = l3Breaker.position.z;
+    if (Math.hypot(player.x - bx, player.z - bz) < 2.0) l3NearestBreaker = l3Breaker;
+  }
   let best = null, bd = 1.9;
   for (const tk of l3Tickets) {
     const dd = Math.hypot(player.x - tk.x, player.z - tk.z);
@@ -2898,6 +2948,15 @@ function updateL3Proximity() {
   l3NearestTicket = best;
 }
 
+function flipBreaker() {
+  if (!l3Breaker || l3State.breakerOn) return;
+  l3State.breakerOn = true;
+  l3Breaker.userData.lever.rotation.z = -0.9;
+  for (const wl of l3TunLights) wl.intensity = 2.2;
+  synthUnlock();
+  showFlashText('断路器合上——维修隧道亮灯，车票显现');
+  spawnL3Ticket(L3_TICKET_DEFS[1][0], L3_TICKET_DEFS[1][1], 1);
+}
 function tryL3Ticket() {
   if (!l3NearestTicket) return;
   scene.remove(l3NearestTicket.mesh);
@@ -2943,9 +3002,37 @@ function synthPA() {
   burst({ type: 'sawtooth', f0: 300, f1: 260, dur: 1.2, gain: 0.04, filter: 'bandpass', freq: 800, q: 4, wet: 2.2, attack: 0.4, delay: 1.4 });
 }
 
+function cd0() { return l3State; }
 function updateLevel3(dt) {
   if (LEVEL !== 2) return;
   const t = performance.now();
+  // —— 乘车结局序列 ——
+  if (l3State.boarded && !l3State.rideDone) {
+    l3State.rideT += dt;
+    camShake = 0.02;
+    if (l3State.rideT > 0.6 && l3State.rideT < 4.2) {
+      l3RideHint = l3State.rideChoice ? '紧急制动已拉下……' : '按 E 拉下紧急制动手柄 · 或静坐等待';
+      if (!l3State.rideChoice && keys.has('KeyE')) {
+        l3State.rideChoice = true;
+        synthUnlock();
+        showFlashText('你拉下了紧急制动……列车骤停');
+      }
+    } else {
+      l3RideHint = '';
+    }
+    if (l3State.rideT > 5.2) {
+      l3State.rideDone = true;
+      camShake = 0;
+      l3RideHint = '';
+      l3Ending = l3State.rideChoice
+        ? '你在黑暗中拉下了紧急制动——车门在两个世界之间打开'
+        : '你静坐到底——列车把你送去了"下一站"';
+      document.querySelector('#end-overlay .sub').textContent = l3Ending;
+      showEndScreen();
+    }
+    return;
+  }
+  camShake *= 0.9;
   l3State.stationT += dt;
   // 光池"驱赶"：身后熄灭、前方亮起
   for (const L of l3Lights) {
@@ -2980,6 +3067,21 @@ function updateLevel3(dt) {
     synthPA();
     const pa = ['广播：开往 ▓▓▓ 的列车即将进站……', '广播：请乘客 ▓▓▓▓ 前往检票口', '广播：本站没有出口。重复，本站没有出口', '广播：请勿在黄线外等待。它不喜欢'];
     showFlashText(pa[Math.floor(Math.random() * pa.length)]);
+  }
+  // —— 过站列车（时刻表掩护） ——
+  l3State.nextPass -= dt;
+  if (!l3State.passing && l3State.nextPass <= 0) {
+    l3State.passing = true; l3State.passT = 0;
+    if (l3PassTrain) l3PassTrain.visible = true;
+    synthTrainPass();
+    showFlashText('一列过站列车轰鸣而过——它听不见你了');
+  }
+  if (l3State.passing) {
+    l3State.passT += dt;
+    if (l3PassTrain) l3PassTrain.position.z = -150 + (l3State.passT / 6) * 300;
+    camShake = Math.max(camShake, 0.03);
+    if (cd0().mode === 'chase') { cd0().mode = 'patrol'; showFlashText('列车轰鸣掩盖了你……'); }
+    if (l3State.passT >= 6) { l3State.passing = false; l3State.nextPass = 32 + Math.random() * 22; if (l3PassTrain) l3PassTrain.visible = false; camShake = 0; }
   }
   // 站台屏幕
   l3State.nextScreen -= dt;
@@ -3042,7 +3144,7 @@ function updateLevel3(dt) {
           cd.mode = 'patrol'; cd.entityT = 0;
           showFlashText('检票员验过你的票……颔首让行');
           l3Entity.position.x += (l3Entity.position.x > player.x ? 1.5 : -1.5);
-        } else if (dist < 10) {
+        } else if (dist < (playerCrouch ? 6 : 10)) {
           cd.mode = 'chase'; cd.chaseT = 9;
           synthWhistle(); showFlashText('无票！检票员追来了！');
         } else { cd.mode = 'patrol'; }
@@ -3051,8 +3153,9 @@ function updateLevel3(dt) {
       cd.chaseT -= dt;
       l3Entity.lookAt(player.x, 0, player.z);
       animateConductor(l3Entity, dt, 'walk', t * 0.0016);
-      l3Entity.position.x += dx / dist * 2.3 * dt;
-      l3Entity.position.z += dz / dist * 2.3 * dt;
+      const cspd = (playerCrouch ? 1.7 : 2.3) * (l3State.passing ? 0.4 : 1);
+      l3Entity.position.x += dx / dist * cspd * dt;
+      l3Entity.position.z += dz / dist * cspd * dt;
       if (cd.chaseT <= 0) { cd.mode = 'patrol'; showFlashText('它放弃了……回到巡逻'); }
     }
     if (cd.mode !== 'chase') {
@@ -3102,7 +3205,6 @@ function updateLevel3(dt) {
       if (player.x < -6.3 + L3_OX && player.z > -1.7 && player.z < 1.7) {
         l3State.boarded = true;
         showFlashText('车门关闭……列车驶入黑暗');
-        setTimeout(() => showEndScreen(), 1400);
       }
     }
   }
@@ -3157,6 +3259,7 @@ const keysMap = {
   'KeyW': 'forward', 'ArrowUp': 'forward', 'KeyS': 'back', 'ArrowDown': 'back',
   'KeyA': 'left', 'ArrowLeft': 'left', 'KeyD': 'right', 'ArrowRight': 'right',
   'Space': 'jump', 'ShiftLeft': 'run', 'ShiftRight': 'run',
+  'ControlLeft': 'crouch', 'ControlRight': 'crouch',
 };
 
 document.getElementById('play-overlay').addEventListener('click', () => {
@@ -3224,11 +3327,19 @@ function collideCircle(x, z, r) {
 
 const _fwd = new THREE.Vector3(), _right = new THREE.Vector3();
 function updatePlayer(dt) {
+  if (l3State.boarded) {
+    camera.position.set(player.x + (Math.random() - 0.5) * camShake, player.y + EYE * crouchH + (Math.random() - 0.5) * camShake, player.z + (Math.random() - 0.5) * camShake);
+    camera.rotation.set(pitch, yaw, 0);
+    return;
+  }
   const waterLv = waterLevelAt(player.x, player.z);
   const submerged = waterLv !== null && player.y < waterLv;
   const camUnder = waterLv !== null && (player.y + EYE) < waterLv;
   const running = keys.has('ShiftLeft') || keys.has('ShiftRight');
-  const speed = (submerged ? 1.9 : (running ? 5.6 : 3.4)) * (1 + (running && !submerged ? 0 : 0));
+  const crouching = (keys.has('ControlLeft') || keys.has('ControlRight')) && !submerged;
+  playerCrouch = crouching;
+  crouchH += ((crouching ? 0.62 : 1) - crouchH) * Math.min(1, dt * 8);
+  const speed = (submerged ? 1.9 : (running ? 5.6 : 3.4)) * (crouching ? 0.5 : 1);
 
   _fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw));
   _right.set(Math.cos(yaw), 0, -Math.sin(yaw));
@@ -3269,19 +3380,19 @@ function updatePlayer(dt) {
     stepTimer -= dt;
     if (stepTimer <= 0) {
       const surface = LEVEL === 0 ? 'carpet' : (submerged ? 'water' : (player.x < -16.1 ? 'concrete' : 'tile'));
-      synthStep(surface);
-      stepTimer = (running ? 0.30 : 0.44) + (Math.random() - 0.5) * 0.10;
+      if (crouching) synthStepSoft(surface); else synthStep(surface);
+      stepTimer = (crouching ? 0.62 : (running ? 0.30 : 0.44)) + (Math.random() - 0.5) * 0.10;
     }
     cameraBob += dt * (running ? 13 : 9);
   }
   const bob = (player.grounded && il > 0) ? Math.sin(cameraBob) * 0.035 * Math.min(1, speed / 3.4) : 0;
-  camera.position.set(player.x, player.y + EYE + bob, player.z);
+  camera.position.set(player.x + (Math.random() - 0.5) * camShake, player.y + EYE * crouchH + bob + (Math.random() - 0.5) * camShake, player.z + (Math.random() - 0.5) * camShake);
   camera.rotation.set(pitch, yaw, 0);
 
   // 水下折射强度（仅相机入水，渐变过渡）
   refractionUniforms.uAmount.value += ((camUnder ? 1 : 0) - refractionUniforms.uAmount.value) * Math.min(1, dt * 4);
   // FOV
-  const targetFov = running && !camUnder ? 78 : 72;
+  const targetFov = camUnder ? 72 : (crouching ? 68 : (running ? 78 : 72));
   if (Math.abs(camera.fov - targetFov) > 0.1) { camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
 }
 
@@ -3332,7 +3443,10 @@ function tryInteract() {
     if (nearestFlash && !flashlight.owned) { pickFlash(); return; }
     tryFuse();
   } else {
-    if (LEVEL === 2) { tryL3Ticket(); return; }
+    if (LEVEL === 2) {
+      if (l3NearestBreaker) { flipBreaker(); return; }
+      tryL3Ticket(); return;
+    }
     tryPickup();
   }
 }
@@ -3385,6 +3499,7 @@ function showEndScreen() {
 }
 function hideEndScreen() {
   endScreenOpen = false;
+  document.getElementById('level-fade').style.opacity = '0';
   document.getElementById('end-overlay').style.display = 'none';
   if (!document.pointerLockElement) renderer.domElement.requestPointerLock();
 }
@@ -3411,6 +3526,7 @@ function resetGame() {
   if (exitLight) { exitLight.color.set(0xff3333); exitLight.intensity = 3.2; }
   // 关卡状态
   hideEndScreen();
+  document.getElementById('level-fade').style.opacity = '0';
   LEVEL = 0;
   ACTIVE_COLLIDERS = COLLIDERS_L0; ACTIVE_BOUNDS = BOUNDS_L0;
   scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
@@ -3567,11 +3683,13 @@ renderer.setAnimationLoop(() => {
     else if (nearestFlash && !flashlight.owned) { hintTarget = nearestFlash; hintText = '按 E 拾取手电筒'; }
     else if (nearestFuse) { hintTarget = nearestFuse; hintText = '按 E 拾取保险丝'; }
   } else if (LEVEL === 2) {
-    if (l3NearestTicket) { hintTarget = l3NearestTicket; hintText = '按 E 拾取车票'; }
+    if (l3NearestBreaker) { hintTarget = l3NearestBreaker; hintText = '按 E 合上断路器'; }
+    else if (l3NearestTicket) { hintTarget = l3NearestTicket; hintText = '按 E 拾取车票'; }
     else if (l3State.trainArrived && !l3State.boarded) { hintTarget = true; hintText = '列车已进站 · 跳下站台走进车门'; }
   } else if (nearestPickup) { hintTarget = nearestPickup; }
   const hintEl = document.getElementById('pickup-hint');
-  if (hintTarget) { hintEl.style.display = 'block'; hintEl.textContent = hintText; }
+  if (l3RideHint) { hintEl.style.display = 'block'; hintEl.textContent = l3RideHint; }
+  else if (hintTarget) { hintEl.style.display = 'block'; hintEl.textContent = hintText; }
   else hintEl.style.display = 'none';
 
   // 天光阴影节流：每 3 帧刷新一次（静态场景几乎无感，省 2/3 阴影开销）
