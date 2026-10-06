@@ -101,10 +101,10 @@
     position: fixed; left: 50%; top: 68%; transform: translateX(-50%); z-index: 9;
     color: #eafff9; font-size: 13px; letter-spacing: 2px;
     padding: 9px 22px; border-radius: 22px;
-    background: linear-gradient(180deg, rgba(12,20,23,0.82), rgba(8,14,16,0.85));
+    background: linear-gradient(180deg, rgba(12,20,23,0.94), rgba(8,14,16,0.95));
     border: 1px solid rgba(111,212,208,0.55);
     box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 16px rgba(111,212,208,0.18);
-    display: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: none;
     transition: opacity .25s;
   }
 
@@ -2646,9 +2646,9 @@ function synthConStep(pan, dist) {
 const l3PickedDefs = [];
 (function buildLevel3() {
   const _before = new Set(scene.children);
-  const floorMat = matFor({ diffuse: 'textures/station-floor.png' }, 6, 26, { roughness: 0.66, metalness: 0.05, env: 0.85 });
-  const wallMat = matFor({ diffuse: 'textures/station-wall-old.png' }, 12, 2.4, { roughness: 0.34, metalness: 0.06, env: 1.15 });
-  const darkMat = matFor({ diffuse: 'textures/tunnel-concrete.png' }, 6, 6, { roughness: 0.9, metalness: 0.08, env: 0.6 });
+  const floorMat = matFor({ diffuse: 'textures/station-floor.png' }, 1, 1, { roughness: 0.66, metalness: 0.05, env: 0.85 });
+  const wallMat = matFor({ diffuse: 'textures/station-wall-old.png' }, 1, 1, { roughness: 0.34, metalness: 0.06, env: 1.15 });
+  const darkMat = matFor({ diffuse: 'textures/tunnel-concrete.png' }, 1, 1, { roughness: 0.9, metalness: 0.08, env: 0.6 });
   const trenchMat = matFor({ diffuse: 'textures/trench-floor.png' }, 1, 1, { roughness: 0.9, metalness: 0.08, env: 0.5 });
   const metalMat = new THREE.MeshStandardMaterial({ color: 0x54595e, roughness: 0.38, metalness: 0.82 });
   const rustMat = matFor({ diffuse: 'textures/rust-metal.png' }, 2, 2, { roughness: 0.8, metalness: 0.5 });
@@ -2903,8 +2903,10 @@ const l3TicketMat = new THREE.MeshStandardMaterial({ color: 0xf5e6c8, emissive: 
 function spawnL3Ticket(x, z, di) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.11), l3TicketMat);
   m.position.set(x, 0.75, z);
-  const glow = new THREE.PointLight(0xffc878, 0.55, 2.2, 2);
-  glow.position.set(x, 0.95, z);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.95),
+    new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.set(x, 0.78, z);
   scene.add(m); scene.add(glow);
   l3Tickets.push({ mesh: m, glow, x, z, baseY: 0.75, ph: Math.random() * 6.28, di: di });
 }
