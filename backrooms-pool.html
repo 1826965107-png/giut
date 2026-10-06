@@ -2579,9 +2579,9 @@ scene.add(l3Group);
 /* 「检票员」：车站原生实体——制服/大檐帽/提灯/打孔钳，与 L0 黑影、泳池溺者剪影完全不同 */
 function buildConductor() {
   const g = new THREE.Group();
-  const coatMat = new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.85, metalness: 0.05 });
-  const capMat = new THREE.MeshStandardMaterial({ color: 0x101218, roughness: 0.8 });
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 });
+  const coatMat = matFor({ diffuse: 'textures/uniform-wool.png' }, 4, 4, { roughness: 0.85, metalness: 0.05, env: 0.6 });
+  const capMat = matFor({ diffuse: 'textures/uniform-wool.png' }, 2, 2, { roughness: 0.8, metalness: 0.05, env: 0.5, color: 0x8a90a0 });
+  const skinMat = matFor({ diffuse: 'textures/dead-skin.png' }, 2, 2, { roughness: 0.95, metalness: 0, env: 0.3, color: 0x30343a });
   const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, emissive: 0xd8e8ff, emissiveIntensity: 2.2 });
   const brassMat = new THREE.MeshStandardMaterial({ color: 0x8a6a2a, roughness: 0.35, metalness: 0.9 });
   const legL = new THREE.Group(); legL.position.set(-0.12, 0.75, 0);
@@ -2649,7 +2649,7 @@ const l3PickedDefs = [];
   const floorMat = matFor({ diffuse: 'textures/station-floor.png' }, 6, 26, { roughness: 0.66, metalness: 0.05, env: 0.85 });
   const wallMat = matFor({ diffuse: 'textures/station-wall-old.png' }, 12, 2.4, { roughness: 0.34, metalness: 0.06, env: 1.15 });
   const darkMat = matFor({ diffuse: 'textures/tunnel-concrete.png' }, 6, 6, { roughness: 0.9, metalness: 0.08, env: 0.6 });
-  const trenchMat = new THREE.MeshStandardMaterial({ color: 0x282b2f, roughness: 0.9, metalness: 0.08 });
+  const trenchMat = matFor({ diffuse: 'textures/trench-floor.png' }, 1, 1, { roughness: 0.9, metalness: 0.08, env: 0.5 });
   const metalMat = new THREE.MeshStandardMaterial({ color: 0x54595e, roughness: 0.38, metalness: 0.82 });
   const rustMat = matFor({ diffuse: 'textures/rust-metal.png' }, 2, 2, { roughness: 0.8, metalness: 0.5 });
   const yellowMat = new THREE.MeshStandardMaterial({ color: 0xc8a027, roughness: 0.55, metalness: 0.15, emissive: 0x2a2002, emissiveIntensity: 0.5 });
