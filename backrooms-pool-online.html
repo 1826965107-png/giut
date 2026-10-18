@@ -535,7 +535,7 @@ function groundAt(x, z) {
       const s = Math.min(11, Math.floor((z - 8) / 0.5));
       return (s + 1) * (5 / 12);
     }
-    if (lx >= -2 && lx <= 2 && z > 14 && z <= 16) return 5;
+    if (lx >= -2 && lx <= 2 && z > 14 && z <= 16) return player.y > 2.5 ? 5 : 0;
     // 夹层环廊（仅当人在上层）
     if (player.y > 2.5) {
       if (z >= 4 && z <= 8 && lx >= -9 && lx <= 9) return 5;
@@ -3079,8 +3079,9 @@ scene.add(l3Group);
     addBox(3.6, 1.0, 0.2, 0, 3.5, z, panelMat, 1.4);                      // 牌框
     addPlane(3.4, 0.85, 0, 3.5, z + 0.13, 0, 0, signMat);
     addPlane(3.4, 0.85, 0, 3.5, z - 0.13, 0, Math.PI, signMat);
-    for (const hx of [-1.4, 1.4]) addBox(0.07, 4.5, 0.07, hx, 6.25, z, metalMat);   // 吊杆 4.0 → 8.5
-    addBox(3.1, 0.09, 0.09, 0, 4.02, z, metalMat);                         // 横担
+    const shortHang = z > 12;                                              // z=16 的牌子挂在夹层楼板下方
+    for (const hx of [-1.4, 1.4]) addBox(0.07, shortHang ? 0.58 : 4.5, 0.07, hx, shortHang ? 4.3 : 6.25, z, metalMat);
+    if (!shortHang) addBox(3.1, 0.09, 0.09, 0, 4.02, z, metalMat);         // 横担
   }
   const scrC = makeCanvas(512, 256), scrG = scrC.getContext('2d');
   scrG.fillStyle = '#0a0c10'; scrG.fillRect(0, 0, 512, 256);
@@ -3791,9 +3792,12 @@ function updatePlayer(dt) {
   if (il > 0) { ix /= il; iz /= il; }
   moveAmount = il * (il > 0 ? 1 : 0);
 
+  const px0 = player.x, pz0 = player.z;
   player.x += ix * speed * dt;
   player.z += iz * speed * dt;
   [player.x, player.z] = collideCircle(player.x, player.z, RADIUS);
+  // 台阶过高视为墙：撤销本帧水平位移，防止被地面高度场“瞬移”到上一层
+  if (groundAt(player.x, player.z) - player.y > 0.62) { player.x = px0; player.z = pz0; }
 
   // 垂直
   const G = 12.5;
