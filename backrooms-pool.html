@@ -2756,18 +2756,17 @@ scene.add(l3Group);
   for (const [z1, z2, top] of [[-22, -20.66, 0], [-20.66, -19.33, -0.41], [-19.33, -18, -0.83]]) {
     addBox(1.8, top + 1.8, z2 - z1, -7.1, (top - 1.8) / 2, (z1 + z2) / 2, trenchMat, 0.8);
   }
-  // ═══ 夹层售票厅（y=5.0 环廊 + 中庭楼梯） ═══
-  addBox(18, 0.4, 4, 0, 4.8, 6, floorMat, 2.4);                         // 南环
-  addBox(18, 0.4, 8, 0, 4.8, 20, floorMat, 2.4);                        // 北环
+  // ═══ 夹层：售票厅（y=5.0，带吊顶的封闭大厅 + 中庭楼梯） ═══
+  addBox(18, 0.4, 4, 0, 4.8, 6, floorMat, 2.4);                         // 南环（梯口平台）
+  addBox(18, 0.4, 8, 0, 4.8, 20, floorMat, 2.4);                        // 北环（售票厅主厅）
   addBox(7, 0.4, 8, -5.5, 4.8, 12, floorMat, 2.4);                      // 西环
   addBox(7, 0.4, 8, 5.5, 4.8, 12, floorMat, 2.4);                       // 东环
   addBox(4, 0.4, 2, 0, 4.8, 15, floorMat, 2.4);                         // 楼梯平台
   for (let i = 0; i < 12; i++) {
     const top = (i + 1) * (5 / 12), z1 = 8 + i * 0.5;
     addBox(4, top + 0.2, 0.5, 0, (top - 0.2) / 2, z1 + 0.25, floorMat, 1.2);
-    addBox(4.04, 0.05, 0.07, 0, top - 0.02, z1 + 0.06, panelMat, 1.0);   // 踏步包边（防滑条）
+    addBox(4.04, 0.05, 0.07, 0, top - 0.02, z1 + 0.06, panelMat, 1.0);   // 踏步包边
   }
-  // 楼梯斜梁 + 扶手（两侧），让梯段看起来是"做出来的"而不是堆起来的
   {
     const ang = Math.atan2(5, 6), len = Math.hypot(5, 6);
     for (const sx of [-2.06, 2.06]) {
@@ -2783,38 +2782,159 @@ scene.add(l3Group);
       hr.castShadow = true; scene.add(hr);
     }
   }
-  // 栏板（视觉 + 限高层碰撞）
+  // 大厅吊顶（中庭洞口 x -2..2 / z 8..16 留空）
+  const hallCeilMat = new THREE.MeshStandardMaterial({ color: 0x9aa2a6, roughness: 0.92, metalness: 0.04, envMapIntensity: 0.18 });
+  addBox(18, 0.18, 4, 0, 8.38, 6, hallCeilMat, 3.0);
+  addBox(18, 0.18, 8, 0, 8.38, 20, hallCeilMat, 3.0);
+  addBox(7, 0.18, 8, -5.5, 8.38, 12, hallCeilMat, 3.0);
+  addBox(7, 0.18, 8, 5.5, 8.38, 12, hallCeilMat, 3.0);
+  const trofMat = new THREE.MeshStandardMaterial({ color: 0xf2f6f8, emissive: 0xe8f0f6, emissiveIntensity: 1.15, roughness: 0.5 });
+  for (const [cx, cz, cw] of [[0, 20, 13], [0, 6, 13], [-5.5, 12, 5.2], [5.5, 12, 5.2]]) {
+    addBox(cw, 0.07, 0.42, cx, 8.27, cz, trofMat, 1.0);                 // 吊顶灯槽
+  }
+  // 玻璃栏板 + 不锈钢扶手（中庭四周）
   const guideMat = new THREE.MeshStandardMaterial({ color: 0xaab2b6, roughness: 0.52, metalness: 0.3, envMapIntensity: 0.4 });
-  for (const [w, d, x, y, z, x1, x2, z1, z2] of [
-    [7, 0.1, -5.5, 5.55, 8, -9, -2, 7.9, 8.1],
-    [7, 0.1, 5.5, 5.55, 8, 2, 9, 7.9, 8.1],
-    [7, 0.1, -5.5, 5.55, 16, -9, -2, 15.9, 16.1],
-    [7, 0.1, 5.5, 5.55, 16, 2, 9, 15.9, 16.1],
-    [0.1, 6, -2.05, 5.55, 11, -2.15, -1.95, 8, 14],
-    [0.1, 6, 2.05, 5.55, 11, 1.95, 2.15, 8, 14]
+  const hallGlassMat = new THREE.MeshStandardMaterial({ color: 0xd8eef4, transparent: true, opacity: 0.16, roughness: 0.06, metalness: 0.1, envMapIntensity: 0.7, side: THREE.DoubleSide });
+  const railMat2 = new THREE.MeshStandardMaterial({ color: 0xb9c2c6, roughness: 0.28, metalness: 0.88, envMapIntensity: 0.9 });
+  for (const [w, d, x, z, x1, x2, z1, z2] of [
+    [7, 0.1, -5.5, 8, -9, -2, 7.9, 8.1],
+    [7, 0.1, 5.5, 8, 2, 9, 7.9, 8.1],
+    [7, 0.1, -5.5, 16, -9, -2, 15.9, 16.1],
+    [7, 0.1, 5.5, 16, 2, 9, 15.9, 16.1],
+    [0.1, 6, -2.05, 11, -2.15, -1.95, 8, 14],
+    [0.1, 6, 2.05, 11, 1.95, 2.15, 8, 14]
   ]) {
-    addBox(w, 1.0, d, x, y, z, guideMat, 0.6);
-    addBox(w, 0.06, d + 0.12, x, y + 0.53, z, trimMat, 0.6);              // 扶手
+    addBox(w, 0.9, d, x, 5.62, z, hallGlassMat, 0.6);
+    addBox(w + 0.03, 0.07, d + 0.03, x, 6.1, z, railMat2, 0.6);          // 顶扶手
+    addBox(w + 0.02, 0.09, d + 0.02, x, 5.12, z, railMat2, 0.6);         // 底框
     COLLIDERS_L3.push({ x1, x2, z1, z2, y1: 4.6, y2: 8.6 });
   }
-  // 夹层外墙 / 售票窗 / 闸机 / 卷帘 / 卫生间
+  // 大厅外墙（三面）
   addBox(0.5, 3.5, 20, -9.25, 6.75, 14, tileBandMat, 1.6);
   addBox(0.5, 3.5, 20, 9.25, 6.75, 14, tileBandMat, 1.6);
   addBox(18, 3.5, 0.5, 0, 6.75, 24.25, tileBandMat, 1.6);
   COLLIDERS_L3.push({ x1: -9.4, x2: -9.1, z1: 4, z2: 24, y1: 4.6, y2: 8.6 });
   COLLIDERS_L3.push({ x1: 9.1, x2: 9.4, z1: 4, z2: 24, y1: 4.6, y2: 8.6 });
   COLLIDERS_L3.push({ x1: -9, x2: 9, z1: 24.1, z2: 24.5, y1: 4.6, y2: 8.6 });
-  addBox(6, 1.1, 0.6, 0, 5.55, 23.6, metalMat, 0.6);                    // 售票柜台
-  addBox(6, 1.3, 0.08, 0, 6.95, 23.75, rustMat, 0.8);                   // 卷帘
-  COLLIDERS_L3.push({ x1: -3, x2: 3, z1: 23.2, z2: 24, y1: 4.6, y2: 8.6 });
+  // ── 售票厅：柜台 + 玻璃隔断 + 4 个窗口 + 编号 + 顶牌 ──
+  addBox(9.2, 0.95, 0.62, 0, 5.48, 23.5, metalMat, 0.7);
+  addBox(9.3, 0.07, 0.72, 0, 6.0, 23.5, trimMat, 0.7);
+  COLLIDERS_L3.push({ x1: -4.7, x2: 4.7, z1: 23.1, z2: 24, y1: 4.6, y2: 8.6 });
+  for (let wi = 0; wi < 4; wi++) {
+    const wx = -3.45 + wi * 2.3;
+    addBox(1.62, 1.15, 0.04, wx, 6.72, 23.62, hallGlassMat);
+    addBox(0.07, 1.24, 0.15, wx - 0.84, 6.7, 23.6, railMat2);
+    addBox(0.07, 1.24, 0.15, wx + 0.84, 6.7, 23.6, railMat2);
+    addBox(0.36, 0.14, 0.2, wx, 6.07, 23.42, railMat2, 0.6);             // 窗口台面
+    const nc = makeCanvas(96, 64), ng = nc.getContext('2d');
+    ng.fillStyle = '#f2c14a'; ng.fillRect(0, 0, 96, 64);
+    ng.fillStyle = '#1a1d20'; ng.font = 'bold 40px "Microsoft YaHei", sans-serif'; ng.textAlign = 'center';
+    ng.fillText('0' + (wi + 1), 48, 46);
+    const nt = new THREE.CanvasTexture(nc); nt.colorSpace = THREE.SRGBColorSpace;
+    addPlane(0.4, 0.26, wx, 5.74, 23.17, 0, Math.PI, new THREE.MeshBasicMaterial({ map: nt }));
+  }
+  {
+    const tc = makeCanvas(512, 128), tg = tc.getContext('2d');
+    tg.fillStyle = '#0e1418'; tg.fillRect(0, 0, 512, 128);
+    tg.strokeStyle = '#f2c14a'; tg.lineWidth = 3; tg.strokeRect(7, 7, 498, 114);
+    tg.fillStyle = '#f2c14a'; tg.font = 'bold 44px "Microsoft YaHei", sans-serif'; tg.textAlign = 'center';
+    tg.fillText('售 票 厅   TICKET HALL', 256, 78);
+    const tt = new THREE.CanvasTexture(tc); tt.colorSpace = THREE.SRGBColorSpace;
+    addBox(5.4, 1.2, 0.14, 0, 7.55, 24.02, panelMat, 1.2);
+    addPlane(5.2, 1.06, 0, 7.55, 23.94, 0, Math.PI, new THREE.MeshBasicMaterial({ map: tt }));
+    // 北墙东侧：票价 / 末班车公告板
+    const fc = makeCanvas(360, 200), fg = fc.getContext('2d');
+    fg.fillStyle = '#141a1e'; fg.fillRect(0, 0, 360, 200);
+    fg.strokeStyle = '#3c4a52'; fg.lineWidth = 4; fg.strokeRect(6, 6, 348, 188);
+    fg.fillStyle = '#e8eef2'; fg.font = 'bold 24px "Microsoft YaHei", sans-serif';
+    fg.fillText('票  价', 24, 46);
+    fg.fillStyle = '#9fb0b8'; fg.font = '19px "Microsoft YaHei", sans-serif';
+    fg.fillText('单程票            3 元', 24, 84);
+    fg.fillText('一日票            8 元', 24, 114);
+    fg.fillText('末班车           23:40', 24, 144);
+    fg.fillStyle = '#f2c14a'; fg.font = 'bold 18px "Microsoft YaHei", sans-serif';
+    fg.fillText('请自备零钱 · 不设找零', 24, 176);
+    const ft = new THREE.CanvasTexture(fc); ft.colorSpace = THREE.SRGBColorSpace;
+    addBox(2.3, 1.3, 0.1, 6.4, 6.5, 24.0, panelMat, 1.2);
+    addPlane(2.16, 1.18, 6.4, 6.5, 23.93, 0, Math.PI, new THREE.MeshBasicMaterial({ map: ft }));
+  }
+  // 排队栏杆（售票厅前）
+  for (const qx of [-4.2, -2.1, 0, 2.1, 4.2]) {
+    addBox(0.038, 0.9, 0.038, qx, 5.45, 22.2, railMat2);
+    addBox(0.14, 0.02, 0.14, qx, 5.01, 22.2, metalMat, 1.0);
+  }
+  addBox(8.5, 0.035, 0.035, 0, 5.88, 22.2, railMat2, 0.6);
+  // 检票闸机 + 上方导视
   for (const gx of [-4.5, 0, 4.5]) {
-    addBox(0.4, 1.05, 1.4, gx, 5.53, 18, metalMat, 0.5);
-    addBox(0.55, 0.06, 0.7, gx, 6.08, 17.7, new THREE.MeshStandardMaterial({ color: 0x101418, emissive: 0x20c060, emissiveIntensity: 1.2 }));
+    addBox(0.42, 1.05, 1.4, gx, 5.53, 18, metalMat, 0.5);
+    addBox(0.56, 0.06, 0.72, gx, 6.08, 17.7, new THREE.MeshStandardMaterial({ color: 0x101418, emissive: 0x20c060, emissiveIntensity: 1.2 }));
     COLLIDERS_L3.push({ x1: gx - 0.32, x2: gx + 0.32, z1: 17.2, z2: 18.8, y1: 4.6, y2: 8.6 });
   }
-  addBox(0.08, 1.8, 3, 8.96, 5.9, 10, rustMat, 0.8);                    // 商铺卷帘
-  addBox(0.08, 1.8, 3, 8.96, 5.9, 14.5, rustMat, 0.8);
-  addPlane(1.4, 2.1, -8.98, 5.9, 19, 0, Math.PI / 2, new THREE.MeshBasicMaterial({ color: 0x05070a }));
+  addBox(11, 0.06, 0.06, 0, 6.06, 18, railMat2, 0.6);                   // 闸机连栏
+  {
+    const gc = makeCanvas(384, 96), gg = gc.getContext('2d');
+    gg.fillStyle = '#0e1418'; gg.fillRect(0, 0, 384, 96);
+    gg.fillStyle = '#e8eef2'; gg.font = 'bold 34px "Microsoft YaHei", sans-serif'; gg.textAlign = 'center';
+    gg.fillText('检 票 口   GATES', 192, 44);
+    gg.fillStyle = '#7fe3dd'; gg.font = '18px "Microsoft YaHei", sans-serif';
+    gg.fillText('站台 ↓  请刷卡进站', 192, 76);
+    const gt = new THREE.CanvasTexture(gc); gt.colorSpace = THREE.SRGBColorSpace;
+    addBox(4.4, 1.0, 0.12, 0, 7.0, 18, panelMat, 1.2);
+    addPlane(4.26, 0.9, 0, 7.0, 17.93, 0, Math.PI, new THREE.MeshBasicMaterial({ map: gt }));
+    addPlane(4.26, 0.9, 0, 7.0, 18.07, 0, 0, new THREE.MeshBasicMaterial({ map: gt }));
+    for (const hx of [-1.7, 1.7]) addBox(0.05, 1.5, 0.05, hx, 7.9, 18, metalMat);
+  }
+  // 线网图灯箱（西墙）
+  {
+    const mc = makeCanvas(512, 320), mg = mc.getContext('2d');
+    mg.fillStyle = '#eef2ef'; mg.fillRect(0, 0, 512, 320);
+    mg.strokeStyle = '#c9d2cf'; mg.lineWidth = 2;
+    for (let k = 0; k < 8; k++) { mg.beginPath(); mg.moveTo(0, 40 * k); mg.lineTo(512, 40 * k); mg.stroke(); }
+    const lines = [['#d94f4f', 70, 0.35], ['#3f86d9', 150, 0.2], ['#d9a13f', 230, 0.5]];
+    for (const [c, y, o] of lines) {
+      mg.strokeStyle = c; mg.lineWidth = 9; mg.beginPath();
+      mg.moveTo(24, y); mg.bezierCurveTo(150, y + 40, 340, y - 50, 488, y + (o - 0.35) * 90); mg.stroke();
+      for (let st = 0; st < 7; st++) {
+        mg.fillStyle = '#ffffff'; mg.strokeStyle = '#333'; mg.lineWidth = 2;
+        mg.beginPath(); mg.arc(40 + st * 68, y + Math.sin(st) * 16, 6, 0, 6.3); mg.fill(); mg.stroke();
+      }
+    }
+    mg.fillStyle = '#1c2327'; mg.font = 'bold 22px "Microsoft YaHei", sans-serif';
+    mg.fillText('线 网 图 · NETWORK', 24, 30);
+    const mt = new THREE.CanvasTexture(mc); mt.colorSpace = THREE.SRGBColorSpace;
+    addBox(0.12, 2.1, 3.3, -8.94, 6.5, 12, panelMat, 1.2);
+    addPlane(3.1, 1.9, -8.86, 6.5, 12, 0, Math.PI / 2, new THREE.MeshBasicMaterial({ map: mt }));
+  }
+  // 商铺（东墙卷帘 + 招牌 + 售货机 + 长凳）
+  for (const [sz, nm] of [[10, '便利店 · 已打烊'], [14.5, '站内药房 · 已打烊']]) {
+    addBox(0.1, 2.2, 3.0, 8.97, 6.1, sz, rustMat, 1.2);
+    const sc = makeCanvas(320, 72), sg = sc.getContext('2d');
+    sg.fillStyle = '#151b1f'; sg.fillRect(0, 0, 320, 72);
+    sg.fillStyle = '#c8d2d6'; sg.font = 'bold 26px "Microsoft YaHei", sans-serif'; sg.textAlign = 'center';
+    sg.fillText(nm, 160, 46);
+    const st2 = new THREE.CanvasTexture(sc); st2.colorSpace = THREE.SRGBColorSpace;
+    addBox(0.1, 0.7, 3.0, 8.96, 7.5, sz, panelMat, 1.2);
+    addPlane(2.9, 0.62, 8.9, 7.5, sz, 0, -Math.PI / 2, new THREE.MeshBasicMaterial({ map: st2 }));
+    addBox(0.44, 0.9, 0.4, 8.5, 5.45, sz - 1.9, metalMat, 1.0);          // 售货机
+    COLLIDERS_L3.push({ x1: 8.24, x2: 8.76, z1: sz - 2.12, z2: sz - 1.68, y1: 4.6, y2: 8.6 });
+  }
+  // 洗手间（西墙：门框 + 门扇 + 门牌 + 内部微光）
+  addBox(0.1, 2.15, 1.5, -9.02, 6.08, 19, panelMat, 1.2);
+  addPlane(1.32, 1.98, -8.94, 6.05, 19, 0, Math.PI / 2, new THREE.MeshStandardMaterial({ color: 0x2a3238, roughness: 0.6, metalness: 0.35 }));
+  {
+    const wc = makeCanvas(160, 72), wg = wc.getContext('2d');
+    wg.fillStyle = '#0e1418'; wg.fillRect(0, 0, 160, 72);
+    wg.fillStyle = '#8fb7c4'; wg.font = 'bold 26px "Microsoft YaHei", sans-serif'; wg.textAlign = 'center';
+    wg.fillText('洗 手 间', 80, 46);
+    const wt = new THREE.CanvasTexture(wc); wt.colorSpace = THREE.SRGBColorSpace;
+    addPlane(0.86, 0.4, -8.9, 7.3, 19, 0, Math.PI / 2, new THREE.MeshBasicMaterial({ map: wt }));
+  }
+  const wcLight = new THREE.PointLight(0xcfe0e8, 2.2, 4, 1.0);
+  wcLight.position.set(-8.4, 6.2, 19); scene.add(wcLight);
+  // 消防柜 / 垃圾桶 / 长凳
+  addBox(0.24, 0.7, 0.5, -9.0, 5.35, 15.4, rustMat, 1.0);
+  addBox(0.42, 0.86, 0.42, -8.5, 5.43, 6.4, metalMat, 1.2);
+  addBox(0.42, 0.86, 0.42, 8.5, 5.43, 21.6, metalMat, 1.2);
   // ═══ 北维修间（断路器） ═══
   addBox(8, 0.2, 10, 2, -0.1, -29, trenchMat, 1.6);
   addBox(0.5, 3.6, 10, 6.25, 1.4, -29, darkMat, 1.2);
@@ -2968,8 +3088,8 @@ scene.add(l3Group);
     addBox(0.16, 0.96, 2.06, 4.88, 2.6, z, panelMat, 1.2);                 // 屏体
     addPlane(1.9, 0.8, 4.79, 2.6, z, 0, -Math.PI / 2, scrMat);
   }
-  addBox(2.5, 1.4, 0.14, 0, 6.4, 24.02, panelMat, 1.2);                    // 夹层屏体（贴北墙）
-  addPlane(2.4, 1.3, 0, 6.4, 23.93, 0, Math.PI, scrMat);
+  addBox(0.14, 1.4, 2.5, -8.94, 6.6, 9.6, panelMat, 1.2);                  // 夹层屏体（贴西墙，避免与售票厅顶牌重叠）
+  addPlane(2.4, 1.3, -8.86, 6.6, 9.6, 0, Math.PI / 2, scrMat);
   l3Screen.ctx = scrG; l3Screen.tex = scrTex;
   // 站台边缘冷光灯带（贴地，强化站台边界）
   {
@@ -2983,11 +3103,17 @@ scene.add(l3Group);
   // ═══ 灯光：站台光池（错列双排，避开中线立柱）/ 夹层 / 房间 / 隧道 ═══
   for (const [lx, lz] of [[-3.0, -18], [-3.0, -2], [-3.0, 14], [3.0, -10], [3.0, 6], [3.0, 22]]) {
     const sm = new THREE.MeshStandardMaterial({ color: 0x1a1d20, emissive: 0xffe0b0, emissiveIntensity: 1.7 });
-    addBox(0.42, 0.09, 3.0, lx, 3.9, lz, sm);
-    addBox(0.05, 4.56, 0.05, lx, 6.22, lz, metalMat);                      // 吊杆 3.94 → 8.5
-    addBox(0.68, 0.1, 0.68, lx, 3.98, lz, metalMat, 1.0);                  // 灯具吊架
+    const underHall = lz >= 3.5;                                          // 夹层楼板下方（净高 4.6）
+    const lampY = underHall ? 4.1 : 3.9;
+    addBox(0.42, 0.09, 3.0, lx, lampY, lz, sm);
+    if (underHall) {
+      addBox(0.05, 0.34, 0.05, lx, 4.38, lz, metalMat);                    // 短吊杆 4.21 → 4.55
+    } else {
+      addBox(0.05, 4.56, 0.05, lx, 6.22, lz, metalMat);                    // 吊杆 3.94 → 8.5
+    }
+    addBox(0.68, 0.1, 0.68, lx, lampY + 0.08, lz, metalMat, 1.0);          // 灯具吊架
     const l = new THREE.PointLight(0xffe6c2, 62, 26, 2);
-    l.position.set(lx, 3.2, lz); scene.add(l);
+    l.position.set(lx, underHall ? 3.5 : 3.2, lz); scene.add(l);
     l3Lights.push({ light: l, base: 46, i: lz, z: lz, pool: true, stripMat: sm });
     l3Strips.push({ material: sm, i: lz });
   }
