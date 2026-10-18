@@ -2851,6 +2851,15 @@ scene.add(l3Group);
   // ═══ 道具 ═══
   const benchMat = new THREE.MeshStandardMaterial({ color: 0x333a41, roughness: 0.55, metalness: 0.55 });
   const woodMat = new THREE.MeshStandardMaterial({ color: 0x7d5c3c, roughness: 0.72, metalness: 0.03, envMapIntensity: 0.3 });
+  // 沿站台补长椅与垃圾桶（避免空旷）
+  for (const bz of [-14, 12]) {
+    addBox(1.9, 0.07, 0.5, 2.0, 0.46, bz, woodMat, 1.2);
+    addBox(1.9, 0.07, 0.09, 2.0, 0.44, bz - 0.28, woodMat, 1.2);
+    for (const lx2 of [1.25, 2.75]) addBox(0.07, 0.44, 0.46, lx2, 0.22, bz, metalMat);
+    COLLIDERS_L3.push({ x1: 1.05, x2: 2.95, z1: bz - 0.34, z2: bz + 0.34 });
+    addBox(0.42, 0.86, 0.42, -4.6, 0.43, bz + 1.2, metalMat, 1.2);
+    COLLIDERS_L3.push({ x1: -4.82, x2: -4.38, z1: bz + 0.98, z2: bz + 1.42 });
+  }
   for (const z of [-20, -12, -4, 4, 12, 20]) {
     if (z === 12) continue;
     addBox(1.8, 0.06, 0.17, 2.6, 0.45, z - 0.16, woodMat, 0.4);
@@ -2962,6 +2971,11 @@ scene.add(l3Group);
   addBox(2.5, 1.4, 0.14, 0, 6.4, 24.02, panelMat, 1.2);                    // 夹层屏体（贴北墙）
   addPlane(2.4, 1.3, 0, 6.4, 23.93, 0, Math.PI, scrMat);
   l3Screen.ctx = scrG; l3Screen.tex = scrTex;
+  // 站台边缘冷光灯带（贴地，强化站台边界）
+  {
+    const em = new THREE.MeshStandardMaterial({ color: 0x0d1216, emissive: 0x9fd8e6, emissiveIntensity: 1.25 });
+    for (const ex of [-5.86, 5.86]) addBox(0.07, 0.03, 47.6, ex, 0.016, 0, em, 1.0);
+  }
   // 墙面竖向分缝（每 4m 一道，增加尺度感）
   for (let jz = -22; jz <= 22; jz += 4) {
     for (const jx of [-12.9, 12.9]) addBox(0.06, 8.4, 0.12, jx, 2.9, jz, panelMat, 2.0);
