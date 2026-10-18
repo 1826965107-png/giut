@@ -2981,6 +2981,7 @@ scene.add(l3Group);
 for (const cd of COLLIDERS_L3) {
   cd.x1 += L3_OX; cd.x2 += L3_OX;
   if (cd.gapX1 != null) { cd.gapX1 += L3_OX; cd.gapX2 += L3_OX; }
+  if (cd.y1 == null) { cd.y1 = -2.2; cd.y2 = 2.6; }   // 站台/轨槽层限高
 }
 BOUNDS_L3.x1 += L3_OX; BOUNDS_L3.x2 += L3_OX;
 L3_SPAWN.x += L3_OX;
