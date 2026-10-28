@@ -41,6 +41,9 @@ Level 0 · 后室（前置关卡）            Level 37 · 泳池层（通关场
 ## 🚀 快速开始
 
 ### 方式一：本地离线版（推荐）
+Windows 下双击 **`启动游戏.cmd`** 即可：自动检查或启动本机服务，然后打开游戏。已运行时会复用现有服务。
+
+直接进入第三层：`启动游戏.cmd --level=3`。也可在终端手动启动：
 ```bash
 git clone https://github.com/1826965107-png/giut.git
 cd giut
@@ -51,7 +54,7 @@ node server.js            # 需 Node.js ≥ 18
 ### 方式二：CDN 双击版（需联网）
 直接双击打开 `backrooms-pool-online.html`（Three.js 从 jsDelivr 加载）。
 
-> ⚠️ 本地版通过 `<script type="module">` + importmap 加载，必须走 HTTP 服务（`node server.js`）；浏览器直接以 `file://` 打开请用 CDN 版。
+> 本地版通过 `<script type="module">` + importmap 加载，需要 HTTP 服务。双击本地 HTML 会转到本机地址；若服务尚未启动，请先运行 `启动游戏.cmd`。
 
 ---
 
@@ -116,6 +119,9 @@ node -e "const h=require('fs').readFileSync('backrooms-pool.html','utf8');const 
 ```
 
 - 关卡数据（泳池/台阶/碰撞/分区）集中在文件顶部 `/* 地图数据 */` 区块，调结构改这里
+- 第三层可直接预览：`http://127.0.0.1:8555/backrooms-pool.html?level=3`。车站采用独立任务界面，右上角可展开画面设置，`H` 隐藏界面，`R` 回到车站起点。
+- 第三层检查：运行 `node tools/check-station.cjs`，校验语法、素材与本地/CDN 版本一致性；再打开 `http://127.0.0.1:8555/test-station.html?level=3`，运行 26 项任务流程、楼梯及环廊行走、家具交叠、细节合批与界面检查。检查页不修改通关存档。
+- 地图细部：28 级楼梯与碰撞高度共用尺寸；连续对缝的 60cm 地砖；带轨头、扣件与道砟的钢轨；倒角家具、设备柜、售票窗及管线支架。静态小零件按几何体与材质合批。
 - Windows 下 git 若报 `schannel SEC_E_NO_CREDENTIALS`：`git config --local http.sslBackend openssl`
 
 ---
