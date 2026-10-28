@@ -309,6 +309,7 @@
   <h1>POOLROOMS</h1>
   <div class="sub">Level 0 · 后室 — 收集 3 枚保险丝，逃往泳池层</div>
   <div class="btn">点击进入</div>
+  <div class="btn" id="btn-l3" style="margin-top:2px;font-size:13px;padding:7px 20px;letter-spacing:2px;opacity:.72;">从第三关开始 · 地下车站</div>
   <div class="keys">
     <kbd>WASD</kbd> 移动 · 鼠标 观察 · <kbd>Shift</kbd> 奔跑 · <kbd>空格</kbd> 跳跃 · <kbd>E</kbd> 交互拾取<br>
     <kbd>Esc</kbd> 释放光标调参 · <kbd>H</kbd> 面板 · 小心黑暗中的东西…
@@ -4602,6 +4603,14 @@ const keysMap = {
 document.getElementById('play-overlay').addEventListener('click', () => {
   initAudio();
   if (!stats.started) { stats.started = true; stats.start = performance.now(); }
+  renderer.domElement.requestPointerLock();
+});
+// 「从第三关开始」：直接跳到地下车站（列车已到站）
+document.getElementById('btn-l3').addEventListener('click', (e) => {
+  e.stopPropagation();
+  initAudio();
+  if (!stats.started) { stats.started = true; stats.start = performance.now(); }
+  if (LEVEL !== 2) enterLevel3(true);
   renderer.domElement.requestPointerLock();
 });
 document.addEventListener('pointerlockchange', () => {
