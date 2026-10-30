@@ -1,0 +1,22 @@
+{
+  "generator": "built-in image_gen.imagegen",
+  "purpose": "第四关首次回返：Codex美术素材",
+  "date": "2026-10-30",
+  "assets": [
+    {
+      "file": "l4-damp-concrete.png",
+      "prompt": "Production-ready seamless physically plausible albedo texture for a realistic psychological-horror abandoned subway tunnel. A single square flat orthographic surface scan of cast grey concrete lining, subtle pores, fine hairline cracking, grey mineral bloom and restrained vertical water seep stains, cool desaturated mid-grey with slight green charcoal discoloration, detailed but quiet at distance. Texture only, perfectly edge-tileable in both axes, even diffuse illumination, no perspective, no cast shadow, no baked highlights, no vignette, no borders, no objects, no text, no doors, no pipes, no panel grid. Not black: preserve usable middle grey values for runtime darkness. 1024 square or higher. Material is damp concrete, not rocky stone or brick. Fine and medium detail, realistic photographic microstructure. Intended game asset l4-damp-concrete.png.",
+      "transparent": false
+    },
+    {
+      "file": "l4-aged-enamel.png",
+      "prompt": "Production-ready seamless albedo texture for the body panels and inner ceiling of a realistically decayed subway car in a psychological horror game. A single square flat orthographic surface scan of aged pale grey-green enamel paint on steel, paint crazing, worn off-white layers, sparse irregular red-brown oxidized patches concentrated organically along scratches, small dark oily stains, years of damp neglect. Predominantly pale grey enamel, rust covers only 20 percent, not an orange all-rust sheet. Perfectly edge-tileable in both axes, even diffuse lighting, no perspective, no cast shadow or baked highlights, no vignette, no borders, no text, no screws, no panel frames, no objects. Crisp fine photographic surface detail, not painterly. 1024 square or higher. Intended game asset l4-aged-enamel.png.",
+      "transparent": false
+    },
+    {
+      "file": "l4-worn-vinyl.png",
+      "prompt": "Production-ready seamless albedo texture for an old subway bench seat in a realistic psychological horror game. Single square orthographic flat surface material scan of aged muted grey-teal vinyl upholstery, very fine leatherette pebble grain, restrained lighter abraded streaks and occasional small softened creases, some desaturated ingrained grime, material intact with subtle worn areas, no huge holes. Predominantly medium muted teal grey, not black, preserve material readability in a flashlight. Perfectly edge-tileable in both axes, even diffuse lighting, no perspective, no cast shadows, no baked highlights, no vignette, no borders, no seams dividing a cushion, no stitching, no objects, no text. Photorealistic microstructure. 1024 square or higher. Intended game asset l4-worn-vinyl.png.",
+      "transparent": false
+    }
+  ]
+}

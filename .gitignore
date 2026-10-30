@@ -9,7 +9,7 @@ node_modules/
 Thumbs.db
 desktop.ini
 
-# �޹��ļ����������ϣ�
+# 本地练习与临时文件
 _exam_extract/
 _exam_grade/
 
@@ -19,3 +19,22 @@ test-*.html
 tools/_*.mjs
 tools/_*.cjs
 tools/_*.html
+
+# 正式构建脚本与第四关检查入口
+!/test-level4.html
+!/tools/_mkcdn.cjs
+
+# 本机制作副本、权限诊断与其他独立项目
+/workbench/
+/acl-recovery/
+/projects/
+/larmor-ggb/
+/larmor-precession/
+/physics/
+
+# 本机调试截图、日志和建模草稿
+/tools/*.png
+/tools/*.err
+/tools/*.out
+/tools/dom.html
+/tools/car-build*.js

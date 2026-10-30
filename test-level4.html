@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>第四关《回声区间》· 画面检查</title>
+<style>
+  :root { --bg:#0a0d0f; --panel:#11171a; --line:#223137; --ink:#d8e6e4; --dim:#7e9490; --hi:#8fe3b4; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13px/1.6 "Segoe UI", system-ui, sans-serif; display:flex; height:100vh; }
+  #side { width:352px; flex:0 0 352px; border-right:1px solid var(--line); padding:14px 14px 40px; overflow:auto; background:var(--panel); }
+  h1 { margin:0 0 2px; font-size:14px; letter-spacing:2px; color:#eaf7f3; font-weight:500; }
+  p.sub { margin:0 0 12px; color:var(--dim); font-size:11px; letter-spacing:1px; }
+  h2 { margin:16px 0 6px; font-size:11px; letter-spacing:2px; color:var(--hi); font-weight:500; }
+  button { display:block; width:100%; text-align:left; margin:3px 0; padding:6px 9px; font:12px/1.35 inherit; color:var(--ink);
+    background:#16202400; border:1px solid var(--line); border-radius:4px; cursor:pointer; }
+  button:hover { border-color:#3a5a52; background:#162024; }
+  ol, ul { margin:4px 0 0 18px; padding:0; color:var(--dim); font-size:11.5px; }
+  li { margin:2px 0; }
+  code { color:#b9d8cf; background:#0d1416; padding:0 3px; border-radius:3px; }
+  #frameWrap { flex:1 1 auto; position:relative; }
+  iframe { width:100%; height:100%; border:0; display:block; background:#05070a; }
+  .hint { color:#c8a86a; }
+  .row { display:flex; gap:6px; }
+  .row button { margin:3px 0; }
+</style>
+</head>
+<body>
+<div id="side">
+  <h1>第四关 · 回声区间</h1>
+  <p class="sub">画面检查页 · 预览模式（?level=4）不写通关记录</p>
+
+  <h2>机位（?l4view=… &amp; ?cam=x,y,z,yaw,pitch）</h2>
+  <div id="presets"></div>
+  <div class="row">
+    <button id="btn-free">从出生点自由走（无 cam）</button>
+  </div>
+
+  <h2>看什么</h2>
+  <ol>
+    <li><b>车厢</b>：正常车是原地铁车厢，座椅/立柱/扶手/门缝光都在；门洞对得上，中门开后能走到步道</li>
+    <li><b>步道手电</b>：门外靠墙一只实体手电（不埋地、不悬空），拾取前 F 无效、HUD 显示「未拾取」</li>
+    <li><b>隧道</b>：单一走向的暗隧道，步道比轨槽高，靠墙管束与支架、环肋按 6m 周期重复</li>
+    <li><b>接缝</b>：走到 z≈−48 时同朝向平移 84m 回起点段；画面不黑、不转镜、不停步，缝两侧几何/材质/UV 与灯一致</li>
+    <li><b>回返落点</b>：落点朝前看不到列车（雾与手电有效距离之外），继续走近才慢慢显形</li>
+    <li><b>异变后的车</b>：仍是同一节车厢，但锈蚀/老化，板材轻微鼓曲、窗框错位、扶手倾斜、车顶局部下垂；8 个真窗洞 + 低透明旧玻璃</li>
+    <li><b>可玩性</b>：门净宽 ≥1.1m、中心过道净宽 ≥1.0m、可走净高 ≥2.15m；吊板低边不许被跳跃穿头</li>
+    <li><b>拾取物</b>：电池在敞开座椅旁的收纳架上，钥匙在驾驶端设备托盘上；拿齐后阶段结束但不结算</li>
+  </ol>
+
+  <h2>声音自查（真实游玩时）</h2>
+  <ul>
+    <li><b>跨缝必须没有额外声音</b>：缝边来回走 W/S 不应出现吱嘎叠加；跨缝瞬间只有持续的环境风噪</li>
+    <li>拾手电、开中门、拾电池、拾钥匙各有一次性提示音，不重复触发</li>
+    <li>暂停 / 失锁 / 重开都不应出现声音堆积或残留</li>
+  </ul>
+
+  <h2>走一遍（真实流程）</h2>
+  <ul>
+    <li>进关后先在车内转身对中门 → <code>E</code> 开门下车 → 门口步道拾手电（<code>E</code>）→ <code>F</code> 开灯</li>
+    <li>沿步道一直向前（同朝向）走约 48m → 无感跨缝 → 继续向前 36m 才重新看到列车（已异变）</li>
+    <li>回到中门进车 → 座椅旁收纳架取电池 → 驾驶端托盘取钥匙 → 提示变为「继续探索」，不通关</li>
+    <li>按 <code>R</code> 完整复位（手电、门、电池、钥匙、异变全部回到初始），可再走一遍</li>
+  </ul>
+
+  <h2>说明</h2>
+  <ul>
+    <li>机位设置真实预建状态用于检查画面；自由走入口保留完整交互流程</li>
+    <li>本页用 <code>?level=4</code> 预览，不写 <code>poolrooms.records.v1</code></li>
+    <li>要点亮/操作请在 iframe 里点击锁定鼠标后正常游玩</li>
+    <li class="hint">机位页面隐藏 HUD；按 <code>Ctrl+R</code> 重载本页换机位</li>
+  </ul>
+</div>
+<div id="frameWrap"><iframe id="frame" src="about:blank"></iframe></div>
+<script>
+const OX = 360;
+// 机位名必须与 backrooms-pool.html 的 ?l4view= 白名单一致：
+// car / walkway / torch / seam / arrive / aged / battery / key
+const presets = [
+  ['① 车厢内 · 朝中门（车门已开）', 'car'],
+  ['② 车门外 · 步道上的实体手电', 'torch'],
+  ['③ 车门旁 · 沿隧道向前', 'walkway'],
+  ['④ 隧道深处 · 接缝前（z≈−42）', 'seam'],
+  ['⑤ 跨缝落点 · 向前看不到列车（z=36）', 'arrive'],
+  ['⑥ 异变后 · 车内向前看', 'aged'],
+  ['⑦ 电池 · 敞开座椅旁的收纳架', 'battery'],
+  ['⑧ 钥匙 · 驾驶端设备托盘', 'key'],
+  ['⑨ 接缝前 · 精确对比机位', 'seam-before'],
+  ['⑩ 接缝后 · 精确对比机位', 'seam-after'],
+  ['⑪ 异变列车 · 从步道看向车门', 'aged-exterior'],
+];
+const frame = document.getElementById('frame');
+const box = document.getElementById('presets');
+const load = (q) => { frame.src = 'backrooms-pool.html' + (q || '?level=4'); };
+for (const [label, view] of presets) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  // cam 由宿主的 place() 按 l4view 覆盖，这里只给一个合法占位坐标
+  b.onclick = () => load('?level=4&l4view=' + view + '&cam=' + [OX.toFixed(2), 1.70.toFixed(2), 0, 0, 0].join(','));
+  box.appendChild(b);
+}
+document.getElementById('btn-free').onclick = () => load('?level=4');
+load('?level=4');
+</script>
+</body>
+</html>

@@ -18,10 +18,13 @@ Level 0 · 后室（前置关卡）            Level 37 · 泳池层（通关场
 └─────────────────────┘              └──────────────────────────┘
 ```
 
+第三关乘车约 6.4s 后故障停车，承接 **Level 4 · 回声区间：第一次回返**。紧急制动与静坐两种选择都从正常列车进入新版。
+
 | 阶段 | 目标 | 恐怖/玩法元素 |
 |---|---|---|
 | **Level 0** | 找齐 3 枚保险丝 → 东端 EXIT 门解锁 → 逃入泳池层 | 灯管大面积烧毁、手电成为关键；**黑影实体**三种行为：远处凝视（靠近触发惊吓）、第 2 枚保险丝后**追击战 12s**（2.2m/s，走跑可甩脱）、第 3 枚后**逃亡追逐 22s**（3.05m/s，全灯骤暗 + 心跳声 + 嗡鸣渐强）；被抓即回出生点（道具进度保留） |
 | **Level 37** | 自由探索标准游泳馆，集齐 6 个漂浮物（小黄鸭 ×4 / 救生圈 ×2） | **泳池恐怖包**：①「池中人」——苍白人影立于深水池底、时刻面向你，**全馆停电**（进馆 15~30s 后首次，之后每 24~50s）时它会换位，来电瞬间离你太近→惊吓；②停电时**水下掠影**高速滑过 + 远处水声；③**背视漂移**——漂浮物在你没看它时缓缓靠近；④随机滴水/水声回声。潜入深水触发水下折射滤镜；集齐后弹出 **通关结算**（用时/惊吓/收集度），一键**再玩一次** |
+| **Level 4 · 回声区间**<br>（关卡编号 3，第三关乘车途中进入） | 故障停车 → E 开门下车 → 门外拾实体手电 → 沿黑暗隧道前进 → 无缝回到起点 → 旧列车异变 → 进车拾电池和应急通行钥匙 | **心理恐怖阶段一**：列车老旧、窗框错位、扶手倾斜、车顶下垂。本次到资源探索为止，继续自由走动，不结算、不写全流程纪录。 |
 
 ### 操作
 
@@ -31,9 +34,9 @@ Level 0 · 后室（前置关卡）            Level 37 · 泳池层（通关场
 | 鼠标 | 视角 |
 | `Shift` | 奔跑 |
 | `空格` | 跳跃 / 水中上浮 |
-| `E` | 交互拾取；车厢内关门发车；行驶中选择紧急制动 |
-| `R` | 返回本关起点；乘车时返回站台并恢复开门 |
-| `F` | 手电筒开关（仅 Level 0 生效，有电量） |
+| `E` | 交互拾取；车厢内关门发车；行驶中选择紧急制动；第四关：打开中门、拾手电、电池与钥匙 |
+| `R` | 返回本关起点；乘车时返回站台并恢复开门；第四关完整恢复正常列车及未拾取物品 |
+| `F` | 手电开关；第四关必须先拾取手电，独立电量约260秒，备用电池耗尽时自动补给一次 |
 | `Esc` / `P` | 释放光标（可调左上角参数面板） |
 | `H` | 隐藏 / 显示 HUD 面板 |
 
@@ -44,7 +47,7 @@ Level 0 · 后室（前置关卡）            Level 37 · 泳池层（通关场
 ### 方式一：本地离线版（推荐）
 Windows 下双击 **`启动游戏.cmd`** 即可：自动检查或启动本机服务，然后打开游戏。已运行时会复用现有服务。
 
-直接进入第三层：`启动游戏.cmd --level=3`。也可在终端手动启动：
+直接进入第三层：`启动游戏.cmd --level=3`；直接进入第四关：`启动游戏.cmd --level=4`（预览模式，不写全流程记录）。也可在终端手动启动：
 ```bash
 git clone https://github.com/1826965107-png/giut.git
 cd giut
@@ -54,6 +57,9 @@ node server.js            # 需 Node.js ≥ 18
 
 ### 方式二：CDN 双击版（需联网）
 直接双击打开 `backrooms-pool-online.html`（Three.js 从 jsDelivr 加载）。
+
+> 该副本由 `node sync-online.cjs` 从本地版生成：除了 importmap 里的 three / three addons 两行换成 CDN，其余逐字节相同（`tools/check-metro.cjs`、`tools/check-station.cjs` 的 CDN 一致性断言就按这条规则比对，别手工改别的字符）。
+> 第四关是独立模块 `levels/level4-tunnel.js`，用相对 import 载入，所以 CDN 版也要和 `levels/` 放在同一目录、并通过 HTTP 打开；双击 `file://` 时浏览器会拦掉相对模块（CORS），请改用 `启动游戏.cmd` 或本机服务。
 
 > 本地版通过 `<script type="module">` + importmap 加载，需要 HTTP 服务。双击本地 HTML 会转到本机地址；若服务尚未启动，请先运行 `启动游戏.cmd`。
 
@@ -71,9 +77,11 @@ node server.js            # 需 Node.js ≥ 18
 
 **关卡与玩法**
 - 数据驱动碰撞（AABB 列表 + 圆推进解），地面/水位按矩形区域查询
+- 第四关程序为 `levels/level4-tunnel.js`，通过 `createLevel4(ctx)` 接入宿主，共用注入的 THREE；材质由 Codex 的 `levels/level4-art.js` 提供，正式贴图为 `textures/l4-*.png`。保留独立偏移 `L4_OX=360` 与渲染层3。
+- 第四关固定4盏场景灯与一盏手电，正常/异常列车预建预热；回返只切状态、不新增灯/网格/材质。接缝保持镜头步态，不发提示音，近景几何与米制纹理周期一致。
 - ShapeGeometry 洞口地板 + 世界坐标 UV；Box/Plane 逐面 UV 缩放 → **全场共享单张贴图**，原图直出省显存
 - 第一人称控制器：重力 / 跳跃 / 游泳 / 头摆 / 奔跑 FOV
-- 双关卡状态机（Level 0 ⇄ Level 37）：碰撞/边界/雾/光照随关卡切换
+- 多关卡状态机（后室 → 泳池 → 车站 → 回声区间）：碰撞/边界/雾/光照随关卡切换
 - 运行时错误可视化（左下角红框，告别黑屏哑火）
 
 **程序化贴图引擎**（无需任何外部素材也能跑）
@@ -100,6 +108,8 @@ node server.js            # 需 Node.js ≥ 18
 .
 ├── backrooms-pool.html        # 🎮 游戏本体（本地版，importmap → vendor/）
 ├── backrooms-pool-online.html # 🎮 游戏本体（CDN 版，可双击）
+├── levels/level4-tunnel.js    # 黑暗隧道、首次回返与异变列车的程序主体
+├── test-level4.html           # 11个正式场景诊断机位，预览不写档
 ├── server.js                  # 零依赖静态服务器（Node ≥18）
 ├── vendor/three/              # Three.js r160 + addons（离线依赖）
 ├── tools/download-three.mjs   # vendor 重新生成脚本
@@ -115,6 +125,10 @@ node server.js            # 需 Node.js ≥ 18
 # 重新拉取 Three.js 依赖（版本变动时）
 node tools/download-three.mjs
 
+# 改完本地版后同步 CDN 双击版（只换 importmap 两行），并校验是否已同步
+node sync-online.cjs
+node sync-online.cjs --check
+
 # 语法自检（提取内联 module 交给 node --check）
 node -e "const h=require('fs').readFileSync('backrooms-pool.html','utf8');const k='<script type=\"module\">';const i=h.indexOf(k)+k.length,j=h.indexOf('</script>',i);require('fs').writeFileSync('.tmp.mjs',h.slice(i,j))" && node --check .tmp.mjs && del .tmp.mjs
 ```
@@ -125,11 +139,14 @@ node -e "const h=require('fs').readFileSync('backrooms-pool.html','utf8');const 
 - 地铁检查：运行 `node tools/check-metro.cjs`，再打开 `http://127.0.0.1:8555/test-metro.html?level=3`，运行 66 项检查，覆盖车体与站台间距、三门进出、实际门洞与隧道网格、椅柱碰撞、跳跃净空、行驶中走动、两个结局、继续与复位，以及静止门/碰撞零重复写入、移动车厢同步。测试拦截存档写入并核对原记录。
 - 交互性能：运行 `node tools/check-interaction-performance.cjs`，再打开 `http://127.0.0.1:8555/test-performance.html?level=3`。检查拾票、检票员显隐、过站列车、通电和进站时的灯光数量及新增着色程序。第三关使用独立渲染层，动态提灯留在固定灯池，过站列车不创建光源；进入前异步准备材质、贴图和阴影，避免在交互时首次编译。
 - 检票员检查：运行 `node tools/check-conductor.cjs`，再打开 `http://127.0.0.1:8555/test-conductor.html?level=3`，执行 35 项出生坐标、模型可见性、视线方向、提灯、巡逻、查票（含三票让行两步）和追逐检查。获得首张车票后，检票员会在下层站台随机出现，沿西侧通道巡逻；出场前三秒保留转头查看时间，正视它不会误触发背视退场。
-- 第三关纯 Node 回归（不启动浏览器）：`node tools/check-level3-node.cjs`。从 `backrooms-pool.html` 抽出真实 module（含真实 vendor THREE），只桩化渲染器/音频/图片解码/DOM，实跑 86 项断言：北端维修间 -110→0 共 111 个位置的车体扫掠（静态碰撞盒 + 具名建筑网格 + 实例化网格逐 instance 用 `geometry.boundingBox × matrixWorld × instanceMatrix`，并排除车厢自身配件、用阴性对照证明扫掠非空跑）、真实 `updatePlayer` 从站台走进维修间、检票员 9m 查票线/10~12m 死区/三票让行冷却、视线遮挡与矮家具真实高度、逐帧位移上限、模型各段衔接与材质物理尺度、固定 26 灯。`tools/check-{metro,conductor,station}.cjs` 只生成浏览器检查页并做注入语法自检，不能当作行为断言。
+- 第三关纯 Node 回归（不启动浏览器）：`node tools/check-level3-node.cjs`。从 `backrooms-pool.html` 抽出真实 module（含真实 vendor THREE），只桩化渲染器/音频/图片解码/DOM，实跑 101 项断言：北端维修间 -110→0 共 111 个位置的车体扫掠（静态碰撞盒 + 具名建筑网格 + 实例化网格逐 instance 用 `geometry.boundingBox × matrixWorld × instanceMatrix`，并排除车厢自身配件、用阴性对照证明扫掠非空跑）、真实 `updatePlayer` 从站台走进维修间、检票员 9m 查票线/10~12m 死区/三票让行冷却、视线遮挡与矮家具真实高度（含站台三个 0.86m 垃圾桶：碰撞盒高度对得上真实桶顶 0.855m，1.5m 视线不被挡、0.5m 低视线仍被挡作对照）、逐帧位移上限、模型各段衔接与材质物理尺度、固定 26 灯。`tools/check-{metro,conductor,station}.cjs` 只生成浏览器检查页并做注入语法自检，不能当作行为断言。
+- 第四关：`node tools/check-level4-node.cjs` 为168项真实引擎断言；`node tools/check-level4-rework-independent.cjs` 为45项独立验收，含连续WASD流程、正逆接缝、真实网格净空、隔墙不可拾取、两条L3乘车衔接及零通关写档。GPU、DOM、音频和图片解码在Node中为桩，真实画面另用浏览器检查。
+- 第四关：双击 `启动第四关.cmd`；预览为 `http://127.0.0.1:8555/backrooms-pool.html?level=4`。本阶段拿齐资源仍可继续探索，不做最终结算。
 - 检票员行为（相对旧版）：查票线由“进 12m 就停”改为“进 9m 且看得见才停”，离开 12.5m 才放弃，停查后进入 7s 冷却；三票放行走 0.55s smoothstep 侧移让行再巡逻，并有 12s 放行冷却；追逐 3.9 m/s（玩家蹲行时 2.9 m/s）。碰撞半径 0.44 与外套轮廓一致，单步位移 ≤3cm 并做受阻滑移/绕行，不再隔着长椅、薄栏杆或楼梯井查票。
 - 北端维修间东墙由 x=6.25 收到 5.65（外表面 5.90，碰撞面 5.95），与车体最西面 6.00 留 0.10m；断路器、电气柜、铭牌等随墙整体西移 0.60m，门洞 x0..3 与车票点不变。北端站厅端墙门洞东侧那一段（原 3×8.5×0.5、x 3..6）原本正好顶到车皮平面 x=6.00，已收到 x 3..5.90，与维修间东墙同平面。
 - 地铁尺寸：车厢内部宽 3.5m、净高 2.56m，三处车门宽 1.65m。停稳后步行上车，在车内按 `E` 发车；行驶和结算继续后均可在车内行走。检票口改用圆角金属机身、感应区、状态指示和常开摆翼，两条内通道净宽 1.34m。
 - 地图细部：28 级楼梯与碰撞高度共用尺寸；连续对缝的 60cm 地砖；带轨头、扣件与道砟的钢轨；倒角家具、设备柜、售票窗及管线支架。静态小零件按几何体与材质合批。
+- 站台三个 detailedBin（x±4.6 的 (4.6,-16)/(4.6,4)/(-4.6,12)）原先漏写碰撞高度，被 `l3SightBlocked` 补成 `[-2.2,2.6]` 的整面墙，1.5m 视线会被垃圾桶挡死、检票员看不到对面；现补 `y1:0, y2:0.86`（桶真实顶 0.855m），与同款桶在 `-4.6` 那两处一致。
 - Windows 下 git 若报 `schannel SEC_E_NO_CREDENTIALS`：`git config --local http.sslBackend openssl`
 
 ---
@@ -140,6 +157,8 @@ node -e "const h=require('fs').readFileSync('backrooms-pool.html','utf8');const 
 - 材质原图较大，首次进入需 1~2s 贴图加载（期间表面偏暗）
 - 手电筒电量约 100s（`charge - dt/100` 处可调）
 - 第三关本轮改动（维修间净空、检票员 AI/模型/贴图）由上面的纯 Node 回归覆盖几何与参数；最终 GPU 观感（布料 PBR、死皮裂纹、提灯体积感）未在浏览器实测，需要人工看一眼。
+- 第四关重做已通过168项模块测试、45项独立验收、第三关101项回归与真实WebGL代表画面检查。范围止于首次异变后拾电池和钥匙；见 [第四关验收记录](docs/level4-acceptance.md)。长期帧率与音效听感尚未专项评测。
+- 修改本地版后运行 `node tools/_mkcdn.cjs` 同步 CDN 副本；运行 `node tools/check-entry.cjs` 检查启动、服务复用和第四关模块访问。
 
 ---
 

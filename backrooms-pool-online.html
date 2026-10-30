@@ -148,6 +148,11 @@
     transition: opacity .8s;
   }
 
+  #record-card { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; pointer-events: none; z-index: 40; }
+  #record-card .rc-paper { max-width: 540px; padding: 22px 26px 14px; background: linear-gradient(160deg, rgba(227,220,197,0.97), rgba(197,189,165,0.97)); color: #262a25; box-shadow: 0 18px 60px rgba(0,0,0,0.6); border-radius: 2px; transform: rotate(-0.35deg); }
+  #record-card .rc-title { font: 700 15px/1.4 'Consolas', monospace; letter-spacing: 2px; border-bottom: 1px solid rgba(38,42,37,0.35); padding-bottom: 8px; margin-bottom: 10px; }
+  #record-card .rc-body { font: 14px/1.95 'Consolas', monospace; letter-spacing: 0.3px; white-space: pre-wrap; }
+  #record-card .rc-foot { margin-top: 12px; font: 12px/1 'Consolas', monospace; letter-spacing: 2px; color: rgba(38,42,37,0.62); text-align: right; }
   #end-overlay {
     position: fixed; inset: 0; z-index: 40; display: none;
     align-items: center; justify-content: center;
@@ -293,11 +298,39 @@
   body.station #play-overlay .sub { color: #d4b77b; }
   body.station #play-overlay .btn { border-color: #bba16a; background: rgba(151,123,64,.2); }
   body.station.hud-hidden #station-ui { display: none; }
+  body.hud-hidden #hud { display: none; }
+  #tunnel-ui { display: none; }
+  body.tunnel #tunnel-ui { display: block; pointer-events: none; }
+  .tunnel-heading { position: fixed; left: 30px; top: 28px; z-index: 11; color: #d7dcd8; text-shadow: 0 2px 15px #000; }
+  .tunnel-heading small { font-size: 9px; letter-spacing: 4px; color: #90a29c; }
+  .tunnel-heading h2 { margin: 8px 0; font-size: 21px; font-weight: 400; letter-spacing: 6px; }
+  .tunnel-heading p { margin: 0; font-size: 11px; letter-spacing: 2px; color: #aab6b0; }
+  .tunnel-status { position: fixed; right: 30px; bottom: 82px; width: 176px; text-align: right; color: #b9c1b5; text-shadow: 0 2px 10px #000; }
+  .tunnel-status small { display: block; font-size: 8px; letter-spacing: 3px; color: #829087; margin-bottom: 8px; }
+  #l4-power { font: 12px monospace; letter-spacing: 1px; }
+  .l4-charge { height: 2px; background: #7b85722b; margin: 9px 0; }
+  #l4-charge-fill { display: block; width: 0; height: 100%; background: #b7c4a7; transition: width .4s linear; }
+  .tunnel-status.low #l4-charge-fill { background: #bd9561; }
+  #l4-inventory { font-size: 10px; color: #87958a; letter-spacing: 1px; }
+  body.l4-view-check .tunnel-status { display: none; }
+  #tunnel-settings { position: fixed; right: 28px; top: 62px; z-index: 12; pointer-events: auto; padding: 8px 12px; border: 1px solid #50635a55; background: #0a1113bb; color: #afc0b6; font: inherit; font-size: 10px; letter-spacing: 2px; cursor: pointer; }
+  body.tunnel.locked #tunnel-settings, body.tunnel #btn-l3 { display: none; }
+  body.tunnel #hud { display: none; }
+  body.tunnel #ov-best { display: none; }
+  body.tunnel.station-settings #hud { display: block; left: auto; right: 28px; top: 104px; }
+  body.tunnel.hud-hidden #tunnel-ui, body.tunnel.hud-hidden #hud { display: none; }
+  body.tunnel #hint { border-radius: 2px; border-color: #82978b44; background: #0a1113b8; font-size: 10px; }
+  body.tunnel #pickup-hint { border-radius: 3px; border-color: #91a79988; }
+  body.tunnel #play-overlay { border-color: #91a79955; }
+  body.tunnel #play-overlay .sub { color: #bec8b9; letter-spacing: 2px; }
+  body.l4-view-check #flash-text, body.l4-view-check #pickup-hint, body.l4-view-check #hint, body.l4-view-check #level-tag { display: none !important; }
   @media (max-width: 700px) {
     .station-heading { top: 22px; left: 20px; }
     .station-heading h2 { font-size: 19px; }
     .station-mission { left: 20px; bottom: 86px; width: 185px; padding: 13px 15px; }
     body.station #level-tag { right: 16px; letter-spacing: 1px; }
+    body.tunnel #level-tag { display: none; }
+    .tunnel-heading { left: 20px; top: 20px; }
   }
 </style>
 </head>
@@ -356,6 +389,11 @@
   </section>
   <button id="station-settings" type="button" aria-expanded="false">画面设置</button>
 </div>
+<div id="tunnel-ui">
+  <div class="tunnel-heading"><small>CHAPTER 04 / ECHO SECTION</small><h2>回声区间</h2><p>列车停在这里 · 先在门外找到能亮的手电</p></div>
+  <div class="tunnel-status" id="l4-status"><small>PERSONAL LIGHT</small><div id="l4-power">尚未找到手电</div><div class="l4-charge"><i id="l4-charge-fill"></i></div><div id="l4-inventory">尚无随身物品</div></div>
+  <button id="tunnel-settings" type="button" aria-expanded="false">画面设置</button>
+</div>
 <div id="level-fade"></div>
 <div id="scare-flash"></div>
 <div class="letterbox top"></div>
@@ -365,14 +403,22 @@
   <div class="lc-sub" id="lc-sub">类后室 · 收集保险丝</div>
 </div>
 <div id="flash-text"></div>
+<div id="record-card">
+  <div class="rc-paper">
+    <div class="rc-title" id="rc-title">—</div>
+    <div class="rc-body" id="rc-body"></div>
+    <div class="rc-foot">按 E 收起</div>
+  </div>
+</div>
 <div id="end-overlay">
   <div class="card">
     <h1>LEVEL CLEAR</h1>
-    <div class="sub">你逃出了后室，又穿过了泳池层</div>
+    <div class="sub" id="e-sub">你逃出了后室，又穿过了泳池层</div>
     <div class="stat">总用时&nbsp; <b id="e-time">--:--</b></div>
     <div class="stat">碰见黑影&nbsp; <b id="e-scares">0</b> 次 · 保险丝 <b id="e-fuses">3/3</b> · 漂浮物 <b id="e-floats">6/6</b></div>
     <div class="stat" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.14);">历史最佳：<b id="e-best-time">--:--</b> · 最少惊吓 <b id="e-best-scares">—</b> · 已通关 <b id="e-clears">0</b> 次</div>
     <div id="e-newrec" style="margin-top:6px;color:#ffd98a;font-size:13px;letter-spacing:2px;display:none;">🏆 本次刷新纪录！</div>
+    <div id="e-preview" style="margin-top:6px;color:#9fd8e6;font-size:13px;letter-spacing:2px;display:none;">预览 · 本次不计入全流程记录</div>
     <div class="btns">
       <button id="btn-replay">再玩一次</button>
       <button id="btn-continue">继续漫游</button>
@@ -413,6 +459,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+// 第四关《回声区间》：独立关卡模块，只从这里注入 THREE/场景/材质帮助，模块内不 import 裸 three
+import { createLevel4, L4_OX, L4_LEVEL, TUNNEL_LAYER } from './levels/level4-tunnel.js';
 
 RectAreaLightUniformsLib.init();
 
@@ -567,6 +615,25 @@ const COLLIDERS_L0 = [];
 const L0_SPAWN = { x: -144, z: 0 };
 const L0_RESPAWN = { x: -144, z: 0 };
 let LEVEL = 0;
+/* 第四关运行时状态先声明，避免 resetL3State / updateFlashHud 早于定义执行时踩 TDZ */
+let l4 = null;
+let l4RideHandoff = false;
+let l4Completed = false;                       // 最终门只结算一次
+let runPreview = false;                        // true = 本次不是全流程（快捷入口直达 / 跳过前关）
+/* 第四关手电唯一来源是 levels/level4-tunnel.js 的 torch 状态；l4Flash 只是把它接到
+   宿主既有调用点（HUD / 复位 / 光强）上的访问器，自己不存任何状态。 */
+const l4Flash = {
+  get on() { return !!(l4 && l4.torchOn); },
+  set on(v) { if (!v && l4) l4.setTorch(false); },
+};
+/* 光束参数：L0/L3 用构造值；第四关按 levels/level4-art.js 的 lighting 覆盖，退出时还原 */
+const BEAM_BASE = { distance: 26, angle: 0.5, penumbra: 0.45, decay: 1.4 };
+function setFlashBeam(p) {
+  flashLight.distance = p.distance;
+  flashLight.angle = p.angle;
+  flashLight.penumbra = p.penumbra;
+  flashLight.decay = p.decay;
+}
 let ACTIVE_COLLIDERS = COLLIDERS_L0;
 let ACTIVE_BOUNDS = BOUNDS_L0;
 let fuses = 0;
@@ -583,6 +650,7 @@ function insidePoolArea(x, z, pad = 0.4) {
 
 function groundAt(x, z) {
   if (LEVEL === 0) return 0;
+  if (LEVEL === L4_LEVEL) return l4 ? l4.groundAt(x, z) : 0;
   if (LEVEL === 2) {
     const lx = x - L3_OX;
     // 行驶中地板随车厢移动，不再受站台、楼梯高度场影响。
@@ -634,6 +702,7 @@ function groundAt(x, z) {
 function waterLevelAt(x, z) {
   if (LEVEL === 0) return null;
   if (LEVEL === 2) return null;
+  if (LEVEL === L4_LEVEL) return null;   // 第四关：轨槽积水只做视觉，不做游泳物理
   for (const p of POOLS) {
     if (x >= p.x1 && x <= p.x2 && z >= p.zDeep1 && z <= p.zEnd) return p.water;
   }
@@ -1844,14 +1913,15 @@ function initAudio() {
     audioConv = audioCtx.createConvolver(); audioConv.buffer = IR_L0;
     audioConv.connect(audioWet);
     audioCtx._conv = audioConv;
+    applyRoomSound(LEVEL); // 直达关卡的首次点击也使用当前空间混响。
     startDrone();
     startAmbience(LEVEL);
   } else if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 function applyRoomSound(level) {
   if (!audioCtx) return;
-  audioConv.buffer = level === 2 ? IR_STATION : (level === 1 ? IR_POOL : IR_L0);
-  audioWet.gain.value = level === 2 ? 0.5 : (level === 1 ? 0.62 : 0.4);
+  audioConv.buffer = (level === 2 || level === 3) ? IR_STATION : (level === 1 ? IR_POOL : IR_L0);
+  audioWet.gain.value = level === 2 ? 0.5 : (level === 3 ? 0.62 : (level === 1 ? 0.62 : 0.4));
 }
 let droneNodes = null;
 function startDrone() {
@@ -1866,6 +1936,7 @@ function startDrone() {
 }
 /* 环境声床：Level 0 = 荧光嗡鸣(闪断感) + 空气嘶声；泳池 = 水波轻拍 + 空调低鸣 */
 let ambNodes = null;
+let ambWind = null;        // 第四关：风机风道气流增益节点（模块按 ventOn 调，不新建节点）
 function startAmbience(level) {
   if (!audioCtx) return;
   stopAmbience();
@@ -1899,6 +1970,30 @@ function startAmbience(level) {
     const hum = audioCtx.createOscillator(); hum.type = 'sine'; hum.frequency.value = 38;
     const hg2 = audioCtx.createGain(); hg2.gain.value = 0.022;
     hum.connect(hg2); hg2.connect(out); hum.start(); stops.push(hum);
+  } else if (level === 3) {
+    /* 第四关 · 回声区间：不是站台声床。区间隧道的床声 =
+       ① 极低频隆隆（钢轨远处受力） ② 风道气流（带低通 + 极慢起伏，风机 ON 时更响）
+       ③ 极长的混凝土走廊尾音（靠湿混响） */
+    const rumble = audioCtx.createOscillator(); rumble.type = 'sine'; rumble.frequency.value = 31;
+    const rumble2 = audioCtx.createOscillator(); rumble2.type = 'sine'; rumble2.frequency.value = 44.5;
+    const rg = audioCtx.createGain(); rg.gain.value = 0.034;
+    rumble.connect(rg); rumble2.connect(rg); rg.connect(out);
+    rumble.start(); rumble2.start(); stops.push(rumble, rumble2);
+    const lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.043;      // 每 ~23s 一次呼吸
+    const lg = audioCtx.createGain(); lg.gain.value = 0.012;
+    lfo.connect(lg); lg.connect(rg.gain); lfo.start(); stops.push(lfo);
+    const air = audioCtx.createBufferSource(); air.buffer = makeNoiseBuf(4); air.loop = true;
+    const af = audioCtx.createBiquadFilter(); af.type = 'bandpass'; af.frequency.value = 260; af.Q.value = 0.65;
+    const windG = audioCtx.createGain(); windG.gain.value = 0.055;             // 风机 ON 时由模块调到更高
+    const lfo2 = audioCtx.createOscillator(); lfo2.frequency.value = 0.017;
+    const lg2 = audioCtx.createGain(); lg2.gain.value = 0.020;
+    lfo2.connect(lg2); lg2.connect(windG.gain); lfo2.start(); stops.push(lfo2);
+    air.connect(af); af.connect(windG); windG.connect(out); air.start(); stops.push(air);
+    const hiss = audioCtx.createBufferSource(); hiss.buffer = makeNoiseBuf(3); hiss.loop = true;
+    const hf = audioCtx.createBiquadFilter(); hf.type = 'highpass'; hf.frequency.value = 3400;
+    const hg = audioCtx.createGain(); hg.gain.value = 0.006;                   // 空气里一点干燥的高频，隧道不是真空
+    hiss.connect(hf); hf.connect(hg); hg.connect(out); hiss.start(); stops.push(hiss);
+    ambWind = windG;
   } else {
     const lap = audioCtx.createBufferSource(); lap.buffer = makeNoiseBuf(3); lap.loop = true;
     const lf = audioCtx.createBiquadFilter(); lf.type = 'bandpass'; lf.frequency.value = 760; lf.Q.value = 1.1;
@@ -1923,6 +2018,7 @@ function startAmbience(level) {
 function stopAmbience() {
   if (!ambNodes) return;
   const n = ambNodes; ambNodes = null;
+  ambWind = null;
   try { n.out.gain.setValueAtTime(n.out.gain.value, audioCtx.currentTime); n.out.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6); } catch (e) {}
   setTimeout(() => { for (const s of n.stops) { try { s.stop(); } catch (e) {} } try { n.out.disconnect(); } catch (e) {} }, 900);
 }
@@ -2381,6 +2477,13 @@ function pickFlash() {
   showFlashText('获得手电筒 — F 开关');
 }
 function toggleFlash() {
+  // 第四关：手电由 L4 模块唯一持有（owned/on/charge 共一份），未拾取时 F 不能凭空照亮
+  if (LEVEL === L4_LEVEL) {
+    if (!l4) return;
+    l4.toggleTorch();
+    updateFlashHud();
+    return;
+  }
   if (!flashlight.owned) return;
   if (LEVEL !== 0) { showFlashText('手电筒只在后室层可用'); return; }
   if (flashlight.on) { flashlight.on = false; synthFuse(); }
@@ -2388,10 +2491,51 @@ function toggleFlash() {
   else { showFlashText('手电筒没电了…'); }
   updateFlashHud();
 }
+// 电量消耗只属于 Level 0 的手电；第四关的应急手电由 L4 模块在自己的 update(dt) 里扣电
+function updateFlashBattery(dt) {
+  if (LEVEL !== 0) return;
+  if (!flashlight.on || flashlight.charge <= 0) return;
+  flashlight.charge = Math.max(0, flashlight.charge - dt / 100);
+  if (flashlight.charge <= 0) { flashlight.on = false; showFlashText('手电筒没电了…'); }
+  if (flashlight.charge < 0.2) { lowBeepT -= dt; if (lowBeepT <= 0) { synthPing(0, false); lowBeepT = 2.5; } }
+}
+function updateL4Presentation() {
+  if (LEVEL !== L4_LEVEL || !l4) return;
+  const status = document.getElementById('l4-status');
+  const power = document.getElementById('l4-power');
+  const fill = document.getElementById('l4-charge-fill');
+  const inventory = document.getElementById('l4-inventory');
+  const task = document.querySelector('.tunnel-heading p');
+  const owned = l4.torchOwned, charge = l4.torchCharge;
+  if (power) power.textContent = !owned ? '尚未找到手电' : (charge <= 0 ? '电量耗尽' : `${l4.torchOn ? '照明中' : '已关闭'} · ${Math.round(charge * 100)}%`);
+  if (fill) fill.style.width = (owned ? Math.max(0, charge * 100) : 0) + '%';
+  if (status) status.classList.toggle('low', owned && charge < .25);
+  if (inventory) inventory.textContent = [l4.spareBattery ? '备用电池 × ' + l4.spareBattery : '', l4.hasKey ? '应急通行钥匙' : ''].filter(Boolean).join(' · ') || '尚无随身物品';
+  // The player discovers the changed train visually; the HUD never announces the wrap.
+  if (task) task.textContent = l4.aged && !l4.state.carSeen ? '沿着检修步道，继续向前' : l4.state.task;
+}
 function updateFlashHud() {
   const el = document.getElementById('v-flash');
   const batt = document.getElementById('batt'), fill = document.getElementById('batt-fill');
   if (!el) return;
+  if (LEVEL === L4_LEVEL) {
+    updateL4Presentation();
+    // 第四关有本关独立电量（不占 L0 电池），HUD 显示真实状态
+    if (!l4 || !l4.torchOwned) {
+      el.textContent = '未拾取';
+      if (batt) { batt.style.opacity = '0.35'; batt.classList.remove('low'); }
+      if (fill) fill.style.width = '2%';
+      return;
+    }
+    const ch = l4.torchCharge, pct = Math.round(ch * 100);
+    el.textContent = ch <= 0.001 ? '耗尽' : (l4.torchOn ? `开 · ${pct}%` : `关 · ${pct}%`);
+    if (batt) batt.style.opacity = '1';
+    if (fill) {
+      fill.style.width = Math.max(2, ch * 100) + '%';
+      if (batt) batt.classList.toggle('low', ch < 0.25);
+    }
+    return;
+  }
   if (!flashlight.owned) {
     el.textContent = '未拾取';
     if (batt) batt.style.opacity = '0.35';
@@ -3630,11 +3774,15 @@ function drawStationScreen(message) {
 
 const defaultHint = document.getElementById('hint').innerHTML;
 const defaultPlaySubtitle = document.querySelector('#play-overlay .sub').textContent;
+const defaultPlayKeys = document.querySelector('#play-overlay .keys').innerHTML;
 function setStationPresentation(active) {
   document.body.classList.toggle('station', active);
+  document.body.classList.remove('tunnel', 'l4-view-check');
   document.body.classList.remove('station-settings');
   if (!active) document.body.classList.remove('hud-hidden');
   document.getElementById('station-settings').setAttribute('aria-expanded', 'false');
+  document.getElementById('tunnel-settings').setAttribute('aria-expanded', 'false');
+  document.querySelector('#play-overlay .keys').innerHTML = defaultPlayKeys;
   document.querySelector('#play-overlay h1').textContent = active ? 'LAST TRANSFER' : 'POOLROOMS';
   document.querySelector('#play-overlay .sub').textContent = active ? '地下换乘站 · 车票 / 供电 / 道岔' : defaultPlaySubtitle;
   document.getElementById('hint').innerHTML = active
@@ -3644,6 +3792,18 @@ function setStationPresentation(active) {
 document.getElementById('station-settings').addEventListener('click', () => {
   const open = document.body.classList.toggle('station-settings');
   document.getElementById('station-settings').setAttribute('aria-expanded', String(open));
+});
+function setTunnelPresentation() {
+  document.body.classList.add('tunnel');
+  document.body.classList.remove('chase');
+  document.querySelector('#play-overlay h1').textContent = 'ECHO SECTION';
+  document.querySelector('#play-overlay .sub').textContent = 'Level 4 · 回声区间 — 列车故障停运，先找到门外的手电';
+  document.querySelector('#play-overlay .keys').innerHTML = '<kbd>WASD</kbd> 移动 · 鼠标观察 · <kbd>E</kbd> 开门 / 拾取<br><kbd>F</kbd> 应急手电 · <kbd>R</kbd> 重开本关 · <kbd>Esc</kbd> 暂停';
+  document.getElementById('hint').innerHTML = '<kbd>WASD</kbd> 移动 · <kbd>Shift</kbd> 奔跑 · <kbd>E</kbd> 交互 · <kbd>F</kbd> 应急手电 · <kbd>R</kbd> 重开 · <kbd>Esc</kbd> 暂停 · <kbd>H</kbd> 隐藏界面';
+}
+document.getElementById('tunnel-settings').addEventListener('click', () => {
+  const open = document.body.classList.toggle('station-settings');
+  document.getElementById('tunnel-settings').setAttribute('aria-expanded', String(open));
 });
 
 (function buildLevel3() {
@@ -4130,7 +4290,9 @@ document.getElementById('station-settings').addEventListener('click', () => {
   }
   for (const [x, z] of [[4.6, -16], [4.6, 4], [-4.6, 12]]) {
     detailedBin(x, 0, z, x < 0 ? Math.PI / 2 : -Math.PI / 2);
-    COLLIDERS_L3.push({ x1: x - 0.3, x2: x + 0.3, z1: z - 0.3, z2: z + 0.3 });
+    // 桶真实高度 ≈0.855m（桶身 .40+.72/2 顶盖 .79+.04，投放口边沿 .837+.0175）。旧版漏写高度，
+    // 被 l3SightBlocked 补成 [-2.2,2.6] 的整面墙，1.5m 视线会莫名其妙被三个垃圾桶挡死。
+    COLLIDERS_L3.push({ x1: x - 0.3, x2: x + 0.3, z1: z - 0.3, z2: z + 0.3, y1: 0, y2: 0.86 });
   }
   const posterMat = stationPoster(0), posterAlt = stationPoster(1);
   // 售货机（自发光的货架，给冷灰站台一点颜色）
@@ -4628,10 +4790,12 @@ function resetL3State() {
   l3State.breakerOn = false; l3State.leverOn = false;
   l3Ending = ''; l3RideHint = ''; camShake = 0;
   l3State.trainCols = false;
+  l4RideHandoff = false;             // 重玩车站时允许再次进入第四关衔接
   for (let i = COLLIDERS_L3.length - 1; i >= 0; i--) if (COLLIDERS_L3[i].train) COLLIDERS_L3.splice(i, 1);
   l3TrainColliders.length = 0;
   metroColliderX = NaN; metroColliderZ = NaN; metroDoorValue = NaN;
   if (l3Train) {
+    l3Train.visible = true;          // 第四关衔接不再藏车；回站/全重玩后末班车必须可见
     l3Train.position.set(L3_METRO.centerX, 0, -110);
     setMetroDoors(0);
     l3State.doorsT = 0;
@@ -4780,11 +4944,12 @@ function updateLevel3(dt) {
     }
     if (rt > 6.4) {
       l3State.rideDone = true; camShake = 0; l3RideHint = '';
+      // 两种乘车选择（拉制动 / 静坐）都在原 6.4s 后进入故障区间，台词保留差异，
+      // 旧的三关最终结算不再出现，全游记录也不在这里写。
       l3Ending = l3State.rideChoice
         ? '你在黑暗中拉下了紧急制动——车门在两个世界之间打开'
         : '你静坐到底——列车把你送去了"下一站"';
-      document.querySelector('#end-overlay .sub').textContent = l3Ending;
-      showEndScreen();
+      beginLevel4Ride(l3State.rideChoice);
     }
     return;
   }
@@ -4898,6 +5063,7 @@ function enterLevel3(instant) {
   synthWhoosh();
   const go = () => {
     LEVEL = 2;
+    if (l4) { l4.leave(); l4.reset(); }        // 从第四关退回车站时隐藏并清掉 L4 状态
     camera.layers.set(STATION_LAYER);
     setStationPresentation(true);
     ACTIVE_COLLIDERS = COLLIDERS_L3; ACTIVE_BOUNDS = BOUNDS_L3;
@@ -4909,6 +5075,7 @@ function enterLevel3(instant) {
     showLevelCard('LEVEL 3', '地下车站 · 换乘层');
     skyLight.intensity = 0; skyLight.castShadow = false;
     flashLight.castShadow = true;
+    setFlashBeam(BEAM_BASE);                            // 退出第四关时还原 L0/L3 的手电光束
     scene.environment = ENV_STATION;                   // 中性 IBL，不反射泳池的青色环境
     setPanelDefaults(0.78, 0.24, 0.018);
     entity.visible = false; entityChasing = false;
@@ -4930,6 +5097,190 @@ function enterLevel3(instant) {
   if (instant) { go(); return; }
   document.getElementById('level-fade').style.opacity = '1';
   setTimeout(go, 520);
+}
+
+/* ============================================================ 第四关 · 回声区间 */
+/* 第四关独立模块 levels/level4-tunnel.js：只注入 THREE/场景/材质帮助/建模帮助/声音与 UI 回调。
+   世界偏移 360、渲染层 TUNNEL_LAYER、关卡编号统一用模块导出的 L4_LEVEL（=3），
+   HTML 里不再出现第二个关卡魔数；几何/碰撞/地面高度场/净高共用模块同一份尺寸数据。 */
+const L4_SFX = {
+  door: () => synthKnock(),
+  unlock: () => synthUnlock(),
+  clank: () => synthFarClank(),
+  paper: () => synthKnock(),
+  wind: () => synthCreak(),
+  vent: (o) => l4AirGust(o),
+  pa: () => synthPA(),
+  drip: () => synthDrip(),
+  'step-far': (o) => l4StepAway(o),
+  // —— 第四关专用声音。全部复用合成器与 burst(pan/gain)，不新增音频文件 ——
+  'l4-relay': () => { synthKnock(); synthFarClank(); },            // 刀闸吸合：敲击 + 远处金属
+  'l4-switch': (o) => {                                            // 扳刀闸：金属弹片 + 一点电流
+    burst({ dur: 0.05, freq: 1500, q: 1.4, gain: 0.22 * (o && o.gain != null ? o.gain : 1), sweep: 700, wet: 0.6 });
+    burst({ type: 'sine', f0: 210, f1: 120, dur: 0.09, gain: 0.16, filter: 'lowpass', wet: 0.8 });
+  },
+  'l4-maglock': () => synthFarClank(),                             // 门磁吸上
+  'l4-maglock-release': (o) => {                                   // 门磁松开（正解）：重闩 + 一声金属回弹
+    synthKnock(); synthUnlock();
+    burst({ dur: 0.16, freq: 900, q: 0.6, gain: 0.14, sweep: 2400, pan: (o && o.pan) || 0, wet: 1.1 });
+  },
+  'l4-hatch': () => synthCreak(),                                  // 舱门重铰链
+  'l4-final': () => { synthUnlock(); synthWhoosh(); },             // 最终门开：重闩 + 风涌进来
+  // 风：风机运行时的**气流**（带通噪声长扫，不是滴水）
+  'l4-vent': (o) => l4AirGust(o),
+  'l4-pa': (o) => l4Broadcast(o),                                  // 广播：混响里偏一侧的闷声
+  // 错位脚步：第二层起从背后/侧面来 —— 延迟 0.16s + 重湿 + 反相声像
+  'l4-steps-behind': (o) => l4StepBehind(o),
+  'l4-paper': () => synthKnock(),                                  // 翻纸/记录卡
+  'l4-wind': () => synthCreak(),                                   // 门缝风
+  // 风道气流强度：不新建节点，直接调第四关环境里的风增益
+  'l4-wind-level': (o) => {
+    if (!ambWind || !audioCtx) return;
+    const g = Math.max(0, Math.min(1, (o && o.gain != null) ? o.gain : 1));
+    ambWind.gain.setTargetAtTime(0.016 + 0.075 * g, audioCtx.currentTime, 0.8);
+  },
+};
+/* 气流/风：一段带通噪声长扫 —— 风机、门缝、坡道尽头的风都用它，不是滴水声 */
+function l4AirGust(o = {}) {
+  const g = o.gain == null ? 1 : o.gain;
+  const pan = o.pan || 0;
+  burst({ dur: 0.85, freq: 300, q: 0.55, gain: 0.085 * g, sweep: 190, pan, wet: 1.6, attack: 0.22, rand: true });
+  burst({ dur: 0.6, freq: 780, q: 0.5, gain: 0.045 * g, sweep: 520, pan: pan * 0.7, wet: 1.2, attack: 0.16, delay: 0.12, rand: true });
+}
+/* 错位脚步：你听见的这一步不是自己的。延迟 + 反向声像 + 更湿更远 */
+function l4StepBehind(o = {}) {
+  const pan = o.pan == null ? (Math.random() * 1.2 - 0.6) : o.pan;
+  burst({ dur: 0.07, freq: 480, q: 0.8, gain: 0.20, pan: -pan * 0.9, wet: 2.0, delay: 0.16, rand: true });
+  burst({ type: 'sine', f0: 92, f1: 48, dur: 0.10, gain: 0.20, filter: 'lowpass', pan: -pan * 0.9, wet: 1.8, delay: 0.16, rand: true });
+  burst({ dur: 0.06, freq: 430, q: 0.8, gain: 0.10, pan: pan * 0.5, wet: 2.4, delay: 0.62, rand: true });
+}
+/* 远处的脚步（不是金属敲击）：低通 + 重湿 + 极小声 */
+function l4StepAway(o = {}) {
+  const pan = o.pan == null ? (Math.random() * 1.4 - 0.7) : o.pan;
+  burst({ dur: 0.09, freq: 360, q: 0.7, gain: 0.10, filter: 'lowpass', pan, wet: 2.2, rand: true });
+  burst({ type: 'sine', f0: 74, f1: 42, dur: 0.12, gain: 0.10, filter: 'lowpass', pan, wet: 2.0, rand: true });
+}
+/* 广播：闷在混响里的中频 + 抖动衰减，声像按传出的位置偏一侧 */
+function l4Broadcast(o = {}) {
+  synthPA();
+  const pan = o.pan || 0;
+  burst({ dur: 0.9, freq: 1450, q: 1.1, gain: 0.05, filter: 'bandpass', pan, wet: 2.0, attack: 0.2, delay: 0.05 });
+}
+function syncCameraToPlayer() {
+  camera.position.set(player.x, player.y + EYE * crouchH, player.z);
+  camera.rotation.set(pitch, yaw, 0);
+}
+function ensureLevel4() {
+  if (l4) return l4;
+  l4 = createLevel4({
+    THREE, scene, camera, player,
+    matFor, mergeGeoList, makeCanvas, buildMetroCar,
+    layer: TUNNEL_LAYER,
+    setView: (y, p) => { yaw = y; pitch = p; },
+    syncCamera: () => syncCameraToPlayer(),
+    onFlash: (msg) => showFlashText(msg),
+    // 目标栏文案由模块按阶段推进（拾手电 → 沿隧道前进 → 检查返回的列车）
+    onTask: (text) => { const el = document.getElementById('v-task'); if (el) el.textContent = text; updateL4Presentation(); },
+    sfx: (name, opts) => { const fn = L4_SFX[name]; if (fn) fn(opts); },
+    // 旧记录卡/最终门接口保留为空实现：本轮 L4 不结算、不写档
+    onCard: (card) => openRecordCard(card),
+    onCardClose: () => closeRecordCard(),
+    onComplete: () => {},   // 本轮第四关没有结算：保留接口但什么都不做
+  });
+  return l4;
+}
+/* 记录卡：只用 DOM 贴一张纸，不夺鼠标、不退出指针锁；开着时模块冻结惊吓/环境推进 */
+function openRecordCard(card) {
+  const el = document.getElementById('record-card');
+  if (!el) return;
+  document.getElementById('rc-title').textContent = card.title || '记录';
+  document.getElementById('rc-body').textContent = (card.lines || []).join('\n');
+  el.style.display = 'flex';
+  if (l4) l4.setPaused(true);
+}
+function closeRecordCard() {
+  const el = document.getElementById('record-card');
+  if (el) el.style.display = 'none';
+  if (l4) l4.setPaused(false);
+}
+/* 最终门结算：一次性 + 预览不写档（records v1 结构保持不变，只跳过写入） */
+function completeLevel4(res = {}) {
+  if (l4Completed) return;
+  l4Completed = true;
+  closeRecordCard();
+  if (l4) l4.setPaused(true);
+  const preview = !!res.preview || !!runPreview;
+  if (document.pointerLockElement) document.exitPointerLock();
+  showEndScreen({ preview, level: 'L4' });
+}
+function enterLevel4(opts = {}) {
+  if (transitioning) return;
+  transitioning = true;
+  const instant = !!opts.instant;
+  const mode = opts.mode === 'ride' ? 'ride' : 'preview';
+  if (!instant) synthWhoosh();
+  const go = () => {
+    l4Completed = false;                       // 进关即重置结算闸门，重进/预览都能独立结算
+    const api = ensureLevel4();
+    api.enter({ mode, rideChoice: !!opts.rideChoice });
+    LEVEL = L4_LEVEL;
+    camera.layers.set(TUNNEL_LAYER);
+    setStationPresentation(false);
+    setTunnelPresentation();
+    document.body.classList.remove('station');
+    document.body.classList.remove('hud-hidden');
+    { const _h = document.getElementById('hud'); if (_h) _h.style.display = ''; }
+    ACTIVE_COLLIDERS = api.colliders; ACTIVE_BOUNDS = api.bounds;
+    // 第四关色调/雾/天光全部取自 levels/level4-art.js；隧道里没有可用 IBL，直接清掉环境图
+    scene.fog = new THREE.FogExp2(api.artPalette.fog, api.artLighting.fogDensity);
+    scene.background = new THREE.Color(api.artPalette.background);
+    hemi.intensity = api.artLighting.hemi; hemiL0.intensity = 0;
+    hemi.layers.enable(TUNNEL_LAYER);
+    flashLight.layers.enable(TUNNEL_LAYER);       // 应急手电也要照到 layer 3 的几何
+    scene.environment = null;
+    // 手电光束按美术配置覆盖，退出本关时由 enterLevel3 / 重开流程还原
+    setFlashBeam({
+      distance: api.artLighting.flashlightDistance,
+      angle: api.artLighting.flashlightAngle,
+      penumbra: api.artLighting.flashlightPenumbra,
+      decay: api.artLighting.flashlightDecay,
+    });
+    // 曝光/泛光/雾都跟美术配置走：雾密度必须用 art 的值，否则会把上面刚设的 .078
+    // 覆盖回 .022，26m 外的列车灯带直接可见，跨缝就会“跳出来”。
+    setPanelDefaults(0.60, 0.14, api.artLighting.fogDensity);
+    skyLight.intensity = 0; skyLight.castShadow = false;
+    flashLight.castShadow = false;
+    entity.visible = false; entityChasing = false;
+    l3Entity.visible = false;
+    l3RideHint = ''; camShake = 0;
+    if (droneNodes) droneNodes.g.gain.value = 0.03;
+    applyRoomSound(3); startAmbience(3);          // 区间隧道自己的床声（不是站台声床）
+    l4Flash.on = false;
+    document.getElementById('level-tag').textContent = 'LEVEL 4 · 回声区间';
+    document.getElementById('v-task').textContent = '打开步道侧车门';
+    document.getElementById('v-pick').textContent = '—';
+    document.querySelectorAll('#fuse-slots i').forEach(s => s.classList.remove('on'));
+    updateFlashHud();
+    showLevelCard('LEVEL 4', '回声区间 · 故障停车');
+    syncCameraToPlayer();
+    prepareLevelRendering();
+    const done = () => { document.getElementById('level-fade').style.opacity = '0'; transitioning = false; };
+    if (instant) done(); else renderPreparation.then(done);
+  };
+  if (instant) { go(); return; }
+  document.getElementById('level-fade').style.opacity = '1';
+  setTimeout(go, 520);
+}
+/* 第三关两种乘车选择都走到这里：旧的最终结算改为第四关衔接（一次性，不重复进关） */
+function beginLevel4Ride(choice) {
+  if (l4RideHandoff) return;
+  l4RideHandoff = true;
+  // 列车网格本身不藏：靠相机层隔离（L3 站在 0 层、L4 在 TUNNEL_LAYER），
+  // 这样回到车站或全重玩时末班车依然是可见的。只收起站台里的乘务员。
+  l3Entity.visible = false;
+  l3State.entityOn = false;
+  showFlashText(choice ? '紧急制动咬死后，列车缓缓停在区间里' : '列车在区间里失速，灯一盏盏灭下去');
+  enterLevel4({ mode: 'ride', rideChoice: !!choice });
 }
 
 /* ============================================================ 第一人称控制器 */
@@ -4957,6 +5308,7 @@ document.getElementById('play-overlay').addEventListener('click', () => {
 // 「从第三关开始」：直接跳到地下车站（列车已到站）
 document.getElementById('btn-l3').addEventListener('click', (e) => {
   e.stopPropagation();
+  runPreview = true;                       // 快捷入口跳过 L0/L1：本次不算全流程记录
   if (LEVEL !== 2) enterLevel3(true);
   if (!renderReady) return;
   initAudio();
@@ -4998,12 +5350,28 @@ function respawnToLevelStart() {
     }
     player.x = L3_SPAWN.x; player.z = L3_SPAWN.z; player.y = 0; player.vy = 0; player.grounded = true; yaw = Math.PI; pitch = 0;
   }
+  else if (LEVEL === L4_LEVEL && l4) {
+    // 本关重开：复位车门/T-17/回环层数，回到车厢出生点；不碰任何通关记录与统计
+    if (l4.closeCard) l4.closeCard();
+    closeRecordCard();
+    l4Completed = false;                      // 本关重开后仍能再结算一次
+    hideEndScreen(); endScreenOpen = false;
+    l4.reset();
+    const pose = l4.spawnPose();
+    player.x = pose.x; player.y = pose.y; player.z = pose.z; player.vy = 0; player.grounded = true;
+    crouchH = 1; playerCrouch = false;
+    yaw = pose.yaw; pitch = pose.pitch;
+    l4Flash.on = false;
+    syncCameraToPlayer();
+    updateFlashHud();
+  }
   else { player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0; yaw = 0; pitch = 0; }
   showFlashText('已复位到本关起点');
 }
 
 function toggleHud() {
-  if (LEVEL === 2) { document.body.classList.toggle('hud-hidden'); return; }
+  // 车站与第四关都用同一个 body.hud-hidden 开关，H 隐藏后还能用 H 恢复
+  if (LEVEL === 2 || LEVEL === L4_LEVEL) { document.body.classList.toggle('hud-hidden'); return; }
   const hud = document.getElementById('hud');
   hud.style.display = hud.style.display === 'none' ? '' : 'none';
 }
@@ -5093,12 +5461,17 @@ function updatePlayer(dt) {
     const maxFeet = (nearDoor ? METRO_DH : METRO_CL - .10) - EYE * crouchH - .12;
     if (player.y > maxFeet) { player.y = maxFeet; player.vy = Math.min(0, player.vy); }
   }
+  // 第四关：净高跟随所在空间（车厢 2.60 / 步道拱顶 / 房间 / 检修廊），与几何同一份数据
+  if (LEVEL === L4_LEVEL && l4) {
+    const maxFeet = l4.ceilingAt(player.x, player.z) - EYE * crouchH - 0.12;
+    if (player.y > maxFeet) { player.y = maxFeet; player.vy = Math.min(0, player.vy); }
+  }
 
   // 脚步声音 + 头部摆动
   if (player.grounded && il > 0) {
     stepTimer -= dt;
     if (stepTimer <= 0) {
-      const surface = LEVEL === 0 ? 'carpet' : (submerged ? 'water' : (player.x < -16.1 ? 'concrete' : 'tile'));
+      const surface = LEVEL === 0 ? 'carpet' : (LEVEL === L4_LEVEL ? 'concrete' : (submerged ? 'water' : (player.x < -16.1 ? 'concrete' : 'tile')));
       if (crouching) synthStepSoft(surface); else synthStep(surface);
       stepTimer = (crouching ? 0.62 : (running ? 0.30 : 0.44)) + (Math.random() - 0.5) * 0.10;
     }
@@ -5157,6 +5530,11 @@ function tryPickup() {
   if (pickedCount >= PICK_TOTAL) enterLevel3();
 }
 function tryInteract() {
+  if (LEVEL === L4_LEVEL) {
+    if (!l4) return;
+    l4.interact();          // 记录卡开着时模块自己关卡片（E 一键收起），不重复触发机关
+    return;
+  }
   if (LEVEL === 0) {
     if (nearestBattery) { pickBattery(); return; }
     if (nearestFlash && !flashlight.owned) { pickFlash(); return; }
@@ -5196,14 +5574,33 @@ function fmtTime(ms) {
   const s = Math.floor(ms / 1000), m = Math.floor(s / 60);
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
-function showEndScreen() {
+function showEndScreen(opts = {}) {
   endScreenOpen = true;
+  const preview = !!opts.preview;
   if (document.pointerLockElement) document.exitPointerLock();
   document.getElementById('e-time').textContent = fmtTime(performance.now() - stats.start);
   document.getElementById('e-scares').textContent = stats.scares;
   document.getElementById('e-fuses').textContent = `${Math.min(fuses, 3)}/3`;
   document.getElementById('e-floats').textContent = pickedCount + '/' + PICK_TOTAL;
-  // —— 写入历史最佳 ——
+  const subEl = document.getElementById('e-sub');
+  if (subEl) subEl.textContent = opts.level === 'L4'
+    ? '你沿着风离开了区间。那张车票的日期，是明天。02:17。'
+    : '你逃出了后室，又穿过了泳池层';
+  const pvEl = document.getElementById('e-preview');
+  if (pvEl) pvEl.style.display = preview ? 'block' : 'none';
+  if (preview) {
+    // 预览（?level= 直达 / 从 L3 快捷入口跳过前关 / ride 非全流程）：
+    // 只读记录用于展示，绝不写入 —— records v1 的 bestTime / bestScares / clears 原样保留。
+    const rec = loadRecords();
+    document.getElementById('e-best-time').textContent = rec.bestTime == null ? '--:--' : fmtTime(rec.bestTime);
+    document.getElementById('e-best-scares').textContent = rec.bestScares == null ? '—' : rec.bestScares;
+    document.getElementById('e-clears').textContent = rec.clears;
+    document.getElementById('e-newrec').style.display = 'none';
+    updateOverlayRecord();
+    document.getElementById('end-overlay').style.display = 'flex';
+    return;
+  }
+  // —— 写入历史最佳（仅全流程 0→1→L3→L4）——
   const elapsed = Math.round(performance.now() - stats.start);
   const rec = loadRecords();
   let newRec = false;
@@ -5249,6 +5646,12 @@ function resetGame() {
   // 关卡状态
   hideEndScreen();
   document.getElementById('level-fade').style.opacity = '0';
+  if (l4) { l4.leave(); l4.reset(); }        // 全复位：第四关几何隐藏并清状态
+  l4RideHandoff = false;
+  l4Completed = false;
+  runPreview = false;                        // 从头重玩 = 重新算一次全流程
+  closeRecordCard();
+  l4Flash.on = false;
   LEVEL = 0;
   camera.layers.set(0);
   scene.environment = ENV_TEX;
@@ -5266,6 +5669,7 @@ function resetGame() {
   showLevelCard('LEVEL 0', '类后室 · 收集保险丝');
   skyLight.intensity = 0; skyLight.castShadow = false;
   flashLight.castShadow = true;
+  setFlashBeam(BEAM_BASE);
   resetLockerHorror();
   setPanelDefaults(0.31, 0.12, 0.075);
   resetL3State();
@@ -5384,7 +5788,8 @@ function getLevelTextureMaterials() {
 }
 function prepareLevelRendering() {
   const id = ++renderPreparationId;
-  const key = [LEVEL, camera.layers.mask, scene.environment.uuid, skyLight.castShadow, flashLight.castShadow].join(':');
+  const envKey = (scene.environment && scene.environment.uuid) ? scene.environment.uuid : 'none';
+  const key = [LEVEL, camera.layers.mask, envKey, skyLight.castShadow, flashLight.castShadow].join(':');
   const button = document.querySelector('#play-overlay .btn');
   renderReady = false;
   if (button) button.textContent = '正在准备画面…';
@@ -5411,7 +5816,10 @@ function prepareLevelRendering() {
     });
     preparedLevels.set(key, renderer.compileAsync(warmScene, camera, scene).finally(() => warmScene.clear()));
   }
-  renderPreparation = Promise.all([preparedLevels.get(key), imagesReady]).then(() => {
+  // 第四关贴图由 levels/level4-art.js 用新的 TextureLoader 载入，不在 textureReady 表里，
+  // 必须把 art.ready 一起 await，否则还没解码完就开始推进。
+  const artReady = (LEVEL === L4_LEVEL && l4 && l4.artReady) ? l4.artReady : Promise.resolve();
+  renderPreparation = Promise.all([preparedLevels.get(key), imagesReady, artReady]).then(() => {
     if (id !== renderPreparationId) return;
     const textures = new Set();
     scene.traverse(object => {
@@ -5455,7 +5863,8 @@ renderer.setAnimationLoop(() => {
   for (const m of waterMats) if (m.uniforms && m.uniforms.time) m.uniforms.time.value += dt * 0.03;   // 室内静水：极慢波纹
   const locked = renderReady && document.pointerLockElement === renderer.domElement;
   if (locked) {
-    updatePlayer(dt);
+    // 读记录卡时不走位（卡片贴着屏幕，但它不抢输入，所以这里显式冻结移动）
+    if (!(LEVEL === L4_LEVEL && l4 && l4.cardOpen)) updatePlayer(dt);
     updatePickups(dt);
     updateFuseProximity();
     updateFlashProximity();
@@ -5465,23 +5874,25 @@ renderer.setAnimationLoop(() => {
     updateLockerRoom(dt);
     updateLevel3(dt);
     updateL3Proximity();
+    if (LEVEL === L4_LEVEL && l4) l4.update(dt);
   }
 
-  // 手电筒电量 + 光束（Level 0 限定照明）
-  if (locked && flashlight.on && flashlight.charge > 0) {
-    flashlight.charge = Math.max(0, flashlight.charge - dt / 100);
-    if (flashlight.charge <= 0) { flashlight.on = false; showFlashText('手电筒没电了…'); }
-    if (flashlight.charge < 0.2) { lowBeepT -= dt; if (lowBeepT <= 0) { synthPing(0, false); lowBeepT = 2.5; } }
-  }
+  // 手电筒电量 + 光束（只在 Level 0 消耗；第四关用独立应急手电，不吃这块电池）
+  if (locked) updateFlashBattery(dt);
   const low = flashlight.charge < 0.25;
+  // 第四关光强/角度/穿透全部取自 levels/level4-art.js：稳定不闪，只随电量轻微变化
   flashLight.intensity = (flashlight.on && LEVEL === 0)
-    ? (low ? 36 + 12 * Math.sin(performance.now() * 0.02) : 56) : 0;
+    ? (low ? 36 + 12 * Math.sin(performance.now() * 0.02) : 56)
+    : ((LEVEL === L4_LEVEL && l4) ? l4.artLighting.flashlight * l4.beamFactor() : 0);
   flashHudT -= dt;
-  if (flashHudT <= 0 && flashlight.owned) { updateFlashHud(); flashHudT = 0.5; }
+  if (flashHudT <= 0 && (flashlight.owned || (LEVEL === L4_LEVEL && l4 && l4.torchOwned))) { updateFlashHud(); flashHudT = 0.4; }
 
   // 交互提示（按目标类型显示）
   let hintTarget = null, hintText = '按 E 拾取';
-  if (LEVEL === 0) {
+  if (LEVEL === L4_LEVEL) {
+    const h = l4 ? l4.getHint() : '';
+    if (h) { hintTarget = true; hintText = h; }
+  } else if (LEVEL === 0) {
     if (nearestBattery) { hintTarget = nearestBattery; hintText = '按 E 拾取备用电池'; }
     else if (nearestFlash && !flashlight.owned) { hintTarget = nearestFlash; hintText = '按 E 拾取手电筒'; }
     else if (nearestFuse) { hintTarget = nearestFuse; hintText = '按 E 拾取保险丝'; }
@@ -5529,7 +5940,12 @@ renderer.setAnimationLoop(() => {
 player.y = groundAt(player.x, player.z);
 camera.position.set(player.x, player.y + EYE, player.z);
 camera.rotation.set(0, yaw, 0);
-if (new URLSearchParams(location.search).get('level') === '3') enterLevel3(true);
+if (new URLSearchParams(location.search).get('level') === '3') { runPreview = true; enterLevel3(true); }
+else if (new URLSearchParams(location.search).get('level') === '4') {
+  // 直达预览：不写全流程记录，只建关并准备画面
+  runPreview = true;
+  enterLevel4({ instant: true, mode: new URLSearchParams(location.search).get('ride') === '1' ? 'ride' : 'preview' });
+}
 else prepareLevelRendering();
 // 调试：?train=1 让末班车直接停稳并开门（配合 ?cam= 截图 / 联调）
 if (new URLSearchParams(location.search).get('train') === '1' && LEVEL === 2) {
@@ -5551,6 +5967,37 @@ if (camDbg) {
     const _ov = document.getElementById('play-overlay'); if (_ov) _ov.style.display = 'none';
     const _lc = document.getElementById('level-card'); if (_lc) _lc.style.display = 'none';
     document.body.classList.add('hud-hidden');
+    // 仅诊断机位启用：展示真实预建场景的不同状态，正常游玩仍须自行交互。
+    if (LEVEL === L4_LEVEL && l4) {
+      const view = new URLSearchParams(location.search).get('l4view') || '';
+      const place = (lx, y, z, y2, p2) => {
+        player.x = L4_OX + lx; player.z = z; player.y = y - EYE; player.vy = 0;
+        yaw = y2 || 0; pitch = p2 || 0;
+        camera.position.set(player.x, y, player.z);
+        camera.rotation.set(pitch, yaw, 0, 'YXZ');
+        if (l4.seamState) l4.seamState.prevZ = player.z;
+      };
+      if (['car', 'walkway', 'torch', 'seam', 'arrive', 'aged', 'battery', 'key', 'seam-before', 'seam-after', 'aged-exterior'].indexOf(view) >= 0) {
+        document.body.classList.add('l4-view-check');
+        // Explicit inspection poses use a held torch; the normal entry still requires pickup.
+        if (view !== 'car' && view !== 'torch') { l4.act('torch'); l4.setTorch(true); }
+        if (view === 'car') { l4.setCarDoor(1); place(0, 1.70, 0.9, Math.PI / 2, 0); }
+        else if (view === 'walkway') { l4.setCarDoor(1); place(-2.95, 1.70, 1.4, 0, 0); }
+        else if (view === 'torch') { l4.setCarDoor(1); place(-2.95, 1.55, -0.5, 0.30, -0.42); }
+        else if (view === 'seam') { place(-2.95, 1.70, -42.0, 0, 0); }
+        else if (view === 'arrive') { place(-2.95, 1.70, 36.0, 0, 0); }
+        else if (view === 'aged') { l4.setAge(true); l4.setCarDoor(1); place(0, 1.70, 7.2, 0, 0); }
+        else if (view === 'battery') { l4.setAge(true); place(0.30, 1.55, 4.6, -0.45, -0.45); }
+        else if (view === 'key') { l4.setAge(true); place(0.30, 1.60, -8.0, 0.12, -0.42); }
+        else if (view === 'seam-before') { l4.setCarDoor(1); place(-2.95, 1.70, -48, 0, 0); }
+        else if (view === 'seam-after') { l4.setCarDoor(1); l4.setAge(true); place(-2.95, 1.70, 36, 0, 0); }
+        else if (view === 'aged-exterior') { l4.setAge(true); l4.setCarDoor(1); place(-3.5, 1.70, 1.8, -1, -0.06); }
+        if (new URLSearchParams(location.search).get('l4light') === 'off') l4.setTorch(false);
+        l4.update(0);
+        l4.setPaused(true);
+        prepareLevelRendering();
+      }
+    }
     // 调试信息浮层（?dbg=1）
     if (new URLSearchParams(location.search).get('dbg') === '1') {
       const dbg = document.createElement('div');
