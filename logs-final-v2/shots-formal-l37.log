@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-3lgY5v
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-FDQZEG
+browser pid=13980 port=11120
+shot L37-23-pool-hall OK bytes=2122869 ready=true camBlocked=false waited=31975ms frames=11 lum=0.364/0.67 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[13,0.02,1.6],"cam":[13,1.62,1.6],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3521,"inst":170,"lights":66,"tris":434274,"calls":1,"rtris":1,"geos":1215,"tex":89,"progs":46}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-25-hot-spring OK bytes=2027874 ready=true camBlocked=false waited=28587ms frames=12 lum=0.352/0.534 calls=1
+   diag {"lv":1,"p":[-20,0.02,-12.4],"cam":[-20,1.62,-12.4],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3521,"inst":170,"lights":66,"tris":434274,"calls":1,"rtris":1,"geos":966,"tex":85,"progs":45}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-3lgY5v\shots-report.json
+SHOTS-OK 2

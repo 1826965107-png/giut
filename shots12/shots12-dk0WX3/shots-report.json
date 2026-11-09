@@ -1,0 +1,228 @@
+{
+  "base": "http://127.0.0.1:8556/backrooms-pool.html",
+  "when": "2026-11-04T15:10:11.686Z",
+  "browserPid": 37456,
+  "cdpPort": 10800,
+  "shots": [
+    {
+      "name": "L0-20-spawn-v2",
+      "url": "http://127.0.0.1:8556/backrooms-pool.html?cam=-147,1.62,0,-1.5708,0&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-dk0WX3\\L0-20-spawn-v2.png",
+      "bytes": 1671928,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 20441,
+      "diag": {
+        "lv": 0,
+        "cols": 70,
+        "camBlocked": false,
+        "p": [
+          -147,
+          0.02,
+          0
+        ],
+        "cam": [
+          -147,
+          1.62,
+          0
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d6ccb8",
+          "img",
+          "nm",
+          0.95,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 10,
+        "lum": 0.084,
+        "lumMax": 0.179,
+        "lumMin": 0.004,
+        "budget": {
+          "meshes": 2139,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391477,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 914,
+          "tex": 94,
+          "progs": 42
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":70,\"camBlocked\":false,\"p\":[-147,0.02,0],\"cam\":[-147,1.62,0],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d6ccb8\",\"img\",\"nm\",0.95,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":10,\"lum\":0.084,\"lumMax\":0.179,\"lumMin\":0.004,\"budget\":{\"meshes\":2139,\"inst\":127,\"lights\":66,\"tris\":391477,\"calls\":1,\"rtris\":1,\"geos\":914,\"tex\":94,\"progs\":42}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8556/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L0-23-topdown-v2",
+      "url": "http://127.0.0.1:8556/backrooms-pool.html?cam=-129,15.5,0,0,-1.45&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-dk0WX3\\L0-23-topdown-v2.png",
+      "bytes": 1422923,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 14814,
+      "diag": {
+        "lv": 0,
+        "cols": 70,
+        "camBlocked": false,
+        "p": [
+          -129,
+          13.9,
+          0
+        ],
+        "cam": [
+          -129,
+          15.5,
+          0
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d6ccb8",
+          "img",
+          "nm",
+          0.95,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.025,
+        "lumMax": 0.06,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 2139,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391477,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 360,
+          "tex": 87,
+          "progs": 33
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":70,\"camBlocked\":false,\"p\":[-129,13.9,0],\"cam\":[-129,15.5,0],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d6ccb8\",\"img\",\"nm\",0.95,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.025,\"lumMax\":0.06,\"lumMin\":0,\"budget\":{\"meshes\":2139,\"inst\":127,\"lights\":66,\"tris\":391477,\"calls\":1,\"rtris\":1,\"geos\":360,\"tex\":87,\"progs\":33}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L0-24-service-vest-v2",
+      "url": "http://127.0.0.1:8556/backrooms-pool.html?cam=-114.5,1.6,-5.0,-1.5708,0&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-dk0WX3\\L0-24-service-vest-v2.png",
+      "bytes": 1852047,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 20317,
+      "diag": {
+        "lv": 0,
+        "cols": 70,
+        "camBlocked": false,
+        "p": [
+          -114.5,
+          0,
+          -5
+        ],
+        "cam": [
+          -114.5,
+          1.6,
+          -5
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d6ccb8",
+          "img",
+          "nm",
+          0.95,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.112,
+        "lumMax": 0.191,
+        "lumMin": 0.006,
+        "budget": {
+          "meshes": 2139,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391477,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 631,
+          "tex": 95,
+          "progs": 41
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":70,\"camBlocked\":false,\"p\":[-114.5,0,-5],\"cam\":[-114.5,1.6,-5],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d6ccb8\",\"img\",\"nm\",0.95,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.112,\"lumMax\":0.191,\"lumMin\":0.006,\"budget\":{\"meshes\":2139,\"inst\":127,\"lights\":66,\"tris\":391477,\"calls\":1,\"rtris\":1,\"geos\":631,\"tex\":95,\"progs\":41}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

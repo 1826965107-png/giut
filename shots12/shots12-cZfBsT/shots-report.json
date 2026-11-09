@@ -1,0 +1,300 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-05T13:52:50.445Z",
+  "browserPid": 10884,
+  "cdpPort": 3629,
+  "shots": [
+    {
+      "name": "L37-22-shower-W",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-22,1.55,5.36,0,-0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-cZfBsT\\L37-22-shower-W.png",
+      "bytes": 1707710,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 42487,
+      "diag": {
+        "lv": 1,
+        "cols": 160,
+        "camBlocked": false,
+        "p": [
+          -22,
+          -0.05,
+          5.36
+        ],
+        "cam": [
+          -22,
+          1.55,
+          5.36
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.172,
+        "lumMax": 0.246,
+        "lumMin": 0.128,
+        "budget": {
+          "meshes": 3561,
+          "inst": 170,
+          "lights": 66,
+          "tris": 434754,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1180,
+          "tex": 91,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":160,\"camBlocked\":false,\"p\":[-22,-0.05,5.36],\"cam\":[-22,1.55,5.36],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.172,\"lumMax\":0.246,\"lumMin\":0.128,\"budget\":{\"meshes\":3561,\"inst\":170,\"lights\":66,\"tris\":434754,\"calls\":1,\"rtris\":1,\"geos\":1180,\"tex\":91,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L37-36-shower-E",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=22,1.55,5.36,0,-0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-cZfBsT\\L37-36-shower-E.png",
+      "bytes": 1697226,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 47436,
+      "diag": {
+        "lv": 1,
+        "cols": 160,
+        "camBlocked": false,
+        "p": [
+          22,
+          -0.05,
+          5.36
+        ],
+        "cam": [
+          22,
+          1.55,
+          5.36
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 10,
+        "lum": 0.171,
+        "lumMax": 0.25,
+        "lumMin": 0.127,
+        "budget": {
+          "meshes": 3561,
+          "inst": 170,
+          "lights": 66,
+          "tris": 434754,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1226,
+          "tex": 89,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":160,\"camBlocked\":false,\"p\":[22,-0.05,5.36],\"cam\":[22,1.55,5.36],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":10,\"lum\":0.171,\"lumMax\":0.25,\"lumMin\":0.127,\"budget\":{\"meshes\":3561,\"inst\":170,\"lights\":66,\"tris\":434754,\"calls\":1,\"rtris\":1,\"geos\":1226,\"tex\":89,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-37-shower-corridor",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-19.6,1.50,5.34,0.40,-0.10&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-cZfBsT\\L37-37-shower-corridor.png",
+      "bytes": 1711259,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 43624,
+      "diag": {
+        "lv": 1,
+        "cols": 160,
+        "camBlocked": false,
+        "p": [
+          -19.6,
+          -0.1,
+          5.34
+        ],
+        "cam": [
+          -19.6,
+          1.5,
+          5.34
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.181,
+        "lumMax": 0.298,
+        "lumMin": 0.132,
+        "budget": {
+          "meshes": 3561,
+          "inst": 170,
+          "lights": 66,
+          "tris": 434754,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1085,
+          "tex": 89,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":160,\"camBlocked\":false,\"p\":[-19.6,-0.1,5.34],\"cam\":[-19.6,1.5,5.34],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.181,\"lumMax\":0.298,\"lumMin\":0.132,\"budget\":{\"meshes\":3561,\"inst\":170,\"lights\":66,\"tris\":434754,\"calls\":1,\"rtris\":1,\"geos\":1085,\"tex\":89,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-38-shower-inside",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-24.1,1.52,3.55,0.10,-0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-cZfBsT\\L37-38-shower-inside.png",
+      "bytes": 1693768,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 42621,
+      "diag": {
+        "lv": 1,
+        "cols": 160,
+        "camBlocked": false,
+        "p": [
+          -24.1,
+          -0.08,
+          3.55
+        ],
+        "cam": [
+          -24.1,
+          1.52,
+          3.55
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.148,
+        "lumMax": 0.202,
+        "lumMin": 0.108,
+        "budget": {
+          "meshes": 3561,
+          "inst": 170,
+          "lights": 66,
+          "tris": 434754,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1098,
+          "tex": 91,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":160,\"camBlocked\":false,\"p\":[-24.1,-0.08,3.55],\"cam\":[-24.1,1.52,3.55],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.148,\"lumMax\":0.202,\"lumMin\":0.108,\"budget\":{\"meshes\":3561,\"inst\":170,\"lights\":66,\"tris\":434754,\"calls\":1,\"rtris\":1,\"geos\":1098,\"tex\":91,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

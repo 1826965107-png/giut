@@ -1,0 +1,17 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-pO9lLi
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-zWVsJ2
+browser pid=32168 port=7259
+shot L0-30-entity-face OK bytes=2254552 ready=true camBlocked=false waited=35936ms frames=11 lum=0.099/0.155 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-134.2,-0.02,0.4],"cam":[-134.2,1.58,0.4],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":2114,"tex":97,"progs":49}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L0-31-entity-34 FAIL bytes=2173405 ready=false camBlocked=true waited=77002ms frames=24 lum=0.117/0.189 calls=1
+   diag {"lv":0,"p":[-133.6,0.02,1],"cam":[-133.6,1.62,1],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":2118,"tex":97,"progs":49}}
+shot L37-32-drowned-stand-close OK bytes=1895843 ready=true camBlocked=false waited=47822ms frames=12 lum=0.587/0.862 calls=1
+   diag {"lv":1,"p":[17.6,-0.3,-14],"cam":[17.6,1.3,-14],"ray":[-0.28,"ShaderMaterial","-","nomap","-","-","PlaneGeometry",[13,-0.28,-12.7],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":2165,"tex":97,"progs":46}}
+shot L37-33-drowned-swim-close OK bytes=1905986 ready=true camBlocked=false waited=47817ms frames=12 lum=0.599/0.907 calls=1
+   diag {"lv":1,"p":[17.2,-1.15,-14],"cam":[17.2,0.45,-14],"ray":[-0.28,"ShaderMaterial","-","nomap","-","-","PlaneGeometry",[13,-0.28,-12.7],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":2162,"tex":97,"progs":46}}
+shot L37-34-pool-coping OK bytes=1915316 ready=true camBlocked=false waited=31759ms frames=12 lum=0.418/0.604 calls=1
+   diag {"lv":1,"p":[6.9,-0.32,-12],"cam":[6.9,1.28,-12],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":1097,"tex":91,"progs":45}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-pO9lLi\shots-report.json
+SHOTS-DONE-WITH-ISSUES 1

@@ -1,0 +1,292 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-01T10:21:09.070Z",
+  "browserPid": 39552,
+  "cdpPort": 11886,
+  "shots": [
+    {
+      "name": "L0-03-archive-loop",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-118,1.62,-18.5,1.231,-0.03&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-FIbEyv\\L0-03-archive-loop.png",
+      "bytes": 1836027,
+      "ok": false,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 22419,
+      "diag": {
+        "lv": 0,
+        "cols": 69,
+        "camBlocked": false,
+        "p": [
+          -118,
+          0.02,
+          -18.5
+        ],
+        "cam": [
+          -118,
+          1.62,
+          -18.5
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.62,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 13,
+        "lum": 0.216,
+        "lumMax": 0.397,
+        "lumMin": 0.025,
+        "budget": {
+          "meshes": 1964,
+          "inst": 130,
+          "lights": 67,
+          "tris": 394493,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 63,
+          "tex": 95,
+          "progs": 35
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":69,\"camBlocked\":false,\"p\":[-118,0.02,-18.5],\"cam\":[-118,1.62,-18.5],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.62,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":13,\"lum\":0.216,\"lumMax\":0.397,\"lumMin\":0.025,\"budget\":{\"meshes\":1964,\"inst\":130,\"lights\":67,\"tris\":394493,\"calls\":1,\"rtris\":1,\"geos\":63,\"tex\":95,\"progs\":35}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "shotErr": null
+    },
+    {
+      "name": "L0-06-entity-side",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-131.6,1.58,3.2,0,-0.02&l12view=entity&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-FIbEyv\\L0-06-entity-side.png",
+      "bytes": 1781064,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 24296,
+      "diag": {
+        "lv": 0,
+        "cols": 69,
+        "camBlocked": false,
+        "p": [
+          -131.6,
+          -0.02,
+          3.2
+        ],
+        "cam": [
+          -131.6,
+          1.58,
+          3.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.62,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.159,
+        "lumMax": 0.347,
+        "lumMin": 0.019,
+        "budget": {
+          "meshes": 1964,
+          "inst": 130,
+          "lights": 67,
+          "tris": 394493,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 157,
+          "tex": 95,
+          "progs": 36
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":69,\"camBlocked\":false,\"p\":[-131.6,-0.02,3.2],\"cam\":[-131.6,1.58,3.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.62,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.159,\"lumMax\":0.347,\"lumMin\":0.019,\"budget\":{\"meshes\":1964,\"inst\":130,\"lights\":67,\"tris\":394493,\"calls\":1,\"rtris\":1,\"geos\":157,\"tex\":95,\"progs\":36}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "netErrors": [],
+      "shotErr": null
+    },
+    {
+      "name": "L37-08-drowned-under-stand",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-1.4,-0.72,-6,1.5708,0.12&l12view=drowned-stand&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-FIbEyv\\L37-08-drowned-under-stand.png",
+      "bytes": 2157835,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 26120,
+      "diag": {
+        "lv": 1,
+        "cols": 89,
+        "camBlocked": false,
+        "p": [
+          -1.4,
+          -2.32,
+          -6
+        ],
+        "cam": [
+          -1.4,
+          -0.72,
+          -6
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          -2.01,
+          "BasicMaterial",
+          "ffffff",
+          "img",
+          "-",
+          "-",
+          "PlaneGeometry",
+          [
+            -3,
+            -2.01,
+            -1.5
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.54,
+        "lumMax": 0.88,
+        "lumMin": 0.118,
+        "budget": {
+          "meshes": 1964,
+          "inst": 130,
+          "lights": 67,
+          "tris": 394493,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 669,
+          "tex": 97,
+          "progs": 38
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":89,\"camBlocked\":false,\"p\":[-1.4,-2.32,-6],\"cam\":[-1.4,-0.72,-6],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[-2.01,\"BasicMaterial\",\"ffffff\",\"img\",\"-\",\"-\",\"PlaneGeometry\",[-3,-2.01,-1.5],0,0],\"ready\":true,\"frames\":12,\"lum\":0.54,\"lumMax\":0.88,\"lumMin\":0.118,\"budget\":{\"meshes\":1964,\"inst\":130,\"lights\":67,\"tris\":394493,\"calls\":1,\"rtris\":1,\"geos\":669,\"tex\":97,\"progs\":38}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "netErrors": [],
+      "shotErr": null
+    },
+    {
+      "name": "L37-09-drowned-under-swim",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-1.1,-0.62,-4.9,0.9,0.02&l12view=drowned-swim&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-FIbEyv\\L37-09-drowned-under-swim.png",
+      "bytes": 2307665,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 27370,
+      "diag": {
+        "lv": 1,
+        "cols": 89,
+        "camBlocked": false,
+        "p": [
+          -1.1,
+          -2.22,
+          -4.9
+        ],
+        "cam": [
+          -1.1,
+          -0.62,
+          -4.9
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          -2.01,
+          "BasicMaterial",
+          "ffffff",
+          "img",
+          "-",
+          "-",
+          "PlaneGeometry",
+          [
+            -3,
+            -2.01,
+            -1.5
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.543,
+        "lumMax": 0.899,
+        "lumMin": 0.108,
+        "budget": {
+          "meshes": 1964,
+          "inst": 130,
+          "lights": 67,
+          "tris": 394493,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 688,
+          "tex": 97,
+          "progs": 38
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":89,\"camBlocked\":false,\"p\":[-1.1,-2.22,-4.9],\"cam\":[-1.1,-0.62,-4.9],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[-2.01,\"BasicMaterial\",\"ffffff\",\"img\",\"-\",\"-\",\"PlaneGeometry\",[-3,-2.01,-1.5],0,0],\"ready\":true,\"frames\":12,\"lum\":0.543,\"lumMax\":0.899,\"lumMin\":0.108,\"budget\":{\"meshes\":1964,\"inst\":130,\"lights\":67,\"tris\":394493,\"calls\":1,\"rtris\":1,\"geos\":688,\"tex\":97,\"progs\":38}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "netErrors": [],
+      "shotErr": null
+    }
+  ]
+}

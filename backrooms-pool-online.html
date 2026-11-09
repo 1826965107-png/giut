@@ -461,6 +461,11 @@ import { Water } from 'three/addons/objects/Water.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 // 第四关《回声区间》：独立关卡模块，只从这里注入 THREE/场景/材质帮助，模块内不 import 裸 three
 import { createLevel4, L4_OX, L4_LEVEL, TUNNEL_LAYER } from './levels/level4-tunnel.js';
+/* Level 12 v2 平面（房间 / 门洞 / 水体 / 出生点 / 收集物），宿主与 Node 灰盒校验共用 */
+import * as L12P from './levels/l12-plan.js';
+import { createL37Props, L37_PROPS as L12_PROPS_DATA, L37_LAMPS as L12_LAMPS_DATA } from './levels/l12-props.js';
+import { panelCeiling, slatCeiling, beamRibs, linearCove, wainscot, drainGrates, wallBoard, L12_DRAIN_RECTS } from './levels/l12-art.js';
+import { createL0V2 } from './levels/l12-l0.js';
 
 RectAreaLightUniformsLib.init();
 
@@ -577,43 +582,42 @@ const refractionPass = new ShaderPass({
 });
 composer.addPass(refractionPass);
 
-/* ============================================================ 地图数据 */
-const H = 4.2;
-const BOUNDS = { x1: -24, x2: 24, z1: -16, z2: 20 };
+/* ==== 地图数据：平面（房间/门洞/水体/出生点）唯一来源是 levels/l12-plan.js ==== */
+const H = 4.4;                 // 泳池层净高（原 4.2，抬高后柱头与筒灯不贴顶）
+const L37_ECHO_H = 2.55;       // 局部低顶：桑拿/设备间的净高由 plan 的 h 字段给出
+const L37_SAUNA_H = 2.60;      // v2 桑拿间局部低顶
+const L37_EQUIP_H = 3.05;      // 设备间顶棚
+const BOUNDS = { ...L12P.L37.bounds };
+const L37_ROOMS_V2 = L12P.L37.rooms, L37_DOORS_V2 = L12P.L37.doors;
+const L12_V2_SHELL = true;      // 平面驱动建造（旧布局已删除，保留该常量作为构建期断言）
+const L37_FLOOR_HOLES = L12P.L37_POOLS.map(p => [p.x1, p.zDeep1, p.x2, p.zEnd]);
+const POOLS = L12P.L37_POOLS.map(p => ({
+  name: p.name, label: p.label, x1: p.x1, x2: p.x2, zDeep1: p.zDeep1, zEnd: p.zEnd,
+  bottom: p.bottom, water: p.water, lanes: p.lanes || 0, bench: !!p.bench,
+    benches: (p.benches || []).map(b => ({ x1: b.x1, x2: b.x2, z1: b.z1, z2: b.z2, top: b.top })),
+  stairs: { x1: p.stairs.x1, x2: p.stairs.x2, steps: p.stairs.steps.map(s => ({ z1: s.z1, z2: s.z2, top: s.top })) }
+}));
+const POOL_BY_NAME = Object.fromEntries(POOLS.map(p => [p.name, p]));
+function poolAt(x, z, pad = 0) {
+  for (const p of POOLS) {
+    if (x >= p.x1 - pad && x <= p.x2 + pad && z >= p.zDeep1 - pad && z <= p.zEnd + pad) return p;
+  }
+  return null;
+}
 
-// 泳池（参照标准游泳馆构造）：
-// 竞赛池 25m×12m / 8 泳道：泳道绳、泳道线、出发台、角落入水台阶、溢流槽
-// 训练池 8m×8m：浅水、入水台阶
-const POOLS = [
-  { name: 'main', x1: -9, x2: 3, zDeep1: -14, zEnd: 11, bottom: -2.05, water: -0.30, lanes: 8,
-    stairs: { x1: -9, x2: -6.9, steps: [
-      { z1: 9.6, z2: 11,  top: -0.55 },
-      { z1: 8.2, z2: 9.6, top: -1.20 },
-    ] } },
-  { name: 'train', x1: 14, x2: 22, zDeep1: -6, zEnd: 2, bottom: -1.15, water: -0.30,
-    stairs: { x1: 14, x2: 15.9, steps: [
-      { z1: 1.2, z2: 2,   top: -0.30 },
-      { z1: 0.4, z2: 1.2, top: -0.72 },
-    ] } },
-];
-
-// 浅反射池（已移除，仅立柱过滤使用）
-const BASIN = { x1: -4, x2: 4, z1: -15, z2: -10, bottom: -0.25, water: -0.18 };
-
-// 隔断墙（门洞之外均为墙段）
-const PARTITIONS = [
-  { x: 12, zRanges: [[-16, -5], [5, 20]] },
-  { x: -16, zRanges: [[-16, -2.5], [2.5, 20]] },
-];
+// 浅反射池（保留旧名，指向静汤池，兼容历史引用）
+const BASIN = { x1: -12, x2: -6, z1: -22, z2: -16, bottom: -0.62, water: -0.14 };
 
 const COLLIDERS = [];
 
 /* ============ 关卡状态（0 = Level 0 后室，1 = 泳池层） ============ */
-const BOUNDS_L0 = { x1: -150, x2: -64, z1: -24, z2: 24 };
+const BOUNDS_L0 = { x1: L12P.L0.bounds.x1, x2: L12P.L0.bounds.x2, z1: L12P.L0.bounds.z1, z2: L12P.L0.bounds.z2 };
 const L0H = 3.0;
 const COLLIDERS_L0 = [];
-const L0_SPAWN = { x: -144, z: 0 };
-const L0_RESPAWN = { x: -144, z: 0 };
+const L0_SPAWN = { x: L12P.L0.spawn.x, z: L12P.L0.spawn.z, yaw: L12P.L0.spawn.yaw };
+const L0_RESPAWN = { x: L12P.L0.spawn.x, z: L12P.L0.spawn.z, yaw: L12P.L0.spawn.yaw };
+const L12_V2_L0 = true;
+let L0V2 = null;
 let LEVEL = 0;
 /* 第四关运行时状态先声明，避免 resetL3State / updateFlashHud 早于定义执行时踩 TDZ */
 let l4 = null;
@@ -692,6 +696,12 @@ function groundAt(x, z) {
     if (x >= p.x1 && x <= p.x2 && z >= p.zDeep1 && z <= p.zEnd) {
       if (p.stairs && x >= p.stairs.x1 && x <= p.stairs.x2) {
         for (const s of p.stairs.steps) { if (z >= s.z1 && z <= s.z2) return s.top; }
+      }
+      // 池内坐台：与网格同一份数据（p.benches），玩家站上去而不是跌落/穿模
+      if (p.benches) {
+        for (const b of p.benches) {
+          if (x >= b.x1 && x <= b.x2 && z >= b.z1 && z <= b.z2) return b.top;
+        }
       }
       return p.bottom;
     }
@@ -1094,9 +1104,11 @@ const floorMaint = createTileSet({
   cols: 6, rows: 6, tileWorld: 0.62, size: 512,
   tile: '#676966', grout: '#424542', vary: 0.05, grime: 0.18, tileScale: 0.86, ao: 0.4, normalStrength: 2.2 });
 const poolMosaic = createTileSet({
-  cols: 24, rows: 24, tileWorld: 0.055, size: 512,
-  tile: ['#8edcd8', '#76c7cd'], grout: '#4b9aa0', vary: 0.06, grime: 0.05,
-  tileScale: 0.86, ao: 0.22, checker: true, normalStrength: 2.7 });
+  cols: 8, rows: 8, tileWorld: 0.05, size: 512,
+  tile: ['#9fb0a4', '#8fa398'], grout: '#5c6b60', vary: 0.05, grime: 0.05,
+  tileScale: 0.86, ao: 0.22, checker: true, normalStrength: 2.4 });
+// 池内小砖覆盖率：assets-v2 的 8×8 小砖整张 0.4m —— buildPool 的米制 UV 用同一周期，避免"复制新图却跑旧青蓝"
+poolMosaic.coverageX = 0.4; poolMosaic.coverageY = 0.4;
 const rimTiles = createTileSet({
   cols: 10, rows: 2, tileWorld: 0.13, size: 256,
   tile: '#274b55', grout: '#17323a', vary: 0.07, grime: 0.06, tileScale: 0.86, ao: 0.3, normalStrength: 2.2 });
@@ -1107,9 +1119,11 @@ const ceiling = createPlain({ base: '#e7e5de', speck: 0.4 });
 
 /* —— 接入 AI 生成贴图包（textures/）：替换泳池层墙砖 / 池内马赛克 / 大厅地板 —— */
 wallTiles.diffuse = 'textures/pool-tiles-white.png'; wallTiles.normal = null; wallTiles.rough = null;
-poolMosaic.diffuse = 'textures/pool-mosaic-teal.png'; poolMosaic.normal = null; poolMosaic.rough = null;
+poolMosaic.diffuse = 'assets-v2/l12-v2-pool-mosaic.png'; poolMosaic.normal = null; poolMosaic.rough = null;
 floorWest.diffuse = 'textures/pool-floor.png'; floorWest.normal = null; floorWest.rough = null;
 floorEast.diffuse = 'textures/pool-floor.png'; floorEast.normal = null; floorEast.rough = null;
+// 回声室 / 北廊也接同一张 pool-floor.png（以前留在 createTileSet 的 Canvas 面砖上，看着像金属面板）
+floorMaint.diffuse = 'textures/pool-floor.png'; floorMaint.normal = null; floorMaint.rough = null;
 
 /* ============================================================ 几何辅助 */
 /* 世界尺寸 UV 缩放：让各材质共享同一张贴图（原图直用，repeat 由几何 UV 承担） */
@@ -1154,6 +1168,30 @@ function addBox(w, h, d, x, y, z, mat, cov) {
   const m = new THREE.Mesh(geo, mat);
   m.position.set(x, y, z); m.receiveShadow = true; m.castShadow = true; scene.add(m); return m;
 }
+/* 世界米制 UV 盒体：UV 由顶点世界坐标直接算出，因此同一堵墙被门洞切成多段时
+   各段共享同一张绝对映射，贴图相位跨段连续；-X/-Z 面取负坐标，正反两面都不镜像。 */
+function addWorldUVBox(w, h, d, x, y, z, mat, cov) {
+  const c = cov || 1;
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const pos = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) {
+    const wx = pos.getX(i) + x, wy = pos.getY(i) + y, wz = pos.getZ(i) + z;
+    const face = Math.floor(i / 4);
+    let u, v;
+    if (face === 0) { u = -wz / c; v = wy / c; }        // +X
+    else if (face === 1) { u = wz / c; v = wy / c; }    // -X
+    else if (face === 2) { u = wx / c; v = -wz / c; }   // +Y
+    else if (face === 3) { u = wx / c; v = wz / c; }    // -Y
+    else if (face === 4) { u = wx / c; v = wy / c; }    // +Z
+    else { u = -wx / c; v = wy / c; }                   // -Z
+    uv.setXY(i, u, v);
+  }
+  uv.needsUpdate = true;
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z); m.receiveShadow = true; m.castShadow = true;
+  m.userData.worldUV = c;
+  scene.add(m); return m;
+}
 
 /* ---------------- 地板（ShapeGeometry 洞口 + 世界坐标 UV） ---------------- */
 function holePath(x1, z1, x2, z2) {
@@ -1169,20 +1207,14 @@ function deckShape(x1, z1, x2, z2, holes) {
 }
 function addDeck(x1, z1, x2, z2, holes, set, opts) {
   const geo = new THREE.ShapeGeometry(deckShape(x1, z1, x2, z2, holes));
-  const mat = (opts && opts.physical ? physicalMat : matFor)(set, 1 / set.coverageX, 1 / set.coverageY, opts);
+  const mat = (opts && opts.mat) ? opts.mat
+    : (opts && opts.physical ? physicalMat : matFor)(set, 1 / set.coverageX, 1 / set.coverageY, opts);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.x = -Math.PI / 2;
   mesh.receiveShadow = true;
   scene.add(mesh);
   return mesh;
 }
-
-// 西侧大厅地板（竞赛池洞口 25m×12m）
-addDeck(-24, -16, 12, 20, [[-9, -14, 3, 11]], floorWest, { physical: true });
-// 东侧大厅地板（训练池洞口 8m×8m）
-addDeck(12, -16, 24, 20, [[14, -6, 22, 2]], floorEast, { physical: true, color: 0xd2dbe0 });
-// 门洞门槛石（东大厅 x=12 门洞）
-addBox(0.7, 0.05, 10.4, 12, 0.025, 0, matFor(rimTiles, 0.7 / rimTiles.coverageX, 10.4 / rimTiles.coverageY));
 
 /* ---------------- 泳池建造 ---------------- */
 // 池内马赛克：全场景共享一个材质（原图直用，重复比例由几何 UV 承担）
@@ -1247,7 +1279,219 @@ function makeRopeTexture() {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 3);
   return t;
 }
+/* ============================================================ Level 37 · 泳池层：建造 */
+/* 五个真实隔断的区：南入口前厅 / 中央主池厅 / 西更衣淋浴区 / 北浅水回声室 / 东训练池与设备间
+   墙体、门洞、地面洞口、台阶、碰撞全部由同一份轴对齐数据生成（模型高度 = groundAt 数据）。
+   主环：前厅 →(门洞 z=12)→ 主池厅 →(北门 x-6..-3)→ 回声室 →(东门 z-23..-20)→ 北廊
+        →(门 x14..17)→ 东厅北侧 → 绕训练池 →(栏板缺口 x27..30)→ 东厅南侧 →(门 z8..11)→ 主池厅 → 前厅
+   西环：主池厅 →(北门 z-9..-6)→ 更衣区 →(南门 z8..11)→ 主池厅 */
 
+const L37_SPAWN = { x: L12P.L37.spawn.x, z: L12P.L37.spawn.z, yaw: L12P.L37.spawn.yaw };
+const L37_NAV_CELL = 0.5;
+
+/* ---------------- 地面 / 顶棚 ---------------- */
+/* 回声室与北廊的地面材质：同一张 pool-floor.png、与大厅 floorWest 相同的 6m 覆盖率（统一米制 UV），
+   做成低反光防滑砖 —— 标准材质没有 clearcoat 通道，金属度 0、粗糙度 0.86、弱法线 0.12，
+   并显式去掉派生 roughnessMap（它会与 roughness 相乘，把地面压成镜面金属板）。 */
+const L37_ECHO_FLOOR_COV = 1 / 6;
+const l37EchoFloorMat = matFor(floorMaint, L37_ECHO_FLOOR_COV, L37_ECHO_FLOOR_COV,
+  { ns: 0.12, roughness: 0.86, metalness: 0.0, env: 0.22, color: 0xe3e6df });
+l37EchoFloorMat.roughnessMap = null;
+l37EchoFloorMat.name = 'l37EchoFloor';
+
+
+/* ---------------- 墙体（网格 + 碰撞同源） ---------------- */
+const l37WallMat = matFor(wallTiles, 1, 1);
+const l37SkirtMat = matFor(skirting, 1, 1, { roughness: 0.5, metalness: 0.06 });
+const l37TrimMat = new THREE.MeshStandardMaterial({ color: 0x3a6b72, roughness: 0.5, metalness: 0.3 });
+const l37WallPieces = [], l37Headers = [], l37Windows = [];
+const l37ColumnBases = [];      // 结构柱底座（真实 Box3 供测试做相交检查）
+const L37_WALL_COV = 1.6;       // 墙砖贴图的米制周期（与重构前一致，仅改为世界坐标 UV）
+
+/* ================= v2 外壳：平面数据 → 地面 / 墙体 / 门洞 / 门楣 / 天花 / 柱 ================= */
+/* 一套材料家族（暖灰米色石砖地、暖白矿物墙、灰绿池内小砖、烟熏浅木、深铜灰五金）：
+   同一套材质在整层复用，干湿区靠构造与光色区分，不靠逐房换色。 */
+const L12_TEX = {
+  floor: 'assets-v2/l12-v2-spa-floor.png',
+  plaster: 'assets-v2/l12-v2-spa-plaster.png',
+  mosaic: 'assets-v2/l12-v2-pool-mosaic.png',
+  wood: 'assets-v2/l12-v2-smoked-oak.png',
+  wallpaper: 'assets-v2/l12-v2-wallpaper.png',
+  carpet: 'assets-v2/l12-v2-carpet.png',
+};
+const L12_COV = { floor: 2.4, plaster: 2.0, mosaic: 0.4, wood: 2.0, wallpaper: 2.0, carpet: 2.0 };
+const l12SpaFloorSet = { diffuse: L12_TEX.floor, normal: null, rough: null, coverageX: L12_COV.floor, coverageY: L12_COV.floor };
+const l12SpaWallSet = { diffuse: L12_TEX.plaster, normal: null, rough: null, coverageX: L12_COV.plaster, coverageY: L12_COV.plaster };
+const l12WoodSet = { diffuse: L12_TEX.wood, normal: null, rough: null, coverageX: L12_COV.wood, coverageY: L12_COV.wood };
+// 石材：低反光防滑（metalness 0、无 clearcoat；显式去掉派生粗糙度贴图以免把粗糙度乘低）
+const l12SpaFloorMat = matFor(l12SpaFloorSet, 1 / L12_COV.floor, 1 / L12_COV.floor,
+  { ns: 0.12, roughness: 0.82, metalness: 0.0, env: 0.25, color: 0xd9d2c4 });
+l12SpaFloorMat.roughnessMap = null; l12SpaFloorMat.name = 'l12SpaFloor';
+const l12SpaWallMat = matFor(l12SpaWallSet, 1 / L12_COV.plaster, 1 / L12_COV.plaster,
+  { ns: 0.14, roughness: 0.9, metalness: 0.0, env: 0.2, color: 0xe6e0d2 });
+l12SpaWallMat.roughnessMap = null; l12SpaWallMat.name = 'l12SpaWall';
+const l12WoodMat = matFor(l12WoodSet, 1 / L12_COV.wood, 1 / L12_COV.wood,
+  { ns: 0.10, roughness: 0.78, metalness: 0.0, env: 0.2, color: 0xb08a63 });
+l12WoodMat.roughnessMap = null; l12WoodMat.name = 'l12SmokedOak';
+const l12MetalMat = new THREE.MeshStandardMaterial({ color: 0x5d5b55, roughness: 0.42, metalness: 0.72 });
+const l12CopingMat = (() => { const m = matFor({ diffuse: L12_TEX.floor, coverageX: 2.4, coverageY: 2.4 }, 1 / 2.4, 1 / 2.4, { ns: 0.12, roughness: 0.78, metalness: 0.0, env: 0.12, color: 0xd2cbbe }); m.roughnessMap = null; m.name = 'l12Coping'; return m; })();
+const l12CeilMat = new THREE.MeshStandardMaterial({ color: 0x22262a, roughness: 0.96, metalness: 0.02 });
+const l12CeilSet = { diffuse: L12_TEX.plaster, coverageX: 2.0, coverageY: 2.0 };
+const l12BoardBarMat = new THREE.MeshStandardMaterial({ color: 0xa9a294, roughness: 0.82, metalness: 0.12 });
+const l12CeilPanelMat = matFor(l12CeilSet, 0.5, 0.5, { ns: 0.10, roughness: 0.95, metalness: 0.0, env: 0.05, color: 0xdcd7cbece2 });
+l12CeilPanelMat.roughnessMap = null; l12CeilPanelMat.name = 'l12CeilPanel';
+
+const L12_SHELL_LOG = { walls: 0, headers: 0, doorways: 0, ceilings: 0, columns: 0 };
+const l12RoomH = r => (r.h === 'SAUNA' ? L37_SAUNA_H : (r.h === 'EQUIP' ? L37_EQUIP_H : H));
+const l12RoomAtEdge = (axis, coord, u) => L37_ROOMS_V2.filter(r => {
+  const c1 = axis === 'z' ? r.z1 : r.x1, c2 = axis === 'z' ? r.z2 : r.x2;
+  const a1 = axis === 'z' ? r.x1 : r.z1, a2 = axis === 'z' ? r.x2 : r.z2;
+  return (Math.abs(c1 - coord) < 1e-6 || Math.abs(c2 - coord) < 1e-6) && u > a1 - 1e-6 && u < a2 + 1e-6;
+});
+function l12MergeSpans(spans) {
+  spans.sort((p, q) => p[0] - q[0]);
+  const out = [];
+  for (const s of spans) {
+    const last = out[out.length - 1];
+    if (last && s[0] <= last[1] + 1e-6) last[1] = Math.max(last[1], s[1]);
+    else out.push([s[0], s[1]]);
+  }
+  return out;
+}
+function l12Subtract(segs, gap) {
+  const out = [];
+  for (const [a, b] of segs) {
+    if (gap[1] <= a + 1e-6 || gap[0] >= b - 1e-6) { out.push([a, b]); continue; }
+    if (gap[0] > a + 1e-6) out.push([a, gap[0]]);
+    if (gap[1] < b - 1e-6) out.push([gap[1], b]);
+  }
+  return out.filter(s => s[1] - s[0] > 0.02);
+}
+if (L12_V2_SHELL) {
+  const WT = 0.24, DOOR_H = 2.3;
+  // 1) 地面：整层一块 deck，四个水体开洞（洞与池体同一份坐标）
+  addDeck(BOUNDS.x1, BOUNDS.z1, BOUNDS.x2, BOUNDS.z2, L37_FLOOR_HOLES, l12SpaFloorSet, { mat: l12SpaFloorMat });
+  // 2) 墙体：由房间矩形并集生成，门洞切成段，门头补真实门楣
+  const segMap = new Map();
+  for (const r of L37_ROOMS_V2) {
+    for (const [axis, coord, a, b] of [
+      ['z', r.z1, r.x1, r.x2], ['z', r.z2, r.x1, r.x2],
+      ['x', r.x1, r.z1, r.z2], ['x', r.x2, r.z1, r.z2]]) {
+      const key = axis + ':' + coord.toFixed(3);
+      if (!segMap.has(key)) segMap.set(key, { axis, coord, spans: [] });
+      segMap.get(key).spans.push([Math.min(a, b), Math.max(a, b)]);
+    }
+  }
+  for (const { axis, coord, spans } of segMap.values()) {
+    const adj = l12RoomAtEdge(axis, coord, (spans[0][0] + spans[0][1]) / 2);
+    const hh = Math.max(0, ...l12RoomAtEdge(axis, coord, (spans[0][0] + spans[0][1]) / 2).map(l12RoomH), H);
+    const h = Math.min(hh, H);
+    let segs = l12MergeSpans(spans.map(s => s.slice()));
+    for (const d of L37_DOORS_V2) {
+      if (d.axis !== axis || Math.abs(d.coord - coord) > 1e-3) continue;
+      segs = l12Subtract(segs, d.gap);
+      L12_SHELL_LOG.doorways++;
+    }
+    for (const [a, b] of segs) {
+      const len = b - a, mid = (a + b) / 2;
+      const mesh = axis === 'z'
+        ? addWorldUVBox(len, h, WT, mid, h / 2, coord, l12SpaWallMat, 1.0)
+        : addWorldUVBox(WT, h, len, coord, h / 2, mid, l12SpaWallMat, 1.0);
+      mesh.name = 'l12Wall';
+      l37WallPieces.push({ axis, fixed: coord, a, b, t: WT, mesh });
+      COLLIDERS.push(axis === 'z'
+        ? { x1: a, x2: b, z1: coord - WT / 2, z2: coord + WT / 2, y1: 0, y2: h, kind: 'poolWall' }
+        : { x1: coord - WT / 2, x2: coord + WT / 2, z1: a, z2: b, y1: 0, y2: h, kind: 'poolWall' });
+      L12_SHELL_LOG.walls++;
+    }
+  }
+  // 3) 门洞：门楣（从门高到该墙净高）+ 双面薄门套；碰撞上界与可见门楣一致
+  for (const d of L37_DOORS_V2) {
+    const doorH = d.h == null ? DOOR_H : d.h;
+    const rooms = l12RoomAtEdge(d.axis, d.coord, (d.gap[0] + d.gap[1]) / 2);
+    const top = Math.min(H, Math.max(...rooms.map(l12RoomH), doorH));
+    const gapW = d.gap[1] - d.gap[0], mid = (d.gap[0] + d.gap[1]) / 2;
+    if (top - doorH > 0.02) {
+      const head = d.axis === 'z'
+        ? addWorldUVBox(gapW, top - doorH, WT, mid, doorH + (top - doorH) / 2, d.coord, l12SpaWallMat, 1.0)
+        : addWorldUVBox(WT, top - doorH, gapW, d.coord, doorH + (top - doorH) / 2, mid, l12SpaWallMat, 1.0);
+      head.name = 'l12Lintel';
+      l37Headers.push({ axis: d.axis, coord: d.coord, gap: d.gap.slice(), doorH, top, mesh: head });
+      COLLIDERS.push(d.axis === 'z'
+        ? { x1: d.gap[0], x2: d.gap[1], z1: d.coord - WT / 2, z2: d.coord + WT / 2, y1: doorH, y2: top, kind: 'poolHeader' }
+        : { x1: d.coord - WT / 2, x2: d.coord + WT / 2, z1: d.gap[0], z2: d.gap[1], y1: doorH, y2: top, kind: 'poolHeader' });
+      L12_SHELL_LOG.headers++;
+    }
+    // 门套：两侧贴脸（0.07 宽）+ 上沿，端部压在立框上，不做成悬空大梁
+    for (const side of [-1, 1]) {
+      const u = mid + side * (gapW / 2 + 0.035);
+      if (d.axis === 'z') addBox(0.07, doorH, WT + 0.04, u, doorH / 2, d.coord, l12MetalMat);
+      else addBox(WT + 0.04, doorH, 0.07, d.coord, doorH / 2, u, l12MetalMat);
+    }
+    if (d.axis === 'z') addBox(gapW + 0.14, 0.07, WT + 0.04, mid, doorH + 0.035, d.coord, l12MetalMat);
+    else addBox(WT + 0.04, 0.07, gapW + 0.14, d.coord, doorH + 0.035, mid, l12MetalMat);
+  }
+  // 4) 天花：木格栅（接待/更衣/桑拿）+ 矿物板与结构梁（湿区），带灯槽与线性灯
+  const artCtx = {
+    THREE, scene, addBox, addWorldUVBox, COLLIDERS,
+    mats: { boardBar: l12BoardBarMat, ceil: l12CeilPanelMat, ceilDark: l12CeilMat, trim: l12MetalMat, wood: l12WoodMat, stone: l12SpaWallMat, metal: l12MetalMat },
+  };
+  const WOOD_CEIL = new Set(['lobby', 'shoe', 'lockW', 'lockE', 'sauna']);
+  const HALLS = new Set(['poolA', 'poolB', 'spaA', 'spaB', 'wetHall', 'wetSpine', 'restLink']);
+  for (const r of L37_ROOMS_V2) {
+    const h = l12RoomH(r);
+    if (WOOD_CEIL.has(r.id)) {
+      slatCeiling(artCtx, r, { h, gap: 0.18, slat: 0.06 });
+      linearCove(artCtx, { len: Math.min(6, (r.x2 - r.x1) - 1.2), x: (r.x1 + r.x2) / 2, z: r.z1 + 0.9, y: h - 0.12, dir: 'x' });
+    } else {
+      const w = r.x2 - r.x1, d = r.z2 - r.z1;
+      const panels = [];
+      const nx = Math.max(1, Math.round(w / 5.0)), nz = Math.max(1, Math.round(d / 5.0));
+      for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
+        panels.push({ x: r.x1 + (i + 0.5) * (w / nx), z: r.z1 + (k + 0.5) * (d / nz), w: 1.5, d: 0.5 });
+      }
+      panelCeiling(artCtx, r, { h, panels, tile: 2.0, cove: true, tray: HALLS.has(r.id) });
+      if (HALLS.has(r.id)) beamRibs(artCtx, r, { h, every: 6 });
+    }
+    L12_SHELL_LOG.ceilings++;
+  }
+  // 4b) 墙裙：湿区石材、干区木饰面（下部 0.72m + 细压条），避开门洞
+  for (const r of L37_ROOMS_V2) {
+    const stone = HALLS.has(r.id);
+    wainscot(artCtx, r, L37_DOORS_V2, { h: 0.72, mat: stone ? l12SpaWallMat : l12WoodMat });
+  }
+  // 4c) 高侧磨砂窗：池厅东墙 / 温泉厅西墙（窗台与上沿齐全，只做发光面，不新增点光）
+  {
+    const frostMat = new THREE.MeshStandardMaterial({
+      color: 0xf3f0e6, emissive: 0xf6efdc, emissiveIntensity: 0.85, roughness: 0.85, transparent: true, opacity: 0.92 });
+    const winRow = (x, z1, z2, yBase, yTop, faceSign) => {
+      for (let z = z1; z <= z2 + 0.01; z += 3.4) {
+        const pane = new THREE.Mesh(new THREE.PlaneGeometry(2.4, yTop - yBase), frostMat);
+        pane.position.set(x + faceSign * 0.02, (yBase + yTop) / 2, z);
+        pane.rotation.y = faceSign > 0 ? Math.PI / 2 : -Math.PI / 2;   // 法线朝室内（原来朝墙外，只见空框）
+        scene.add(pane);
+        addBox(0.10, 0.10, 2.5, x - faceSign * 0.02, yBase - 0.05, z, l12MetalMat, 1.0);
+        addBox(0.10, 0.10, 2.5, x - faceSign * 0.02, yTop + 0.05, z, l12MetalMat, 1.0);
+        addBox(0.10, yTop - yBase, 0.08, x - faceSign * 0.02, (yBase + yTop) / 2, z - 1.22, l12MetalMat, 1.0);
+        addBox(0.10, yTop - yBase, 0.08, x - faceSign * 0.02, (yBase + yTop) / 2, z + 1.22, l12MetalMat, 1.0);
+      }
+    };
+    winRow(27.86, -25, -3, 2.55, 3.70, -1);
+    winRow(-27.86, -24, -6, 2.55, 3.70, 1);
+  }
+
+  // 5) 结构柱：只落在绕池步道净距 ≥2.2m 的空位上（不压池沿、不挡门）
+  for (const [cx, cz, s] of [[-6.2, -6.2, 0.5], [-6.2, -13.4, 0.5], [4.9, -6.0, 0.5], [4.9, -18.0, 0.5]]) {
+    const b = addBox(s, H, s, cx, H / 2, cz, l12SpaWallMat, 1.0);
+    b.name = 'l12Column';
+    addBox(s + 0.14, 0.12, s + 0.14, cx, 0.06, cz, l12MetalMat);
+    COLLIDERS.push({ x1: cx - s / 2, x2: cx + s / 2, z1: cz - s / 2, z2: cz + s / 2, y1: 0, y2: H, kind: 'column' });
+    l37ColumnBases.push({ x: cx, z: cz, w: s + 0.14, mesh: b });
+    L12_SHELL_LOG.columns++;
+  }
+}
+
+/* ---------------- 池体 ---------------- */
 function buildPool(p) {
   const W = p.x2 - p.x1, cx = (p.x1 + p.x2) / 2;
   const depth = 0 - p.bottom;
@@ -1256,45 +1500,52 @@ function buildPool(p) {
   const zc = (p.zDeep1 + p.zEnd) / 2;
   const stair = p.stairs;
 
-  // 池底（平底标准池，整幅）
-  addPlane(W, fullLen, cx, p.bottom, zc, -Math.PI / 2, 0, poolAreaMat(), COV);
-  // 四面池壁：北墙 + 东西墙全高；南墙留出入水台阶口
-  addPlane(W, depth, cx, -depth / 2, p.zDeep1, 0, 0, poolAreaMat(), COV);
-  if (stair.x1 - p.x1 > 0.05) addPlane(stair.x1 - p.x1, depth, (p.x1 + stair.x1) / 2, -depth / 2, p.zEnd, 0, Math.PI, poolAreaMat(), COV);
-  addPlane(p.x2 - stair.x2, depth, (stair.x2 + p.x2) / 2, -depth / 2, p.zEnd, 0, Math.PI, poolAreaMat(), COV);
-  addPlane(fullLen, depth, p.x1, -depth / 2, zc, 0, Math.PI / 2, poolAreaMat(), COV);
-  addPlane(fullLen, depth, p.x2, -depth / 2, zc, 0, -Math.PI / 2, poolAreaMat(), COV);
+  // 池底
+  addPlane(W, fullLen, cx, p.bottom, zc, -Math.PI / 2, 0, poolMatShared, COV);
+  // 四面池壁（南墙留台阶缺口）
+  addPlane(W, depth, cx, -depth / 2, p.zDeep1, 0, 0, poolMatShared, COV);
+  if (stair.x1 - p.x1 > 0.05) addPlane(stair.x1 - p.x1, depth, (p.x1 + stair.x1) / 2, -depth / 2, p.zEnd, 0, Math.PI, poolMatShared, COV);
+  addPlane(p.x2 - stair.x2, depth, (stair.x2 + p.x2) / 2, -depth / 2, p.zEnd, 0, Math.PI, poolMatShared, COV);
+  addPlane(fullLen, depth, p.x1, -depth / 2, zc, 0, Math.PI / 2, poolMatShared, COV);
+  addPlane(fullLen, depth, p.x2, -depth / 2, zc, 0, -Math.PI / 2, poolMatShared, COV);
 
-  // 角落入水台阶（2 级）
+  // 入水台阶 / 水下缓台：与 groundAt 共用 p.stairs.steps（高度完全由数据决定）
+  // 注意：不加实体碰撞盒 —— 站立时由 groundAt 的 0.62m 抬升限制决定能否上/下台阶，
+  // 加碰撞盒反而会把站在台阶上的玩家推出去（player.y === c.y2 时 collideCircle 不会跳过）。
   for (const s of stair.steps) {
     const h = s.top - p.bottom, dz = s.z2 - s.z1;
-    addBox(stair.x2 - stair.x1, h, dz, (stair.x1 + stair.x2) / 2, (s.top + p.bottom) / 2, (s.z1 + s.z2) / 2, poolAreaMat(), COV);
+    addBox(stair.x2 - stair.x1, h, dz, (stair.x1 + stair.x2) / 2, (s.top + p.bottom) / 2, (s.z1 + s.z2) / 2, poolMatShared, COV);
   }
 
-  // 泳道线（深蓝直线 + 端部 T 字）
+  // 温泉坐台：从池底砌起的实体（顶面 - 池底 = 真实高度），靠到池壁，数据与 groundAt 同源
+  for (const b of (p.benches || [])) {
+    const bw = b.x2 - b.x1, bd = b.z2 - b.z1, bh = b.top - p.bottom;
+    addBox(bw, bh, bd, (b.x1 + b.x2) / 2, p.bottom + bh / 2, (b.z1 + b.z2) / 2, poolMatShared, COV);
+    // 座沿压条：让坐台顶面有一圈明确收边，避免"悬空盒子"的读感
+    const lipMat = new THREE.MeshStandardMaterial({ color: 0xcfd6cf, roughness: 0.5, metalness: 0.02 });
+    addBox(bw + 0.04, 0.05, bd + 0.04, (b.x1 + b.x2) / 2, b.top + 0.02, (b.z1 + b.z2) / 2, lipMat, 1.2);
+    p.benchMeshes = p.benchMeshes || [];
+    p.benchMeshes.push({ x1: b.x1, x2: b.x2, z1: b.z1, z2: b.z2, top: b.top, bottom: p.bottom });
+  }
+
+  // 泳道线 + 泳道绳
   const lanes = p.lanes || 0;
   if (lanes) {
     const lineMat = new THREE.MeshStandardMaterial({ color: 0x0e3a58, roughness: 0.6 });
     for (let i = 0; i <= lanes; i++) {
       const lx = p.x1 + (W / lanes) * i;
       const line = new THREE.Mesh(new THREE.PlaneGeometry(0.15, fullLen - 0.7), lineMat);
-      line.rotation.x = -Math.PI / 2; line.position.set(lx, p.bottom + 0.02, zc);
-      scene.add(line);
+      line.rotation.x = -Math.PI / 2; line.position.set(lx, p.bottom + 0.02, zc); scene.add(line);
       const t1 = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.6), lineMat);
       t1.rotation.x = -Math.PI / 2; t1.position.set(lx, p.bottom + 0.02, p.zDeep1 + 0.9); scene.add(t1);
       const t2 = t1.clone(); t2.position.z = p.zEnd - 0.9; scene.add(t2);
     }
-  }
-  // 泳道绳（红白浮筒，浮于水面）
-  if (lanes) {
     const rmat = new THREE.MeshStandardMaterial({ map: makeRopeTexture(), roughness: 0.55, metalness: 0.05 });
     const capMatR = new THREE.MeshStandardMaterial({ color: 0xb03028, roughness: 0.5 });
     for (let i = 1; i < lanes; i++) {
       const rx = p.x1 + (W / lanes) * i;
       const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, fullLen - 0.5, 10), rmat);
-      rope.rotation.x = Math.PI / 2;
-      rope.position.set(rx, p.water + 0.045, zc);
-      scene.add(rope);
+      rope.rotation.x = Math.PI / 2; rope.position.set(rx, p.water + 0.045, zc); scene.add(rope);
       [p.zDeep1 + 0.3, p.zEnd - 0.3].forEach(ez => {
         const ec = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 12), capMatR);
         ec.rotation.x = Math.PI / 2; ec.position.set(rx, p.water + 0.045, ez); scene.add(ec);
@@ -1302,67 +1553,79 @@ function buildPool(p) {
     }
   }
 
-  // 溢流槽（深色池沿收边）
-  const rimH = matFor(rimTiles, 0.4 / rimTiles.coverageX, 0.14 / rimTiles.coverageY);
-  addBox(W + 0.4, 0.14, 0.44, cx, 0.07, p.zDeep1 - 0.16, rimH);
-  addBox(0.44, 0.14, fullLen, p.x1 - 0.16, 0.07, zc, rimH);
-  addBox(0.44, 0.14, fullLen, p.x2 + 0.16, 0.07, zc, rimH);
-  addBox(W + 0.4, 0.14, 0.44, cx, 0.07, p.zEnd + 0.16, rimH);
+  // 石质池沿压顶（同家族石材、2.4m 米制纹理周期、细收边）；旧青绿塑料条与旧灰格栅停用
+  const copW = 0.52, copH = 0.10;
+  addWorldUVBox(W + copW * 2, copH, copW, cx, copH / 2, p.zDeep1 - copW / 2, l12CopingMat, 2.4);
+  addWorldUVBox(W + copW * 2, copH, copW, cx, copH / 2, p.zEnd + copW / 2, l12CopingMat, 2.4);
+  addWorldUVBox(copW, copH, fullLen, p.x1 - copW / 2, copH / 2, zc, l12CopingMat, 2.4);
+  addWorldUVBox(copW, copH, fullLen, p.x2 + copW / 2, copH / 2, zc, l12CopingMat, 2.4);
+  // 排水格栅只由 drainGrates（窄槽 + 实例化格栅）负责
 
-  // 不锈钢扶梯（北端池岸两组）
+  // 不锈钢扶梯只给游泳主池；汤池/冷池改为靠台阶边的简洁抓扶栏杆（不穿坐台、不挡出池）
   const metal = new THREE.MeshStandardMaterial({ color: 0xe4ebee, metalness: 1.0, roughness: 0.22 });
-  [cx - 1.6, cx + 1.6].forEach(lx => {
+  if (p.name !== 'pool') {
+    const railX = (p.stairs ? p.stairs.x2 : p.x1 + 0.6) + 0.14;
+    const railZ = p.zEnd - 0.45;
+    for (const dz of [0.32, -0.34]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 1.02, 12), metal);
+      post.position.set(railX, 0.51, railZ + dz); scene.add(post);
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.05, 12), metal);
+      foot.position.set(railX, 0.03, railZ + dz); scene.add(foot);
+    }
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.78, 12), metal);
+    bar.rotation.x = Math.PI / 2; bar.position.set(railX, 1.00, railZ); scene.add(bar);
+    const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.5, 10), metal);
+    drop.position.set(railX, 0.62, railZ + 0.30); scene.add(drop);
+    COLLIDERS.push({ x1: railX - 0.06, x2: railX + 0.06, z1: railZ - 0.38, z2: railZ + 0.36, y1: 0, y2: 1.02, kind: 'grabRail' });
+  } else [cx - 1.6, cx + 1.6].forEach(lx => {
     [-0.45, 0.45].forEach(dx => {
       const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.1, 14), metal);
       rail.position.set(lx + dx, 0.1, p.zDeep1 + 0.55); scene.add(rail);
     });
     [0.75, 0.45, 0.15, -0.25, -0.6].forEach(y => {
       const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.9, 10), metal);
-      rung.position.set(lx, y, p.zDeep1 + 0.55);
-      rung.rotation.z = Math.PI / 2; scene.add(rung);
+      rung.position.set(lx, y, p.zDeep1 + 0.55); rung.rotation.z = Math.PI / 2; scene.add(rung);
     });
   });
 
-  // 出发台（竞赛池北端池岸）
+  // 出发台（仅主池北端池岸 4 座）
   if (lanes && p.name === 'main') {
     const blockMat = new THREE.MeshStandardMaterial({ color: 0xe8eae8, roughness: 0.35, metalness: 0.08 });
     for (let i = 0; i < 4; i++) {
       const bx = p.x1 + 2.1 + i * 2.6;
-      addBox(0.55, 0.5, 0.55, bx, 0.55, p.zDeep1 - 0.42, blockMat);
+      addBox(0.55, 0.5, 0.55, bx, 0.55, p.zDeep1 - 0.5, blockMat);
       const top = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.75), blockMat);
-      top.position.set(bx, 0.84, p.zDeep1 - 0.24); top.rotation.x = -0.14; scene.add(top);
-      COLLIDERS.push({ x1: bx - 0.3, x2: bx + 0.3, z1: p.zDeep1 - 0.8, z2: p.zDeep1 - 0.1 });
+      top.position.set(bx, 0.84, p.zDeep1 - 0.32); top.rotation.x = -0.14; scene.add(top);
+      COLLIDERS.push({ x1: bx - 0.3, x2: bx + 0.3, z1: p.zDeep1 - 0.88, z2: p.zDeep1 - 0.18, y1: 0, y2: 0.84, kind: 'block' });
     }
   }
 
-  // 碰撞：池壁"仅站立时阻挡"（poolSide）——腾空/跳跃可越过池沿入水；台阶侧短墙保持实体
+  // 碰撞：池壁仅站立时阻挡（poolSide），台阶西侧与池沿外沿实体
   COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.15, z2: p.zDeep1 + 0.15, poolSide: true });
   COLLIDERS.push({ x1: p.x1 - 0.15, x2: p.x1 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2, poolSide: true });
   COLLIDERS.push({ x1: p.x2 - 0.15, x2: p.x2 + 0.15, z1: p.zDeep1 - 0.2, z2: p.zEnd + 0.2, poolSide: true });
-  COLLIDERS.push({ x1: stair.x1 - 0.2, x2: stair.x1 + 0.05, z1: p.zEnd - 0.2, z2: p.zEnd + 0.2 });
+  COLLIDERS.push({ x1: stair.x1 - 0.2, x2: stair.x1 + 0.05, z1: p.zEnd - 0.25, z2: p.zEnd + 0.25, y1: 0, y2: 1.0, kind: 'stairSide' });
   COLLIDERS.push({ x1: stair.x2, x2: p.x2 + 0.15, z1: p.zEnd - 0.15, z2: p.zEnd + 0.15, poolSide: true });
 
-  // 水面（室内静水）：极低扰动 + 时间推进压缩到 4%，低频大波纹
+  // 水面（室内静水）
   const water = new Water(new THREE.PlaneGeometry(W + 0.35, fullLen + 0.35), {
     textureWidth: 512, textureHeight: 512,
     waterNormals: makeAINormalTexture('textures/water-surface.png', 7, 5),
     sunDirection: new THREE.Vector3(0, 1, 0),
-    sunColor: 0xfff6e0, waterColor: 0x1a6ab4, distortionScale: 0.45, fog: true });
-  // 关键修复：该版 Water 着色器为纯镜面反射（无折射、alpha=1 不透明），
-  // 水面-池壁交界处的"倒影墙"与真实墙体重合，随波纹抖动 = 贴图闪烁带。
-  // 改为半透明后，水面线以下直接透出真实池壁/池底贴图，交界处恢复稳定。
+    sunColor: 0xfff6e0, waterColor: 0x1a6ab4, distortionScale: 0.10, fog: true });
   water.material.transparent = true;
   water.material.uniforms.alpha.value = 0.55;
   water.material.depthWrite = false;
   water.material.needsUpdate = true;
-
-  // ── 水面美术升级：假深度分层（浅青碧→深宝蓝）+ 深度相关透明度 + 冷调反射 ──
-  // 本版 Water 无深度缓冲，用"到池矩形边缘的距离"模拟水深：浅处透底、深处厚重
   const wu = water.material.uniforms;
   wu.rect = { value: new THREE.Vector4(p.x1, p.zDeep1, p.x2, p.zEnd) };
   wu.maxDepth = { value: (Math.min(W, fullLen) / 2) * 0.75 };
   let fs = water.material.fragmentShader;
   fs = 'uniform vec4 rect;\nuniform float maxDepth;\n' + fs;
+  // 室内静水：Water.js 默认把法线扰动的水平分量放大 1.5×，在水池尺度上会变成"皱布"。
+  // 这里把水平分量压到 4%（垂直仍是 1.0），反射只保留细微摆动，水下轮廓保持清晰。
+  fs = fs.replace('vec3 surfaceNormal = normalize( noise.xzy * vec3( 1.5, 1.0, 1.5 ) );',
+    'vec3 surfaceNormal = normalize( noise.xzy * vec3( 0.045, 1.0, 0.045 ) );');
   fs = fs.replace(/void main\(\) \{/, `void main() {
     vec2 relE = min( worldPosition.xz - rect.xy, rect.zw - worldPosition.xz );
     float depth01 = clamp( min( relE.x, relE.y ) / maxDepth, 0.0, 1.0 );`);
@@ -1390,480 +1653,609 @@ function buildPool(p) {
     origOR.apply(this, arguments);
     water.material.uniforms.time.value = t0 + (water.material.uniforms.time.value - t0) * 0.04;
   };
-  // 底部焦散（慢速）
   makeCaustics(W - 0.6, fullLen - 0.9, cx, zc, p.bottom + 0.035, 0.0022);
+  p.waterMesh = water;
   return water;
 }
-buildPool(POOLS[0]);
-buildPool(POOLS[1]);
 
-/* ---------------- 外墙与隔断 ---------------- */
-const wallMat = () => matFor(wallTiles, 1, 1);
-addPlane(48, H, 0, H / 2, BOUNDS.z1, 0, 0, wallMat(), wallTiles.coverageX);
-addPlane(48, H, 0, H / 2, BOUNDS.z2, 0, Math.PI, wallMat(), wallTiles.coverageX);
-addPlane(36, H, BOUNDS.x1, H / 2, 2, 0, Math.PI / 2, wallMat(), wallTiles.coverageX);
-addPlane(36, H, BOUNDS.x2, H / 2, 2, 0, -Math.PI / 2, wallMat(), wallTiles.coverageX);
+/* 池沿排水格栅（单个实例网格，几十个格栅只占 1 次绘制） */
 
-for (const part of PARTITIONS) {
-  for (const [za, zb] of part.zRanges) {
-    const len = zb - za;
-    addBox(0.5, H, len, part.x, H / 2, (za + zb) / 2, wallMat(), wallTiles.coverageX);
-    // 踢脚
-    const base = matFor(skirting, 0.6 / skirting.coverageX, 0.5 / skirting.coverageY);
-    addBox(0.58, 0.5, len, part.x, 0.25, (za + zb) / 2, base);
-    COLLIDERS.push({ x1: part.x - 0.3, x2: part.x + 0.3, z1: za, z2: zb });
-  }
+
+for (const p of POOLS) buildPool(p);
+// 池沿：窄排水槽 + 实例化格栅（统一石质池沿，槽内凹 2cm）
+for (const p of POOLS) {
+  drainGrates({ THREE, scene, addBox, addWorldUVBox, COLLIDERS,
+    mats: { trim: l12MetalMat, metal: l12MetalMat, wood: l12WoodMat, stone: l12SpaWallMat } }, p, { y: 0.012 });   // 槽口略高于地面，避免与地面共面被吞
 }
-// 门洞门套（薄片，贴合墙面）
-const trimMat = matFor(rimTiles, 0.6 / rimTiles.coverageX, H / rimTiles.coverageY);
-[[12, -5], [12, 5], [-16, -2.5], [-16, 2.5]].forEach(([x, z]) => {
-  const t = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.16), trimMat);
-  t.position.set(x, H / 2, z); scene.add(t);
-  COLLIDERS.push({ x1: x - 0.3, x2: x + 0.3, z1: z - 0.15, z2: z + 0.15 });
-});
 
-/* ---------------- 天花板与灯板 ---------------- */
-const ceilMat = new THREE.MeshStandardMaterial({ map: texFrom('textures/ceiling-dark.png', 7, 5, true), roughness: 0.95, metalness: 0 });
-addPlane(48, 36, 0, H, 2, Math.PI / 2, 0, ceilMat);
+/* 池深标识（Canvas 贴花） */
+const l37DeckSigns = [];
+function l37DeckSign(text, sub, x, z, ry, w = 1.5, h = 0.9) {
+  const c = makeCanvas(256, 160), g = c.getContext('2d');
+  g.fillStyle = '#1d4a5a'; g.fillRect(0, 0, 256, 160);
+  g.strokeStyle = '#9ff0e6'; g.lineWidth = 5; g.strokeRect(6, 6, 244, 148);
+  g.fillStyle = '#eafcff'; g.font = 'bold 74px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, 128, 62);
+  g.font = 'bold 34px Arial'; g.fillStyle = '#b6e9e2'; g.fillText(sub, 128, 122);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), decalMat(t));
+  mesh.rotation.set(-Math.PI / 2, 0, ry || 0);
+  mesh.position.set(x, 0.016, z);
+  scene.add(mesh);
+  l37DeckSigns.push({ text, sub, x, z, ry: ry || 0, w, h, mesh });
+}
 
-/* 暗色顶棚筒灯（贴照片：黑顶 + 密布小灯点）——登记到 poolLights 供停电事件控制 */
-const poolLights = [];
-function downlight(x, z) {
-  const l = new THREE.PointLight(0xf2f6ff, 3.2, 9.5, 2);
-  l.position.set(x, H - 0.4, z);
-  scene.add(l);
-  const fixture = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.07, 12),
-    new THREE.MeshStandardMaterial({ color: 0x0b0b0b, emissive: 0xf7f2e2, emissiveIntensity: 4.5 }));
-  fixture.position.set(x, H - 0.035, z);
+/* 主厅东墙高处一排窗框（贴花式，不改碰撞） */
+
+/* ---------------- 灯光（预算：26 盏点光 + 半球 + 天光，固定不随帧创建） ---------------- */
+const poolLights = [];      // { light, fxMat, base, zone }
+const lockerLights = [];    // 更衣区可闪灯（同时登记在 poolLights）
+function l37Lamp(x, z, zone, o = {}) {
+  const color = o.color == null ? 0xf2f6ff : o.color;
+  const power = o.power == null ? 3.1 : o.power;
+  const dist = o.dist == null ? 9.5 : o.dist;
+  const y = o.y == null ? H - 0.16 : o.y;
+  const light = new THREE.PointLight(color, power, dist, 2);
+  light.position.set(x, y, z); scene.add(light);
+  const fxMat = new THREE.MeshStandardMaterial({ color: 0x0e1214, emissive: color, emissiveIntensity: 4.4, roughness: 0.6 });
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(o.r == null ? 0.26 : o.r, 16), fxMat);
+  disc.rotation.x = Math.PI / 2; disc.position.set(x, y + 0.03, z); scene.add(disc);
+  const ceilingY = o.ceilingY == null ? H : o.ceilingY;
+  const fixtureTop = ceilingY - 0.02;
+  const fixtureBottom = disc.position.y + 0.004;
+  const fixtureHeight = fixtureTop - fixtureBottom;
+  const fixture = new THREE.Mesh(
+    new THREE.CylinderGeometry((o.r || 0.26) + 0.025, (o.r || 0.26) + 0.025, fixtureHeight, 24),
+    l12MetalMat);
+  fixture.position.set(x, fixtureBottom + fixtureHeight / 2, z);
   scene.add(fixture);
-  poolLights.push({ light: l, fxMat: fixture.material, base: 3.2 });
+  const rec = { light, fxMat, fixture, disc, ceilingY, base: power, zone };
+  poolLights.push(rec);
+  if (o.locker) lockerLights.push(rec);
+  return rec;
 }
-for (const x of [-18, -12, -6, 0, 6]) for (const z of [-13, -5, 5, 17]) downlight(x, z);
-for (const x of [16, 20]) for (const z of [-13, -5, 5, 17]) downlight(x, z);
+// 水面两盏冷光（保留原有池面高光）
+[0xc9f2ff, 0xc9f2ff].forEach((c, i) => {
+  const l = new THREE.PointLight(c, 8.5, 13, 2);
+  l.position.set(i ? 3.2 : -3.2, 2.2, i ? 4.5 : -1.5); scene.add(l);
+  poolLights.push({ light: l, fxMat: null, base: 8.5, zone: 'pool' });
+});
+const hemi = new THREE.HemisphereLight(0xfff1dd, 0x84989a, 0.5);
+scene.add(hemi);
 
-/* ---------------- 立柱 ---------------- */
-const colMat = matFor(wallTiles, 0.9 / wallTiles.coverageX, H / wallTiles.coverageY);
-const capMat = matFor(wallTiles, 0.55 / wallTiles.coverageX, 0.1 / wallTiles.coverageY);
-const colBaseMat = matFor(skirting, 0.55 / skirting.coverageX, 0.1 / skirting.coverageY);
-function addColumn(x, z) {
-  if (insidePoolArea(x, z, 1.0) || (x >= BASIN.x1 - 1 && x <= BASIN.x2 + 1 && z >= BASIN.z1 - 1 && z <= BASIN.z2 + 1)) return;
-  addBox(0.9, H, 0.9, x, H / 2, z, colMat);
-  addBox(1.12, 0.18, 1.12, x, H - 0.09, z, capMat);
-  addBox(1.06, 0.5, 1.06, x, 0.25, z, colBaseMat);
-  COLLIDERS.push({ x1: x - 0.48, x2: x + 0.48, z1: z - 0.48, z2: z + 0.48 });
-}
-for (const x of [-20, -12, -8, -4, 0, 4, 8]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
-for (const x of [16, 20]) for (const z of [-12, -4, 4, 12]) addColumn(x, z);
-
-/* ---------------- 西机房（昏灯与灯板） ---------------- */
-(function () {
-  const p1 = new THREE.PointLight(0xffc27a, 7, 12, 2); p1.position.set(-20, 2.6, -8); scene.add(p1);
-  const p2 = new THREE.PointLight(0xffc27a, 7, 12, 2); p2.position.set(-20, 2.6, 8); scene.add(p2);
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.45),
-    new THREE.MeshStandardMaterial({ color: 0x111, emissive: 0xffe2b8, emissiveIntensity: 3.2 }));
-  panel.position.set(-20, H - 0.05, 1); panel.rotation.x = Math.PI / 2; scene.add(panel);
-})();
-
-/* ---------------- 更衣室 / 淋浴区（西侧房间 · 新恐怖场景） ---------------- */
-const lockerLights = [], showerSprays = [], lockerDoors = [], steamPlanes = [];
+/* ---------------- 更衣淋浴区（x -28..-14） ---------------- */
+const showerSprays = [], lockerDoors = [], steamPlanes = [];
 let lockerFigure = null;
-const lockerState = { nextShower: 7, activeShower: -1, showerT: 0, nextSlam: 9, nextDrip: 4, figureOn: false, figureT: 0, lookT: 0 };
 
-(function buildLockerRoom() {
-  // 更衣柜门贴图（单扇门，横向重复）
-  const dc = makeCanvas(128, 256), dg = dc.getContext('2d');
-  dg.fillStyle = '#7f868b'; dg.fillRect(0, 0, 128, 256);
-  const grd = dg.createLinearGradient(0, 0, 128, 0);
-  grd.addColorStop(0, 'rgba(255,255,255,0.16)');
-  grd.addColorStop(0.5, 'rgba(0,0,0,0.10)');
-  grd.addColorStop(1, 'rgba(0,0,0,0.28)');
-  dg.fillStyle = grd; dg.fillRect(0, 0, 128, 256);
-  dg.fillStyle = 'rgba(0,0,0,0.45)'; dg.fillRect(0, 0, 3, 256); dg.fillRect(125, 0, 3, 256);
-  dg.fillStyle = 'rgba(0,0,0,0.35)';
-  for (let i = 0; i < 4; i++) dg.fillRect(46, 26 + i * 9, 36, 3);
-  dg.fillStyle = '#3a3f42'; dg.fillRect(96, 120, 14, 5);
-  dg.fillStyle = 'rgba(0,0,0,0.25)'; dg.fillRect(0, 248, 128, 8);
-  const dTex = new THREE.CanvasTexture(dc); dTex.colorSpace = THREE.SRGBColorSpace;
-  dTex.wrapS = dTex.wrapT = THREE.RepeatWrapping;
-  const lockerMat = new THREE.MeshStandardMaterial({ map: dTex, color: 0xdfe4e7, roughness: 0.42, metalness: 0.55 });
-  function lockerRow(x, zc, len) {
-    const geo = new THREE.BoxGeometry(0.55, 1.9, len);
-    const uv = geo.attributes.uv;
-    const su = len / 0.45;
-    for (let i = 0; i < 24; i++) {
-      const face = Math.floor(i / 4);
-      const u = (face === 0 || face === 1) ? su : 1;
-      uv.setXY(i, uv.getX(i) * u, uv.getY(i));
+/* v2 家具 / 灯具 / 池深与方向牌：按 levels/l12-plan.js 的房间坐标重建（steamPlanes 已就绪，供温泉热气） */
+let L37PROPS = null;
+if (L12_V2_SHELL) {
+  L37PROPS = createL37Props({
+    THREE, scene, addBox, addWorldUVBox, matFor,
+    L12_TEX, L12_COV, l12WoodMat, l12MetalMat, l12SpaWallMat,
+    COLLIDERS, lamp: l37Lamp, sign: l37DeckSign, L12P, roomHeight: l12RoomH,
+    makeSignTexture,
+    boardTexture: (title, lines, opts) => makeBoardTexture(THREE, lines, Object.assign({ title }, opts || {})),
+    addSteam: (x, y, z, r) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(r * 2, r * 1.2),
+        new THREE.MeshBasicMaterial({ color: 0xdfeae4, transparent: true, opacity: 0.075, depthWrite: false }));
+      m.position.set(x, y, z); scene.add(m);
+      steamPlanes.push({ mesh: m, y0: y, ph: steamPlanes.length * 1.7 });
     }
-    uv.needsUpdate = true;
-    const m = new THREE.Mesh(geo, lockerMat);
-    m.position.set(x, 0.95, zc); m.castShadow = true; m.receiveShadow = true;
-    scene.add(m);
-    addBox(0.62, 0.06, len + 0.04, x, 1.93, zc, lockerMat);
-    COLLIDERS.push({ x1: x - 0.3, x2: x + 0.3, z1: zc - len / 2 - 0.1, z2: zc + len / 2 + 0.1 });
-  }
-  lockerRow(-23.6, -8, 14);
-  lockerRow(-16.4, -8, 14);
-  // 会自行甩动的柜门
-  const doorMat = new THREE.MeshStandardMaterial({ map: dTex, color: 0xe6eaec, roughness: 0.4, metalness: 0.6, side: THREE.DoubleSide });
-  [[-23.35, -12], [-23.35, -8], [-23.35, -4], [-16.65, -11], [-16.65, -7], [-16.65, -3]].forEach(([x, z]) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(x, 0.95, z);
-    const door = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.82, 0.45), doorMat);
-    door.position.set(0, 0, 0.225);
-    pivot.add(door);
-    pivot.userData.swing = 0;
-    scene.add(pivot);
-    lockerDoors.push(pivot);
   });
-  // 长凳
-  const wood = new THREE.MeshStandardMaterial({ color: 0x4a3a29, roughness: 0.8 });
-  [[-20, -9], [-20, -4]].forEach(([x, z]) => {
-    addBox(2.4, 0.12, 0.55, x, 0.46, z, wood);
-    addBox(0.14, 0.46, 0.5, x - 1.05, 0.23, z, wood);
-    addBox(0.14, 0.46, 0.5, x + 1.05, 0.23, z, wood);
-    COLLIDERS.push({ x1: x - 1.25, x2: x + 1.25, z1: z - 0.35, z2: z + 0.35 });
-  });
-  // 淋浴隔间（瓷砖隔板 + 花洒 + 排水）
-  const sprayMat = new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.3, depthWrite: false });
-  const metal = new THREE.MeshStandardMaterial({ color: 0xd7dde0, metalness: 0.9, roughness: 0.28 });
-  const drainMat = new THREE.MeshStandardMaterial({ color: 0x2b2f31, roughness: 0.7 });
-  [2, 4, 6, 8, 10, 12].forEach(z => {
-    addBox(2.4, 2.2, 0.12, -22.8, 1.1, z, poolMatShared, poolMosaic.coverageX);
-    COLLIDERS.push({ x1: -24, x2: -21.6, z1: z - 0.12, z2: z + 0.12 });
-  });
-  [3, 5, 7, 9, 11].forEach(z => {
-    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 12), metal);
-    head.position.set(-23.6, 2.16, z); head.rotation.z = Math.PI / 2; scene.add(head);
-    const spray = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.11, 2.1, 8, 1, true), sprayMat.clone());
-    spray.position.set(-23.6, 1.05, z); spray.visible = false; scene.add(spray);
-    showerSprays.push(spray);
-    const drain = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.4), drainMat);
-    drain.position.set(-23.2, 0.012, z); scene.add(drain);
-  });
-  // 蒸汽
-  const sc = makeCanvas(256, 256), sg = sc.getContext('2d');
-  const sgr = sg.createRadialGradient(128, 128, 8, 128, 128, 128);
-  sgr.addColorStop(0, 'rgba(255,255,255,0.55)');
-  sgr.addColorStop(0.55, 'rgba(240,250,255,0.22)');
-  sgr.addColorStop(1, 'rgba(255,255,255,0)');
-  sg.fillStyle = sgr; sg.fillRect(0, 0, 256, 256);
-  const sTex = new THREE.CanvasTexture(sc); sTex.colorSpace = THREE.SRGBColorSpace;
-  for (let i = 0; i < 9; i++) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6),
-      new THREE.MeshBasicMaterial({ map: sTex, transparent: true, opacity: 0.13, depthWrite: false, side: THREE.DoubleSide }));
-    m.position.set(-23.4 + Math.random() * 1.8, 0.6 + Math.random() * 1.6, 2.5 + Math.random() * 9);
-    m.rotation.z = Math.random() * Math.PI;
-    scene.add(m);
-    steamPlanes.push(m);
-  }
-  // 房间灯（可闪烁 + 纳入停电系统）
-  [-13, -7, -1, 5].forEach((z, i) => {
-    const l = new THREE.PointLight(0xeef4ff, 1.8, 8, 2);
-    l.position.set(-20, 3.5, z); scene.add(l);
-    const fx = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0x0c0c0c, emissive: 0xeaf2ff, emissiveIntensity: 2.2 }));
-    fx.position.set(-20, H - 0.05, z); fx.rotation.x = Math.PI / 2; scene.add(fx);
-    lockerLights.push({ light: l, fxMat: fx.material, base: 1.8, i });
-    poolLights.push({ light: l, fxMat: fx.material, base: 1.8 });
-  });
-  lockerFigure = makeEntity();
-  lockerFigure.visible = false;
-})();
-
-function resetLockerHorror() {
-  lockerState.figureOn = false; lockerState.figureT = 0; lockerState.lookT = 0;
-  lockerState.activeShower = -1; lockerState.showerT = 0;
-  lockerState.nextShower = 7; lockerState.nextSlam = 9; lockerState.nextDrip = 4;
-  if (lockerFigure) lockerFigure.visible = false;
-  for (const s of showerSprays) s.visible = false;
-  for (const d of lockerDoors) { d.userData.swing = 0; d.rotation.y = 0; }
+  // 接待背墙总导览：真实墙段 z=16.145、x=-4.2，朝入口 +z，避开中部门洞与门楣
+  wallBoard({ THREE, scene, addBox, addWorldUVBox, COLLIDERS,
+    mats: { trim: l12MetalMat, metal: l12MetalMat } },
+    { x: -4.2, y: 1.60, z: 16.145, face: 'z+', w: 1.76, h: 1.02,
+      title: '会所总导览',
+      lines: ['更衣 A/B → 淋浴 A/B → 湿区', '游泳厅 25m · 温泉厅 · 静汤 · 冷池', '桑拿 · 北休息廊 · 设备间(员工)'] });
 }
 
+function l37LockerTex() {
+  const c = makeCanvas(256, 512), g = c.getContext('2d');
+  g.fillStyle = '#3d5a5f'; g.fillRect(0, 0, 256, 512);
+  for (let i = 0; i < 6; i++) {
+    g.fillStyle = i % 2 ? '#42646a' : '#3a555a';
+    g.fillRect(6, 8 + i * 84, 244, 76);
+    g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(6, 84 + i * 84, 244, 3);
+    g.fillStyle = 'rgba(210,240,238,0.28)';
+    for (let k = 0; k < 4; k++) g.fillRect(84, 22 + i * 84 + k * 7, 88, 3);
+    g.fillStyle = '#c8d4d2'; g.fillRect(224, 44 + i * 84, 6, 18);
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+function makeLockerFigure() {
+  const mat = new THREE.MeshStandardMaterial({ color: 0x0c0f10, roughness: 1, metalness: 0 });
+  const g = new THREE.Group();
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.6, 4, 10), mat);
+  torso.position.y = 1.15; g.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), mat);
+  head.position.y = 1.66; g.add(head);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x8c1a10 });
+  for (const s of [-1, 1]) {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 6), eyeMat);
+    e.position.set(s * 0.04, 1.68, 0.11); g.add(e);
+  }
+  g.visible = false; scene.add(g); return g;
+}
+let lockerHorrorT = 38 + Math.random() * 26, lockerFigureT = 0;
+function resetLockerHorror() {
+  for (const l of lockerLights) { l.light.intensity = l.base; if (l.fxMat) l.fxMat.emissiveIntensity = 4.4; }
+  for (const d of lockerDoors) d.pivot.rotation.y = 0;
+  for (const s of showerSprays) { s.on = false; s.mesh.visible = false; }
+  if (lockerFigure) lockerFigure.visible = false;
+  lockerHorrorT = 38 + Math.random() * 26;
+}
 function updateLockerRoom(dt) {
   if (LEVEL !== 1) return;
   const t = performance.now() * 0.001;
-  const inRoom = player.x < -16.2;
-  for (const L of lockerLights) {
-    let f = 0.55 + 0.45 * Math.sin(t * 5.1 + L.i * 2.3) * Math.sin(t * 2.1 + L.i * 1.7);
-    if (Math.random() < 0.006) f = 0.05;
-    L.light.intensity = L.base * f;
-    if (L.fxMat) L.fxMat.emissiveIntensity = 2.2 * f;
-  }
-  // 淋浴自行开启
-  lockerState.nextShower -= dt;
-  if (lockerState.activeShower < 0 && lockerState.nextShower <= 0) {
-    lockerState.activeShower = Math.floor(Math.random() * showerSprays.length);
-    lockerState.showerT = 5 + Math.random() * 7;
-    synthSplashFar();
-  }
-  if (lockerState.activeShower >= 0) {
-    lockerState.showerT -= dt;
-    const sp = showerSprays[lockerState.activeShower];
-    sp.visible = true;
-    sp.material.opacity = 0.3 + Math.abs(Math.sin(t * 9)) * 0.12;
-    if (Math.random() < dt * 0.6) synthLap();
-    if (lockerState.showerT <= 0) { sp.visible = false; lockerState.activeShower = -1; lockerState.nextShower = 8 + Math.random() * 14; }
-  }
-  // 蒸汽上浮
+  const inRoom = player.x < -14.2 && player.x > -28.2 && player.z > -16 && player.z < 24;
   for (const s of steamPlanes) {
-    s.position.y += dt * 0.13;
-    s.rotation.z += dt * 0.06;
-    if (s.position.y > 2.5) s.position.y = 0.5;
+    const m = s.mesh;
+    m.position.y = s.y0 + Math.sin(t * 0.4 + s.ph) * 0.18;
+    m.position.x += Math.sin(t * 0.23 + s.ph) * dt * 0.05;
+    m.material.opacity = (inRoom ? 0.07 : 0.035) + Math.sin(t * 0.7 + s.ph) * 0.02;
   }
-  // 柜门甩动
-  lockerState.nextSlam -= dt;
-  if (lockerState.nextSlam <= 0) {
-    lockerState.nextSlam = 9 + Math.random() * 16;
-    const d = lockerDoors[Math.floor(Math.random() * lockerDoors.length)];
-    if (d) { d.userData.swing = 1; synthFuse(); }
+  for (const s of showerSprays) {
+    s.t -= dt;
+    if (s.t <= 0) { s.on = !s.on; s.mesh.visible = s.on; s.t = s.on ? 3 + Math.random() * 5 : 6 + Math.random() * 14; }
+    if (s.on) s.mesh.material.opacity = 0.10 + Math.sin(t * 9 + s.z) * 0.03;
   }
   for (const d of lockerDoors) {
-    if (d.userData.swing > 0) {
-      d.userData.swing = Math.max(0, d.userData.swing - dt * 5);
-      d.rotation.y = -1.2 * d.userData.swing;
-    }
+    d.t -= dt;
+    const target = d.t < 0 ? d.amp * 0.55 : 0;
+    d.pivot.rotation.y += (target - d.pivot.rotation.y) * Math.min(1, dt * 2.4);
+    if (d.t < -1.6) d.t = 12 + Math.random() * 26;
   }
-  // 柜间人影
-  if (inRoom && !lockerState.figureOn && Math.random() < dt * 0.22) {
-    lockerState.figureOn = true; lockerState.figureT = 0; lockerState.lookT = 0;
-    lockerFigure.position.set(-20 + (Math.random() < 0.5 ? -1.5 : 1.5), 0, -13 + Math.random() * 11);
-    lockerFigure.visible = true;
-    synthKnock();
+  for (const l of lockerLights) {
+    const flick = inRoom && Math.random() < 0.02 ? 0.15 : 1;
+    l.light.intensity = l.base * (0.82 + 0.18 * Math.sin(t * 3.1 + l.light.position.z)) * flick;
+    if (l.fxMat) l.fxMat.emissiveIntensity = 3.4 * flick;
   }
-  if (lockerState.figureOn) {
-    lockerState.figureT += dt;
+  lockerHorrorT -= dt; lockerFigureT -= dt;
+  if (lockerFigure && !lockerFigure.visible && inRoom && lockerHorrorT <= 0 && horrorCooldownReady()) {
+    lockerFigure.position.set(player.z > 0 ? -20.4 : -20.4, 0, player.z > 0 ? -2.6 : 4.4);
     lockerFigure.lookAt(player.x, 0, player.z);
-    animateDweller(lockerFigure, dt, "idle");
-    const dx = player.x - lockerFigure.position.x, dz = player.z - lockerFigure.position.z;
-    const dist = Math.hypot(dx, dz) || 1;
-    const facing = (dx / dist) * _look.x + (dz / dist) * _look.z;
-    if (facing < -0.55) lockerState.lookT += dt; else lockerState.lookT = 0;
-    if (lockerState.lookT > 0.55 || lockerState.figureT > 10) {
-      lockerState.figureOn = false; lockerFigure.visible = false;
-      synthCreak();
-      showFlashText('柜门后……空了');
-    }
-    if (dist < 2.4) {
-      lockerState.figureOn = false; lockerFigure.visible = false;
-      synthScare(); stats.scares++;
-      const sf = document.getElementById('scare-flash');
-      sf.style.opacity = '1';
-  document.body.classList.add('scare');
-  setTimeout(() => document.body.classList.remove('scare'), 220); setTimeout(() => { sf.style.opacity = '0'; }, 150);
-      showFlashText('更衣柜里的东西抓住了你……');
-      player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0; yaw = 0; pitch = 0;
-    }
+    lockerFigure.visible = true;
+    lockerFigureT = 1.6;
+    synthDrip();
+    lockerHorrorT = 55 + Math.random() * 40;
   }
-  // 滴水
-  lockerState.nextDrip -= dt;
-  if (lockerState.nextDrip <= 0) { if (inRoom) synthDrip(); lockerState.nextDrip = 3 + Math.random() * 7; }
-}
-
-/* ---------------- 环境与基础光 ---------------- */
-const hemi = new THREE.HemisphereLight(0xfff1dd, 0x84989a, 0.5);
-scene.add(hemi);
-[[-3.5, -1.5], [3.5, 1.5]].forEach(([x, z]) => {
-  const p = new THREE.PointLight(0xc9f2ff, 10, 13, 2); p.position.set(x, 2.2, z); scene.add(p);
-  poolLights.push({ light: p, base: 10 });
-});
-
-/* ---------------- 泳池层恐怖元素 ---------------- */
-// 「池中人」：苍白人影立于深水区池底，每次全馆停电换位；来电瞬间离你太近 → 惊吓
-function makeWatcher() {
-  const skin = new THREE.MeshPhysicalMaterial({
-    map: texFrom('textures/monster-skin.png', 2, 2), color: 0xc4bdb0,
-    roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.35,
-    emissive: 0x141a1e, emissiveIntensity: 0.15
-  });
-  const g = buildDweller(skin);
-  const hairMat = new THREE.MeshStandardMaterial({
-    map: texFrom('textures/monster-hair.png', 1, 2), color: 0x120f0d, roughness: 0.5, metalness: 0.05
-  });
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.146, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), hairMat);
-  cap.position.set(0, 1.98, -0.02); cap.scale.set(0.78, 1.1, 0.86); g.add(cap);
-  const strands = [];
-  for (let i = 0; i < 12; i++) {                       // 概念图：湿发贴脸垂落，前额遮面
-    const front = i < 6;
-    const len = front ? (0.42 + Math.random() * 0.24) : (0.3 + Math.random() * 0.3);
-    const st = new THREE.Mesh(new THREE.ConeGeometry(0.03, len, 6), hairMat);
-    const ang = front ? (i / 5 - 0.5) * 0.3 : Math.PI * (0.5 + (i - 6) / 5 * 0.95);
-    st.position.set(Math.sin(ang) * 0.108, 1.94 - len / 2, -0.02 + Math.cos(ang) * 0.108);
-    st.scale.set(1.5, 1, 0.45);                        // 扁平=发绺，不是尖刺
-    st.rotation.x = 0.1 * Math.cos(ang) + 0.08;
-    st.rotation.z = 0.12 * Math.sin(ang);
-    st.userData.bx = st.rotation.x;
-    g.add(st); strands.push(st);
-  }
-  g.userData.strands = strands;
-  const eyeM = new THREE.MeshStandardMaterial({ color: 0x140202, emissive: 0xff2a14, emissiveIntensity: 1.5 });
-  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), eyeM);
-  e1.position.set(-0.048, 1.89, 0.095); g.add(e1);
-  const e2 = e1.clone(); e2.position.x = 0.048; g.add(e2);
-  g.userData.skin = skin; g.userData.eyes = eyeM;
-  return g;
-}
-const watcher = makeWatcher();
-watcher.scale.setScalar(0.78);   // 缩小：站立池底时头顶也低于水面，杜绝"头顶破面"闪烁黑影
-watcher.position.set(-3, POOLS[0].bottom, -12.2);
-scene.add(watcher);
-const WATCHER_SPOTS = [[-6, -3], [0, 4], [-4.5, -8], [1, 8], [-8, 1], [-1.5, -11]];
-// 水面尾迹（辉光环）——追逐时玩家可据此判断怪物位置与航向
-const wake = new THREE.Mesh(new THREE.CircleGeometry(1.5, 28),
-  new THREE.MeshBasicMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }));
-wake.rotation.x = -Math.PI / 2;
-wake.visible = false; scene.add(wake);
-// 水下掠影（停电时从水面下快速滑过）
-const lurker = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 1.7, 6, 12),
-  new THREE.MeshStandardMaterial({ color: 0x06090c, roughness: 1 }));
-lurker.rotation.x = Math.PI / 2;
-lurker.visible = false; scene.add(lurker);
-const poolDark = { timer: 22 + Math.random() * 18, active: false, dur: 0, moved: false };
-let poolIntroShown = false, dripTimer = 12;
-/* 「水中之物」游动跟随状态机：swim（贴水游弋）→ sink（水平潜沉）→ stand（池底直立凝视）
-   全程身体保持在水面以下，避免穿越 Water 镜面产生的闪烁黑影 */
-const poolMonster = { swim: false, phase: 'stand', vx: 0, vz: 0, sndT: 0 };
-function poolScare() {
-  synthScare(); stats.scares++;
-  const sf = document.getElementById('scare-flash');
-  sf.style.opacity = '1';
-  document.body.classList.add('scare');
-  setTimeout(() => document.body.classList.remove('scare'), 220);
-  setTimeout(() => { sf.style.opacity = '0'; }, 150);
-  showFlashText('它一直站在水里看着你……');
-  player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
-  yaw = 0; pitch = 0;
-}
-function updatePoolHorror(dt) {
-  if (LEVEL !== 1) return;
-  if (!poolIntroShown) {
-    poolIntroShown = true;
-    setTimeout(() => showFlashText('水面下……好像站着什么'), 2600);
+  if (lockerFigure && lockerFigure.visible) {
+    const d = Math.hypot(player.x - lockerFigure.position.x, player.z - lockerFigure.position.z);
+    if (d < 2.2 && horrorCooldownReady()) { lockerFigure.visible = false; poolScare('柜间有人影……'); }
+    else if (lockerFigureT <= 0) lockerFigure.visible = false;
   }
   dripTimer -= dt;
-  if (dripTimer <= 0) { (Math.random() < 0.5 ? synthDrip : synthSplashFar)(); dripTimer = 10 + Math.random() * 16; }
-  const P = POOLS[0];
-  // 追逐阶段：躯体微光 + 红眼增强（浑水里可辨）；尾迹淡出
-  const glowOn = poolMonster.swim;
-  watcher.userData.skin.emissiveIntensity += ((glowOn ? 2.0 : 0.15) - watcher.userData.skin.emissiveIntensity) * Math.min(1, dt * 3);
-  watcher.userData.eyes.emissiveIntensity += ((glowOn ? 7 : 1.5) - watcher.userData.eyes.emissiveIntensity) * Math.min(1, dt * 3);
-  if (!glowOn && wake.visible) {
-    wake.material.opacity *= Math.max(0, 1 - dt * 2.5);
-    if (wake.material.opacity < 0.02) wake.visible = false;
+  if (dripTimer <= 0 && inRoom) { synthDrip(); dripTimer = 2.2 + Math.random() * 4; }
+}
+
+/* ---------------- 东侧：训练池设施 / 设备间 ---------------- */
+
+/* ---------------- 北回声室：水箱 / 管道 / 水光 ---------------- */
+
+/* ---------------- 入口前厅陈设 ---------------- */
+
+/* ============================================================ 池中人（Level 37 专属模型） */
+/* 与第一关黑影完全独立：灰白浸水皮肤、凹陷眼窝、塌肩偏斜头、分层湿发束、指肘膝连续。
+   动画分 stand / swim / sink 三态；由 updatePoolHorror 驱动。 */
+const DROWNED_HEAD_TOP = 1.97;   // 局部空间头顶高度（供游姿计算用，测试会校验）
+
+function buildDrownedBody() {
+  const g = new THREE.Group();
+  const R = {};
+  // 复用既有怪物贴图：dead-skin（浅色裂纹，正合淹死体）做皮肤，monster-hair 做发束；
+  // 皮肤用物理材质给一层湿润 clearcoat，避免"无贴图塑料人"。
+  const drownedSkinSet = { diffuse: 'textures/dead-skin.png', coverageX: 1.3, coverageY: 1.3 };
+  const skinMat = physicalMat(drownedSkinSet, 1.3, 1.3, {
+    color: 0xcfdad4, roughness: 0.38, metalness: 0.03,
+    clearcoat: 0.45, clearcoatRoughness: 0.35, emissive: 0x0b1413, emissiveIntensity: 0.35 });
+  const deepSkin = matFor(drownedSkinSet, 1.6, 1.6, {
+    color: 0x93a49e, roughness: 0.5, metalness: 0.02, emissive: 0x0a1211, emissiveIntensity: 0.3 });
+  const hairMat = new THREE.MeshStandardMaterial({
+    map: texFrom('textures/monster-hair.png', 1, 2, true), color: 0x14150f, roughness: 0.72, metalness: 0.03 });
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x14100f, emissive: 0x150b09, emissiveIntensity: 0.35, roughness: 0.95, metalness: 0.0 });
+  const add = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; return m; };
+
+  // ---- 躯干：一条连续消瘦、略偏斜的旋成曲面（与黑影的宽厚驼背刻意不同：
+  //      这里收腰更明显、肩更塌、截面更扁）。不再是"球胸 + 圆柱腹 + 球骨盆"的拼接。
+  R.spine = new THREE.Group(); R.spine.position.set(0, 0.86, 0); g.add(R.spine);
+  const dProf = [[0.176, 0.00], [0.152, 0.10], [0.128, 0.22], [0.132, 0.34],
+                 [0.168, 0.46], [0.176, 0.56], [0.150, 0.66], [0.112, 0.74], [0.090, 0.79]];
+  const dTorsoGeo = new THREE.LatheGeometry(dProf.map(([r, y]) => new THREE.Vector2(r, y)), 24);
+  {
+    const pos = dTorsoGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      const s = Math.max(0, Math.min(1, y / 0.79));
+      const x = pos.getX(i);
+      // 单侧塌陷（右侧略低略扁）：淹死后半边身体垮下去的不对称
+      pos.setY(i, y - (x > 0 ? 0.028 * s * s : 0));
+      // 极轻前倾 + 截面前后压扁
+      pos.setZ(i, pos.getZ(i) * 0.88 + 0.035 * Math.pow(s, 1.6));
+      pos.setX(i, x * (x > 0 ? 0.97 : 1.03));
+    }
+    dTorsoGeo.computeVertexNormals();
   }
-  poolDark.timer -= dt;
-  if (!poolDark.active && poolDark.timer <= 0) {
-    poolDark.active = true; poolDark.dur = 1.7 + Math.random() * 1.7; poolDark.moved = false;
-    synthBlackout();
+  R.torso = add(dTorsoGeo, skinMat);
+  R.chest = R.torso;                      // 兼容旧 rig 字段（呼吸改在 torso 上做）
+  R.spine.add(R.torso);
+  R.hips = add(new THREE.SphereGeometry(0.168, 16, 12), skinMat);
+  R.hips.scale.set(1.08, 0.74, 0.86); R.hips.position.set(0, 0.87, -0.005); g.add(R.hips);
+
+  // 塌肩（左右不对称，右肩更低更前）—— 与颈/头/臂一起挂在脊柱组下，
+  // 这样躯干前倾时上半身整条跟着动，不会在颈根处断开。
+  R.shoulderL = add(new THREE.SphereGeometry(0.078, 12, 10), skinMat);
+  R.shoulderL.position.set(-0.196, 0.66, 0.012); R.spine.add(R.shoulderL);
+  R.shoulderR = add(new THREE.SphereGeometry(0.070, 12, 10), skinMat);
+  R.shoulderR.position.set(0.184, 0.705, 0.022); R.spine.add(R.shoulderR);
+  R.neck = add(new THREE.CylinderGeometry(0.046, 0.064, 0.22, 10), skinMat);
+  R.neck.position.set(0.018, 0.82, 0.028); R.neck.rotation.z = 0.16; R.spine.add(R.neck);
+  R.head = new THREE.Group();
+  const skull = add(new THREE.SphereGeometry(0.135, 18, 14), skinMat);
+  skull.scale.set(0.84, 1.06, 0.94); R.head.add(skull);
+  for (const s of [-1, 1]) {
+    // 灰黑凹陷眼眶：半径减半、纵向压扁、深度贴壳；左右略不对称（右眼略低略窄）
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), eyeMat);
+    const asym = s < 0 ? 1 : 0.88;
+    orb.scale.set(1.05 * asym, 0.46, 0.26);
+    orb.position.set(s * 0.055, s < 0 ? 0.006 : -0.002, 0.121); R.head.add(orb);
   }
+  const jaw = add(new THREE.SphereGeometry(0.076, 12, 10), skinMat);
+  jaw.scale.set(0.9, 0.72, 1.0); jaw.position.set(0, -0.1, 0.022); R.head.add(jaw);
+  R.head.position.set(0.026, 0.97, 0.03);
+  R.head.rotation.set(0.3, 0.1, 0.22);
+  R.spine.add(R.head);
+  // 贴头皮的发盖：只盖头顶与后脑，前额/眉眼露出（正面不再是黑头盔）
+  const cap = add(new THREE.SphereGeometry(0.141, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.40), hairMat);
+  cap.scale.set(0.88, 1.02, 0.98); cap.position.set(0, 0.012, -0.020); R.head.add(cap);
+  // 分层湿发束：后脑/后颈为主，两侧鬓角少量；正面留不对称缺口（一侧眉眼到脸颊可见）
+  R.strands = [];
+  for (let i = 0; i < 16; i++) {
+    const back = i < 11;
+    const k = back ? i / 11 : (i - 11) / 5;
+    // 后脑围绕 π 展开；鬓角两簇不对称（左侧更靠前一点）
+    const a = back
+      ? Math.PI + (k - 0.5) * 1.45
+      : (k < 0.4 ? -1 : 1) * (0.72 + 0.12 * k);
+    const len = back ? 0.26 + Math.random() * 0.34 : 0.24 + Math.random() * 0.14;
+    const st = new THREE.Group();
+    st.position.set(Math.sin(a) * 0.108, 0.050, Math.cos(a) * 0.108 - 0.012);
+    st.rotation.set((Math.cos(a) > 0 ? 0.20 : -0.14), a, Math.sin(a) * 0.14);
+    const lockGeo = new THREE.ConeGeometry(0.026, len, 5);
+    lockGeo.rotateX(Math.PI);                          // 锥尖朝下
+    lockGeo.translate(0, -len / 2, 0);                 // 粗底在发根
+    const lock = new THREE.Mesh(lockGeo, hairMat);
+    lock.scale.set(1, 1, 0.45);
+    st.add(lock);
+    lock.userData.tipDown = true;
+    st.userData.bx = st.rotation.x; st.userData.len = len;
+    R.head.add(st); R.strands.push(st);
+  }
+
+  // 前臂→腕→掌→指一路重叠连接，不留空隙；五指长短错落
+  function arm(side, y0, len, thick) {
+    const a = new THREE.Group(); a.position.set(side * 0.196, y0, 0.012);
+    const up = add(new THREE.CapsuleGeometry(thick, len * 0.46, 4, 10), skinMat);
+    up.position.y = -len * 0.25; a.add(up);
+    const el = add(new THREE.SphereGeometry(thick * 1.12, 10, 8), deepSkin);
+    el.position.y = -len * 0.49; a.add(el);
+    const fo = add(new THREE.CapsuleGeometry(thick * 0.88, len * 0.44, 4, 10), skinMat);
+    fo.position.y = -len * 0.735; a.add(fo);
+    const wr = add(new THREE.SphereGeometry(thick * 0.82, 10, 8), deepSkin);
+    wr.position.y = -len * 0.955; a.add(wr);
+    const palm = add(new THREE.SphereGeometry(thick * 0.92, 12, 10), skinMat);
+    palm.scale.set(1.0, 1.15, 0.6); palm.position.y = -len * 1.03; a.add(palm);
+    const fingers = [];
+    const fLen = [0.30, 0.36, 0.34, 0.30, 0.24];
+    for (let f = 0; f < 5; f++) {
+      const fg = add(new THREE.CapsuleGeometry(thick * 0.26, len * fLen[f] * 0.62, 3, 6), skinMat);
+      // 从掌缘长出来：起点压在掌内、彼此错开、长度不同
+      fg.position.set((f - 2) * thick * 0.42, -len * (1.03 + fLen[f] * 0.30), 0.006);
+      fg.rotation.x = 0.16 + f * 0.06;
+      fg.rotation.z = (f - 2) * 0.05;
+      a.add(fg); fingers.push(fg);
+    }
+    a.userData.fingers = fingers;
+    R.spine.add(a); return a;
+  }
+  R.armL = arm(-1, 0.66, 1.06, 0.050);
+  R.armR = arm(1, 0.705, 1.12, 0.046);   // 右臂略长（不对称）
+
+  function leg(side) {
+    const l = new THREE.Group(); l.position.set(side * 0.095, 0.9, 0);
+    const th = add(new THREE.CapsuleGeometry(0.072, 0.42, 4, 8), skinMat); th.position.y = -0.24; l.add(th);
+    const kn = add(new THREE.SphereGeometry(0.066, 8, 6), deepSkin); kn.position.y = -0.48; l.add(kn);
+    const sh = add(new THREE.CapsuleGeometry(0.05, 0.46, 4, 8), skinMat); sh.position.y = -0.75; l.add(sh);
+    const ft = add(new THREE.BoxGeometry(0.09, 0.055, 0.22), skinMat); ft.position.set(0, -0.99, 0.06); l.add(ft);
+    g.add(l); return l;
+  }
+  R.legL = leg(-1); R.legR = leg(1);
+
+  g.userData.body = R;
+  g.userData.anim = { t: Math.random() * 8, blend: 0, look: 0 };
+  g.userData.rig = R;             // 供诊断机位按真实 head 世界坐标取景
+g.userData.skin = skinMat;     // 兼容旧引用（enterPoolrooms / resetGame）
+  g.userData.eyes = eyeMat;
+  return g;
+}
+
+function animateDrowned(g, dt, mode) {
+  const R = g.userData.body, A = g.userData.anim;
+  A.t += dt;
+  const s = A.t;
+  if (mode === 'swim') {
+    A.blend = Math.min(1, A.blend + dt * 2.2);
+    R.legL.rotation.x = Math.sin(s * 2.1) * 0.42 * A.blend;
+    R.legR.rotation.x = Math.sin(s * 2.1 + 1.1) * 0.36 * A.blend;         // 两腿不同相位
+    R.armL.rotation.x = -1.1 + Math.sin(s * 2.4) * 0.55 * A.blend;
+    R.armR.rotation.x = -1.1 + Math.sin(s * 2.4 + 1.5) * 0.5 * A.blend;   // 两臂不同相位
+    R.armL.rotation.z = -0.35; R.armR.rotation.z = 0.3;
+    R.spine.rotation.x = 0.12 + Math.sin(s * 1.2) * 0.05;
+    R.head.rotation.x = 0.25 + Math.sin(s * 0.9) * 0.1;
+    // 游姿要完全决定姿态：站立时留下的头/肩/手掌角度必须清掉，
+    // 否则从站立切到游动会残留抬手、歪头，包围盒比安全高度表更高
+    R.head.rotation.y = 0; R.head.rotation.z = 0.10;
+    R.torso.scale.y = 1;
+    R.shoulderL.position.y = 0.66; R.shoulderR.position.y = 0.705;
+    for (const fg of [R.armL.userData.fingers, R.armR.userData.fingers]) {
+      for (let i = 0; i < fg.length; i++) fg[i].rotation.x = 0.10 + i * 0.04;
+    }
+  } else if (mode === 'sink') {
+    A.blend = Math.max(0, A.blend - dt * 1.6);
+    R.armL.rotation.x = -0.4; R.armR.rotation.x = -0.4;
+    R.legL.rotation.x = 0.2; R.legR.rotation.x = 0.1;
+    R.spine.rotation.x = 0.3;
+  } else {
+    A.blend = Math.max(0, A.blend - dt * 2.4);
+    const b = Math.sin(s * 1.35);
+    R.torso.scale.y = 1 + b * 0.008;      // 极轻呼吸（整条躯干一起起伏，不做局部缩放）
+    R.spine.rotation.x = 0.06 + b * 0.02;
+    R.shoulderL.position.y = 0.66 + b * 0.006;
+    R.armL.rotation.x = -0.06 + Math.sin(s * 0.7) * 0.03;
+    R.armR.rotation.x = -0.04 + Math.sin(s * 0.62 + 2.1) * 0.028;
+    R.legL.rotation.x *= 0.94; R.legR.rotation.x *= 0.94;
+    A.look += ((player.x - g.position.x) * 0.02 - A.look) * Math.min(1, dt * 0.7);
+    R.head.rotation.y = Math.max(-0.6, Math.min(0.6, A.look));
+    R.head.rotation.z = 0.22 + Math.sin(s * 0.5) * 0.03;
+    const fg = R.armR.userData.fingers;
+    for (let i = 0; i < fg.length; i++) fg[i].rotation.x = 0.2 + i * 0.05 + Math.sin(s * 2.2 + i) * 0.08;
+  }
+  for (const st of R.strands) {
+    st.rotation.x = st.userData.bx + Math.sin(A.t * 1.5 + st.userData.len * 9) * (0.06 + A.blend * 0.22);
+    st.rotation.z = Math.sin(A.t * 1.1 + st.userData.len * 7) * (0.04 + A.blend * 0.14);
+  }
+}
+
+const watcher = buildDrownedBody();
+watcher.scale.setScalar(0.95);
+// 旋转顺序 YXZ：先按航向偏航、再在自身坐标系里俯仰，游姿才会随朝向前倾而不是侧翻
+watcher.rotation.order = 'YXZ';
+scene.add(watcher);
+// v2：黑屏/停电的重定位点全部落在新主池水面内（数据源 levels/l12-plan.js）
+const WATCHER_SPOTS = L12P.WATCHER_SPOTS.map(([x, z]) => [x, z]);
+// 脚掌贴底量：用真实包围盒（静止姿势）量出原点相对脚底的高度差，站立时用 pool.bottom + 该值
+// 注意：这里不能调用 animateDrowned（它引用尚未初始化的 player），只看骨架静止姿态
+const DROWNED_FOOT_LIFT = (() => {
+  const keepP = watcher.position.clone(), keepR = watcher.rotation.clone();
+  watcher.position.set(0, 0, 0); watcher.rotation.set(0, 0, 0);
+  watcher.updateMatrixWorld(true);
+  const b = new THREE.Box3().setFromObject(watcher);
+  const lift = Number.isFinite(b.min.y) ? Math.max(0, -b.min.y) : 0;
+  watcher.position.copy(keepP); watcher.rotation.copy(keepR);
+  watcher.updateMatrixWorld(true);
+  return lift;
+})();
+function watcherHome() {
+  const p = POOLS[0];                       // 新主池（游泳主池）中心偏北
+  return { x: (p.x1 + p.x2) / 2, y: p.bottom + DROWNED_FOOT_LIFT, z: p.zDeep1 + (p.zEnd - p.zDeep1) * 0.45 };
+}
+watcher.position.set(watcherHome().x, watcherHome().y, watcherHome().z);
+// 水面波纹环 + 水下剪影
+const wake = new THREE.Mesh(new THREE.RingGeometry(0.25, 0.7, 28),
+  new THREE.MeshBasicMaterial({ color: 0x9fe8f4, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+wake.rotation.x = -Math.PI / 2; wake.position.set(0, POOLS[0].water + 0.02, 0); scene.add(wake);
+const lurker = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 1.75, 6, 10),
+  new THREE.MeshBasicMaterial({ color: 0x0d1a1c, transparent: true, opacity: 0.45, depthWrite: false }));
+lurker.rotation.z = Math.PI / 2; lurker.visible = false; scene.add(lurker);
+
+let poolIntroShown = false, dripTimer = 12;
+const poolDark = { timer: 26 + Math.random() * 18, active: false, dur: 0 };
+const poolMonster = { swim: false, phase: 'stand', vx: 0, vz: 0, sndT: 0, cool: 0, tpT: 4, moveT: 0 };
+
+/* 视线遮挡：沿线段采样，只把"登记了 y2（真实高度）的碰撞体"当遮挡物（墙 / 柜 / 池沿外的实体） */
+function segmentBlockedByWalls(ax, ay, az, bx, by, bz, endTol) {
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  const len = Math.hypot(dx, dz);
+  const n = Math.max(2, Math.ceil(len / 0.16));
+  const cols = ACTIVE_COLLIDERS;
+  const tol = endTol || 0;
+  for (let k = 1; k < n; k++) {
+    const t = k / n, x = ax + dx * t, y = ay + dy * t, z = az + dz * t;
+    // 端点接触容差：只放过紧贴目标点的采样（目标放在家具表面上时，末端必然贴着该表面）
+    if (tol > 0 && Math.hypot(x - bx, y - by, z - bz) < tol) continue;
+    for (let i = 0; i < cols.length; i++) {
+      const c = cols[i];
+      if (c.poolSide || c.metroBoardEdge) continue;
+      if (c.y2 == null) continue;
+      if (y < (c.y1 == null ? 0 : c.y1) || y > c.y2) continue;
+      if (x > c.x1 && x < c.x2 && z > c.z1 && z < c.z2) return true;
+    }
+  }
+  return false;
+}
+function watcherCanReachPlayer() {
+  return !segmentBlockedByWalls(player.x, player.y + 1.2, player.z,
+    watcher.position.x, watcher.position.y + 1.2, watcher.position.z);
+}
+
+function poolScare(msg) {
+  if (!horrorCooldownReady()) return;
+  synthScare();
+  stats.scares++;
+  const sf = document.getElementById('scare-flash');
+  if (sf) { sf.style.opacity = '1'; setTimeout(() => { sf.style.opacity = '0'; }, 150); }
+  showFlashText(msg || '它一直站在水里看着你……');
+  safeRespawn(LEVEL);            // 统一安全复位：保留进度 + 给一段无攻击窗口
+  poolMonster.phase = 'retreat';
+  poolMonster.cool = 10;
+  poolMonster.swim = false;
+  const _wh = watcherHome(); watcher.position.set(_wh.x, _wh.y, _wh.z);
+}
+
+/* 池中人游姿安全高度：不用解析式自证，而是把真实骨骼摆到该姿态后求 Box3（含发束 / 四肢 / 指尖），
+   在 rotX 0..SWIM_ROT 上采样并取每个姿态的最大顶点，运行时按当前 rotX 线性插值。
+   这样头顶既不会破水面 30cm，也不会整个沉下去；测试会用同样的 Box3 反查。 */
+const DROWNED_SWIM_ROT = 1.15;             // ≈66°：接近水平的前倾游姿，和站立一眼可分
+const DROWNED_SWIM_STEPS = 13;
+const DROWNED_TOP_TABLE = (() => {
+  const savedRotY = watcher.rotation.y, savedX = watcher.rotation.x, savedY = watcher.position.y;
+  const savedPx = watcher.position.x, savedPz = watcher.position.z;
+  const A = watcher.userData.anim;
+  const savedT = A.t, savedBlend = A.blend;
+  const box = new THREE.Box3();
+  const table = [];
+  for (let i = 0; i < DROWNED_SWIM_STEPS; i++) {
+    const rotX = (DROWNED_SWIM_ROT * i) / (DROWNED_SWIM_STEPS - 1);
+    let maxTop = -Infinity;
+    // 姿态周期里按最慢摆动（发束 t*0.9，周期约 7s）取 96 个相位：
+    // 只采 2.6s 会漏掉慢项，手臂 2.4 rad/s 的峰值也可能被采稀漏掉，故再留 10cm 安全余量。
+    for (let k = 0; k < 96; k++) {
+      watcher.position.set(0, 0, 0);
+      watcher.rotation.set(rotX, 0, 0);
+      A.blend = 1; A.t = (k / 96) * 7.0;
+      animateDrowned(watcher, 0.0001, 'swim');
+      watcher.updateMatrixWorld(true);
+      box.setFromObject(watcher);
+      if (Number.isFinite(box.max.y)) maxTop = Math.max(maxTop, box.max.y);
+    }
+    table.push(maxTop);
+  }
+  watcher.position.set(savedPx, savedY, savedPz);
+  watcher.rotation.set(savedX, savedRotY, 0);
+  A.t = savedT; A.blend = savedBlend;
+  watcher.updateMatrixWorld(true);
+  return table;
+})();
+function drownedSwimY(rotX, waterY) {
+  const f = Math.max(0, Math.min(1, rotX / DROWNED_SWIM_ROT)) * (DROWNED_SWIM_STEPS - 1);
+  const i = Math.min(DROWNED_SWIM_STEPS - 1, Math.floor(f));
+  const frac = f - i;
+  const a = DROWNED_TOP_TABLE[i];
+  const b = DROWNED_TOP_TABLE[Math.min(DROWNED_SWIM_STEPS - 1, i + 1)];
+  const top = a + (b - a) * frac;
+  // 采样表是离散的（姿态相位 + 俯仰角），再留 10cm 余量吸收相位采样残差，
+  // 保证插值后头顶也不会露出水面（越深越安全，视觉上仍贴着水面）。
+  return waterY - 0.035 - top - 0.10;
+}
+
+// 诊断姿态冻结：仅 ?cam= + ?l12view= 组合时置位，正常游玩始终为空串。
+let L12_FREEZE = '';
+function updatePoolHorror(dt) {
+  if (LEVEL !== 1) return;
+  if (L12_FREEZE === 'drowned-stand' || L12_FREEZE === 'drowned-swim') {
+    animateDrowned(watcher, dt, L12_FREEZE === 'drowned-swim' ? 'swim' : 'stand');
+    return;
+  }
+  const now = performance.now() * 0.001;
+  const wl = waterLevelAt(player.x, player.z);
+  const inWater = wl != null && player.y < wl;
+  const inMainPool = player.x > POOLS[0].x1 && player.x < POOLS[0].x2 && player.z > POOLS[0].zDeep1 && player.z < POOLS[0].zEnd;
+  const distToWatcher = Math.hypot(player.x - watcher.position.x, player.z - watcher.position.z);
+
+  // —— 停电循环 ——
   if (poolDark.active) {
     poolDark.dur -= dt;
-    for (const L of poolLights) { L.light.intensity = 0; if (L.fxMat) L.fxMat.emissiveIntensity = 0.12; }
-    hemi.intensity = 0.1;
-    if (!poolDark.moved) {
-      poolDark.moved = true;
-      const s = WATCHER_SPOTS[Math.random() * WATCHER_SPOTS.length | 0];
-      watcher.position.set(s[0], P.bottom, s[1]);
-      watcher.rotation.x = 0; watcher.rotation.z = 0;   // 瞬移后立正（若玩家仍在水里会再次转为游姿）
-      poolMonster.phase = poolMonster.swim ? 'swim' : 'stand';
-      poolMonster.vx *= 0.2; poolMonster.vz *= 0.2;
-      lurker.visible = true;
-      lurker.position.set(P.x1 + 1.2 + Math.random() * 2.5, P.water - 0.34, P.zDeep1 + 1);
-      lurker.userData.sweep = true;
-      synthSplashFar();
-    }
-    if (lurker.userData.sweep) {
-      lurker.position.z += dt * 9.5;
-      if (lurker.position.z > P.zEnd - 1) lurker.userData.sweep = false;
-    }
     if (poolDark.dur <= 0) {
-      poolDark.active = false; poolDark.timer = 24 + Math.random() * 26;
-      for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
+      poolDark.active = false;
+      poolDark.timer = 26 + Math.random() * 20;
       hemi.intensity = 0.5;
-      lurker.visible = false;
-      const hd = Math.hypot(player.x - watcher.position.x, player.z - watcher.position.z);
-      const vd = Math.abs(player.y - watcher.position.y);
-      if (hd < 3.4 && vd < 2.8) poolScare();
+      for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.4; }
+      if (inMainPool && distToWatcher < 2.4 && Math.abs(player.y - watcher.position.y) < 2.6
+        && watcherCanReachPlayer() && horrorCooldownReady()) poolScare('灯亮时它还在……');
     }
   } else {
-    // ── 水中之物状态机 ──
-    const px = player.x, pz = player.z;
-    const wl = waterLevelAt(px, pz);
-    const inPool = wl !== null && player.y < wl;
-    const t = performance.now();
-    watcher.rotation.order = 'YXZ';
-    if (inPool) {
-      if (!poolMonster.swim) {
-        poolMonster.swim = true; poolMonster.phase = 'swim';
+    poolDark.timer -= dt;
+    if (poolDark.timer <= 0) {
+      poolDark.active = true; poolDark.dur = 4.6 + Math.random() * 2.4;
+      for (const L of poolLights) { L.light.intensity = 0; if (L.fxMat) L.fxMat.emissiveIntensity = 0; }
+      hemi.intensity = 0.09;
+      synthBlackout();
+      if (!poolIntroShown) { poolIntroShown = true; showFlashText('灯全灭了……'); }
+      // 只在有效水下点之间转移，且不闪到接触距离
+      const valid = WATCHER_SPOTS.filter(p => Math.hypot(p[0] - player.x, p[1] - player.z) > 4.6 &&
+        p[0] > POOLS[0].x1 + 0.8 && p[0] < POOLS[0].x2 - 0.8 && p[1] > POOLS[0].zDeep1 + 0.8 && p[1] < POOLS[0].zEnd - 0.8);
+      if (valid.length) {
+        const p = valid[Math.floor(Math.random() * valid.length)];
+        watcher.position.set(p[0], POOLS[0].bottom + DROWNED_FOOT_LIFT, p[1]);
+        wake.position.set(p[0], POOLS[0].water + 0.02, p[1]);
         synthSplashFar();
-        showFlashText('水面翻涌——它朝你游过来了！');
-        if (droneNodes) droneNodes.g.gain.value = 0.075;
       }
-      const dx = px - watcher.position.x, dz = pz - watcher.position.z;
-      const dist = Math.hypot(dx, dz) || 1;
-      // 速度平滑：目标速度缓动（起停不再生硬）
-      const speed = Math.min(2.0, 0.75 + dist * 0.11);
-      const tvx = dx / dist * speed, tvz = dz / dist * speed;
-      poolMonster.vx += (tvx - poolMonster.vx) * Math.min(1, dt * 2.2);
-      poolMonster.vz += (tvz - poolMonster.vz) * Math.min(1, dt * 2.2);
-      watcher.position.x += poolMonster.vx * dt;
-      watcher.position.z += poolMonster.vz * dt;
-      // 影子始终留在竞赛池边界内（玩家在训练池时它贴壁"陪游"）
-      watcher.position.x = Math.min(P.x2 - 0.45, Math.max(P.x1 + 0.45, watcher.position.x));
-      watcher.position.z = Math.min(P.zEnd - 0.45, Math.max(P.zDeep1 + 0.45, watcher.position.z));
-      // 深度：追逐时头肩破水而出（躯干仍半没水下），不再"全程隐身"
-      const ty = P.water - 0.36 + Math.sin(t * 0.0011) * 0.07;
-      watcher.position.y += (ty - watcher.position.y) * Math.min(1, dt * 2);
-      // 航向 = 速度方向（最短角缓转，丝滑）
-      const yawT = Math.atan2(poolMonster.vx, poolMonster.vz);
-      watcher.rotation.y += ((yawT - watcher.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 2.6);
-      // 俯仰/摆尾平滑趋近水平游姿
-      watcher.rotation.x += (1.3 - watcher.rotation.x) * Math.min(1, dt * 1.8);
-      watcher.rotation.z = Math.sin(t * 0.0028) * 0.13;
-      animateDweller(watcher, dt, "swim");
-      // 水下伴影
-      lurker.visible = true; lurker.userData.sweep = false;
-      lurker.position.x += ((watcher.position.x - poolMonster.vx * 0.7) - lurker.position.x) * Math.min(1, dt * 1.6);
-      lurker.position.z += ((watcher.position.z - poolMonster.vz * 0.7) - lurker.position.z) * Math.min(1, dt * 1.6);
-      lurker.position.y += ((P.water - 0.42) - lurker.position.y) * Math.min(1, dt * 1.6);
-      // 水面尾迹：辉光环随怪物推进，长轴对齐航向（水下也能看清它从哪来）
-      wake.visible = true;
-      wake.position.set(watcher.position.x, P.water + 0.03, watcher.position.z);
-      const wsp = Math.hypot(poolMonster.vx, poolMonster.vz);
-      wake.scale.set(0.9 + wsp * 0.55, 0.85 + wsp * 0.14, 1);
-      wake.rotation.z = Math.atan2(-poolMonster.vz, poolMonster.vx);
-      wake.material.opacity = 0.30 + Math.sin(t * 0.004) * 0.08 + wsp * 0.06;
-      poolMonster.sndT -= dt;
-      if (poolMonster.sndT <= 0) { synthLap(); poolMonster.sndT = 1.0 + Math.random() * 0.6; }
-      if (dist < 1.35) {
-        poolScare();
-        poolMonster.swim = false; poolMonster.phase = 'sink';
-        lurker.visible = false;
-        if (droneNodes) droneNodes.g.gain.value = 0.012;
-      }
-    } else {
-      if (poolMonster.swim) {
-        poolMonster.swim = false; poolMonster.phase = 'sink';
-        poolMonster.vx *= 0.2; poolMonster.vz *= 0.2;
-        lurker.visible = false;
-        poolDark.timer = Math.min(poolDark.timer, 8 + Math.random() * 8);  // 上岸后很快会停电
-        if (droneNodes) droneNodes.g.gain.value = 0.012;
-        showFlashText('它停了……沉回水底');
-      }
-      if (poolMonster.phase === 'sink') {
-        // 保持水平姿态缓慢下沉（身体不穿水面）
-        watcher.position.y += (P.bottom - watcher.position.y) * Math.min(1, dt * 0.9);
-        if (Math.abs(watcher.position.y - P.bottom) < 0.1) { poolMonster.phase = 'stand'; watcher.position.y = P.bottom; }
-      } else {
-        // 池底缓缓立正（立直后头顶仍低于水面）
-        watcher.rotation.x += (0 - watcher.rotation.x) * Math.min(1, dt * 1.6);
-      }
-      watcher.rotation.z += (0 - watcher.rotation.z) * Math.min(1, dt * 3);
-      const ax = px - watcher.position.x, az = pz - watcher.position.z;
-      watcher.rotation.y += ((Math.atan2(ax, az) - watcher.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 1.5);
-      animateDweller(watcher, dt, "idle");
     }
   }
+
+  // —— 池中人：只属于水体，永不上岸 ——
+  const pool = POOLS[0];
+  poolMonster.cool = Math.max(0, poolMonster.cool - dt);
+  const cooldownOK = poolMonster.cool <= 0 && horrorCooldownReady();
+
+  if (inWater && inMainPool) {
+    poolMonster.phase = 'stalk';
+    poolMonster.swim = true;
+    // 速度：贴近时慢一点留出逃跑空间，远时略快（最高 1.85 < 玩家游泳 1.9）
+    const sp = Math.min(1.85, 0.72 + distToWatcher * 0.1);
+    const dx = player.x - watcher.position.x, dz = player.z - watcher.position.z;
+    const d = Math.hypot(dx, dz) || 1;
+    watcher.position.x = Math.max(pool.x1 + 0.45, Math.min(pool.x2 - 0.45, watcher.position.x + (dx / d) * sp * dt));
+    watcher.position.z = Math.max(pool.zDeep1 + 0.45, Math.min(pool.zEnd - 0.45, watcher.position.z + (dz / d) * sp * dt));
+    const ty = drownedSwimY(watcher.rotation.x, pool.water);
+    watcher.rotation.x += (DROWNED_SWIM_ROT - watcher.rotation.x) * Math.min(1, dt * 3);
+    watcher.position.y += (ty - watcher.position.y) * Math.min(1, dt * 2.6);
+    watcher.rotation.y = Math.atan2(dx, dz);
+    animateDrowned(watcher, dt, 'swim');
+    wake.visible = true;
+    wake.position.set(watcher.position.x, pool.water + 0.02, watcher.position.z);
+    wake.material.opacity = 0.25 + Math.sin(now * 2.4) * 0.1;
+    wake.scale.setScalar(1 + Math.sin(now * 1.7) * 0.08);
+    if (distToWatcher < 1.35 && cooldownOK && watcherCanReachPlayer()) poolScare('它就在你身下……');
+  } else {
+    // 玩家在岸上：只在水里注视 / 缓慢挪动，不上岸追人
+    if (poolMonster.phase !== 'retreat') poolMonster.phase = 'stand';
+    poolMonster.swim = false;
+    watcher.rotation.x += (0 - watcher.rotation.x) * Math.min(1, dt * 2.2);
+    animateDrowned(watcher, dt, poolMonster.phase === 'retreat' ? 'sink' : 'stand');
+    poolMonster.tpT -= dt;
+    if (poolMonster.tpT <= 0 && poolMonster.phase !== 'retreat') {
+      const tx2 = Math.max(pool.x1 + 1.0, Math.min(pool.x2 - 1.0, player.x));
+      const tz2 = Math.max(pool.zDeep1 + 1.0, Math.min(pool.zEnd - 1.0, player.z - 2.5));
+      watcher.position.x += (tx2 - watcher.position.x) * 0.35;
+      watcher.position.z += (tz2 - watcher.position.z) * 0.35;
+      poolMonster.tpT = 5 + Math.random() * 5;
+    }
+    watcher.position.y += (pool.bottom + DROWNED_FOOT_LIFT - watcher.position.y) * Math.min(1, dt * 1.4);
+    watcher.rotation.y = Math.atan2(player.x - watcher.position.x, player.z - watcher.position.z);
+    wake.visible = distToWatcher < 9;
+    wake.position.set(watcher.position.x, pool.water + 0.02, watcher.position.z);
+    wake.material.opacity = wake.visible ? 0.12 + Math.sin(now * 1.4) * 0.05 : 0;
+    if (poolMonster.phase === 'retreat') {
+      watcher.position.z += (pool.zDeep1 + 2.2 - watcher.position.z) * Math.min(1, dt * 0.9);
+      if (watcher.position.z < pool.zDeep1 + 3.0) poolMonster.phase = 'stand';
+    }
+  }
+  // 水下剪影
+  const lurkerOn = inWater && inMainPool && distToWatcher < 12;
+  lurker.visible = lurkerOn;
+  if (lurkerOn) {
+    lurker.position.set(watcher.position.x + Math.sin(now * 0.9) * 1.4, pool.water - 1.15,
+      watcher.position.z + Math.cos(now * 0.7) * 1.2);
+    lurker.rotation.y = now * 0.4;
+    lurker.material.opacity = 0.18 + Math.max(0, 1 - distToWatcher / 12) * 0.35;
+  }
+  poolMonster.sndT -= dt;
+  if (poolMonster.sndT <= 0) { synthLap(); poolMonster.sndT = 4 + Math.random() * 6; }
+  dripTimer -= dt;
+  if (dripTimer <= 0) { synthDrip(); dripTimer = 3 + Math.random() * 6; }
 }
 
 /* ============================================================ 合成音频引擎（分层拟音 · 双场景混响 · 环境声床） */
@@ -2151,6 +2543,8 @@ function synthLap() { // 池中人追逐划水
 }
 
 /* ============================================================ 漂浮物（救生圈 / 鸭子） */
+/* 六件：主池 2（鸭 + 圈）、训练池 2（鸭 + 鸭）、浅水回声池 2（鸭 + 圈）= 四鸭二圈。
+   每件的所属水体在生成时绑定，漂移被限制在该水体的可漂浮矩形内，不会上岸或穿墙。 */
 const pickups = [], PICK_TOTAL = 6;
 const haloTex = (() => {
   const c = makeCanvas(128, 128), g = c.getContext('2d');
@@ -2170,6 +2564,7 @@ function ringTexture() {
   }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
+const ringTexShared = ringTexture();
 function makeDuck() {
   const g = new THREE.Group();
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffd21f, roughness: 0.35, metalness: 0.05 });
@@ -2182,44 +2577,50 @@ function makeDuck() {
   beak.rotation.x = -Math.PI / 2; beak.position.set(0, 0.165, 0.24); g.add(beak);
   return g;
 }
+const ringMatShared = new THREE.MeshStandardMaterial({ map: ringTexShared, roughness: 0.35, metalness: 0.1 });
 function makeRing() {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.1, 12, 32),
-    new THREE.MeshStandardMaterial({ map: ringTexture(), roughness: 0.35, metalness: 0.1 }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.1, 12, 32), ringMatShared);
   ring.rotation.x = Math.PI / 2;
   return ring;
 }
-function spawnPickup(kind, x, z, waterY) {
+/* 可漂浮矩形：池内再收 0.55m，杜绝贴壁穿出 */
+function floatRect(p) {
+  return { x1: p.x1 + 0.55, x2: p.x2 - 0.55, z1: p.zDeep1 + 0.55, z2: p.zEnd - 0.55 };
+}
+function spawnPickup(kind, x, z, waterY, bodyName) {
+  const p = bodyName ? POOL_BY_NAME[bodyName] : poolAt(x, z, 0.1);
+  if (!p) throw new Error(`pickup 不在任何泳池内: ${kind} @ ${x},${z}`);
+  const wy = waterY == null ? p.water : waterY;
   const mesh = kind === 'duck' ? makeDuck() : makeRing();
-  mesh.position.set(x, waterY + 0.04, z);
+  mesh.position.set(x, wy + 0.04, z);
   mesh.rotation.y = Math.random() * Math.PI * 2;
   scene.add(mesh);
   const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1),
     new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
   halo.rotation.x = -Math.PI / 2;
-  halo.position.set(x, waterY + 0.02, z);
+  halo.position.set(x, wy + 0.02, z);
   scene.add(halo);
-  pickups.push({ kind, mesh, x, z, halo, baseY: waterY + 0.04, phase: Math.random() * Math.PI * 2 });
+  pickups.push({ kind, mesh, x, z, halo, baseY: wy + 0.04, waterY: wy,
+    phase: Math.random() * Math.PI * 2, body: p.name, rect: floatRect(p) });
 }
-const PICKUP_DEFS = [
-  ['duck', 0.5, 0.5, -0.30],     // 竞赛池
-  ['duck', -5.5, -4, -0.30],     // 竞赛池
-  ['ring', 1.5, 4.5, -0.30],     // 竞赛池
-  ['duck', 18, -2, -0.30],       // 训练池
-  ['ring', 20, 0.5, -0.30],      // 训练池
-  ['duck', -4.5, -9.5, -0.30],   // 竞赛池北端
-];
-PICKUP_DEFS.forEach(d => spawnPickup(d[0], d[1], d[2], d[3]));
+/* [kind, x, z, waterY, body] —— 四鸭二圈，三个水体各两件 */
+/* 六件收集物：主池 / 主汤 / 静汤 各 2（来自 levels/l12-plan.js，漂移只在本水体内） */
+const PICKUP_DEFS = L12P.L37_PICKUPS.map(([kind, x, z, body]) =>
+  [kind, x, z, POOL_BY_NAME[body].water, body]);
+PICKUP_DEFS.forEach(d => spawnPickup(d[0], d[1], d[2], d[3], d[4]));
 document.getElementById('v-pick').textContent = `0 / ${PICK_TOTAL}`;
 
 /* ============================================================ Level 0 · 后室（经典前置关卡） */
+/* 86×48m 外壳内的房间化重做：接待区 / 档案区 / 配电区 / 空办公室 + 主走廊，
+   三处保险丝各有承载物（接待台 / 档案柜 / 配电柜），两条以上真实闭合环路，
+   通道净宽 ≥1.6m，门洞是墙上的真实缺口（不是贴图）。 */
 let l0Lights = [], exitPanel = null, exitSignMat = null, exitLight = null;
-// 阴黄抹灰墙面（接近截图质感：低对比、无裂纹）
+// 阴黄抹灰墙面（低对比、无裂纹）
 const wallpaper = createTileSet({ cols: 4, rows: 4, tileWorld: 1.0, size: 512,
   tile: '#d5c99e', grout: '#c8bc92', vary: 0.02, grime: 0.12, tileScale: 0.96, ao: 0.12, mottle: 0.03, normalStrength: 1.2 });
 const carpet = createTileSet({ cols: 6, rows: 6, tileWorld: 0.9, size: 512,
   tile: '#211b13', grout: '#171209', vary: 0.02, grime: 0.25, tileScale: 0.96, ao: 0.2, mottle: 0.05, normalStrength: 1.2 });
 const ceilL0 = createPlain({ base: '#0e0c08', speck: 0.3 });
-/* —— 接入贴图包：Level 0 墙纸 / 地毯 / 天花 —— */
 wallpaper.diffuse = 'textures/wallpaper-yellow.png'; wallpaper.normal = null; wallpaper.rough = null;
 carpet.diffuse = 'textures/carpet-dark.png'; carpet.normal = null; carpet.rough = null;
 ceilL0.diffuse = 'textures/ceiling-dark.png';
@@ -2228,165 +2629,285 @@ const hemiL0 = new THREE.HemisphereLight(0xcdbd8a, 0x3d3826, 0.5);
 scene.add(hemiL0);
 
 const l0WallMat = matFor(wallpaper, 1, 1);
+// 后室墙面必须读作"黄"：贴图本身偏灰，这里叠加暖赭黄染色（不提高曝光的做法），
+// 让 L0 与泳池白砖的色相距离拉开，同时保留暗部层次。
+l0WallMat.color.setHex(0xf2d38f);
+// 旧墙纸的浮雕只保留很浅的起伏（0.12~0.2），并把镜面反光压到接近哑光：
+// 派生法线/粗糙度是按亮度算的，强度 0.8 会把漫反射污渍变成"塑料浮雕刻字"。
+l0WallMat.roughness = 0.95;
+l0WallMat.metalness = 0.0;
+l0WallMat.envMapIntensity = 0.35;
+l0WallMat.normalScale.set(0.16, 0.16);
+l0WallMat.roughnessMap = null;
 const l0TextureMaterials = new Set([l0WallMat]);
-function wall(x1, z1, x2, z2) {
+/* 建造注册表：测试据此逐项校验"贴面是否真的在墙上""门洞上方是否真有墙""陈设是否真的落地" */
+const L0_DOOR_H = 2.18;                       // 门头高度（净高 2.18m，通行碰撞不受门楣影响）
+const l0WallPieces = [];                      // {axis,fixed,a,b,t,mesh}
+const L0_GAPS = [];                           // 真实门洞 {axis,fixed,a,b,t}
+const l0Headers = [];                         // 门楣 {axis,fixed,a,b,y0,y1,mesh}
+const l0Skirt = [], l0Sockets = [], l0Handles = [], l0Vents = [], l0Stains = [], l0GridList = [];
+const l0Props = [], l0Pipes = [], l0Hangers = [], l0Papers = [];
+let l0FloorMat = null;
+const l0TrimMat = new THREE.MeshStandardMaterial({ color: 0x6f6249, roughness: 0.72 });
+
+function wall(x1, z1, x2, z2, o = {}) {
   const horizontal = z1 === z2;
   const len = horizontal ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
-  const w = horizontal ? len : 0.3;
-  const d = horizontal ? 0.3 : len;
+  const t = o.t == null ? 0.3 : o.t;
+  const w = horizontal ? len : t;
+  const d = horizontal ? t : len;
   const cx = horizontal ? (x1 + x2) / 2 : x1;
   const cz = horizontal ? z1 : (z1 + z2) / 2;
-  addBox(w, L0H, d, cx, L0H / 2, cz, l0WallMat, wallpaper.coverageX);
-  COLLIDERS_L0.push({ x1: cx - w / 2 - 0.08, x2: cx + w / 2 + 0.08, z1: cz - d / 2 - 0.08, z2: cz + d / 2 + 0.08 });
+  const h = o.h == null ? L0H : o.h;
+  const a = horizontal ? Math.min(x1, x2) : Math.min(z1, z2);
+  const b = horizontal ? Math.max(x1, x2) : Math.max(z1, z2);
+  // 世界坐标 UV：同一堵墙被门洞切段后，墙纸/毡面相位跨段连续（不再每段从 UV0 重起）
+  const mesh = addWorldUVBox(w, h, d, cx, h / 2, cz, o.mat || l0WallMat, wallpaper.coverageX);
+  if (o.collide !== false) COLLIDERS_L0.push({ x1: cx - w / 2 - 0.08, x2: cx + w / 2 + 0.08, z1: cz - d / 2 - 0.08, z2: cz + d / 2 + 0.08, y1: 0, y2: h, kind: 'l0Wall' });
+  if (h >= L0H - 0.01) l0WallPieces.push({ axis: horizontal ? 'x' : 'z', fixed: horizontal ? z1 : x1, a, b, t, mesh });
+  // 两侧踢脚（收集后合批成 1 个 InstancedMesh）
+  if (o.skirt !== false && len > 0.6) {
+    if (horizontal) {
+      for (const s of [-1, 1]) l0Skirt.push({ x: cx, y: 0.07, z: z1 + s * (t / 2 + 0.02), sx: len - 0.02, sy: 0.14, sz: 0.04 });
+    } else {
+      for (const s of [-1, 1]) l0Skirt.push({ x: x1 + s * (t / 2 + 0.02), y: 0.07, z: cz, sx: 0.04, sy: 0.14, sz: len - 0.02 });
+    }
+  }
+  return mesh;
+}
+/* 沿 x 的墙（z 固定），gaps 为 [xStart,xEnd] 门洞 */
+function wallZ(z, xa, xb, gaps, o) {
+  const gs = (gaps || []).slice().sort((a, b) => a[0] - b[0]);
+  let cur = Math.min(xa, xb);
+  const end = Math.max(xa, xb);
+  for (const g of gs) {
+    if (g[0] > cur) wall(cur, z, g[0], z, o);
+    const ga = Math.max(Math.min(xa, xb), g[0]), gb = Math.min(end, g[1]);
+    if (gb > ga) L0_GAPS.push({ axis: 'x', fixed: z, a: ga, b: gb, t: (o && o.t) || 0.3 });
+    cur = Math.max(cur, g[1]);
+  }
+  if (cur < end) wall(cur, z, end, z, o);
+}
+/* 沿 z 的墙（x 固定） */
+function wallX(x, za, zb, gaps, o) {
+  const gs = (gaps || []).slice().sort((a, b) => a[0] - b[0]);
+  let cur = Math.min(za, zb);
+  const end = Math.max(za, zb);
+  for (const g of gs) {
+    if (g[0] > cur) wall(x, cur, x, g[0], o);
+    const ga = Math.max(Math.min(za, zb), g[0]), gb = Math.min(end, g[1]);
+    if (gb > ga) L0_GAPS.push({ axis: 'z', fixed: x, a: ga, b: gb, t: (o && o.t) || 0.3 });
+    cur = Math.max(cur, g[1]);
+  }
+  if (cur < end) wall(x, cur, x, end, o);
+}
+/* 门套：洞口内衬 + 两面薄贴脸 + 门楣。
+   门洞不能"整高删墙"——门头以上必须补真实墙体，否则门洞到天花之间是个黑洞；
+   贴脸只做 2cm 厚、7cm 宽，横梁两端压在竖框上，不再是悬空大梁。 */
+function l0Casing(x, z, vertical, gap, o = {}) {
+  const t = o.t == null ? 0.3 : o.t;
+  const w = 0.07;                      // 贴脸宽
+  const p = 0.02;                      // 贴脸凸出墙面
+  const doorH = o.doorH == null ? L0_DOOR_H : o.doorH;
+  const headH = o.headH == null ? L0H : o.headH;   // 门楣顶（贴到局部顶棚）
+  // 洞口内衬（沿墙厚方向的洞口两侧与上沿）
+  if (vertical) {
+    for (const s of [-1, 1]) addBox(t + 0.02, doorH, 0.03, x, doorH / 2, z + s * (gap / 2 - 0.015), l0TrimMat);
+    addBox(t + 0.02, 0.03, gap, x, doorH - 0.015, z, l0TrimMat);
+  } else {
+    for (const s of [-1, 1]) addBox(0.03, doorH, t + 0.02, x + s * (gap / 2 - 0.015), doorH / 2, z, l0TrimMat);
+    addBox(gap, 0.03, t + 0.02, x, doorH - 0.015, z, l0TrimMat);
+  }
+  // 两面薄贴脸：竖框 + 横梁（横梁宽度 = 洞口 + 两侧贴脸，端部正好压在立框上）
+  for (const s of [-1, 1]) {
+    const off = t / 2 + p / 2;
+    if (vertical) {
+      const fx = x + s * off;
+      for (const u of [-1, 1]) addBox(p, doorH + w, w, fx, (doorH + w) / 2, z + u * (gap / 2 + w / 2), l0TrimMat);
+      addBox(p, w, gap + w * 2, fx, doorH + w / 2, z, l0TrimMat);
+    } else {
+      const fz = z + s * off;
+      for (const u of [-1, 1]) addBox(w, doorH + w, p, x + u * (gap / 2 + w / 2), (doorH + w) / 2, fz, l0TrimMat);
+      addBox(gap + w * 2, w, p, x, doorH + w / 2, fz, l0TrimMat);
+    }
+  }
+  // 门楣：门头以上补满真实墙体，并与顶棚相接（碰撞同源，玩家头部仍可通过）
+  const hw = vertical ? t : gap, hd = vertical ? gap : t;
+  const hh = headH - doorH;
+  const hm = addWorldUVBox(hw, hh, hd, x, doorH + hh / 2, z, l0WallMat, wallpaper.coverageX);
+  hm.name = 'l0Lintel';
+  COLLIDERS_L0.push({ x1: x - hw / 2, x2: x + hw / 2, z1: z - hd / 2, z2: z + hd / 2, y1: doorH, y2: headH, kind: 'l0Header' });
+  l0Headers.push({ axis: vertical ? 'z' : 'x', fixed: vertical ? x : z,
+    a: (vertical ? z : x) - gap / 2, b: (vertical ? z : x) + gap / 2, y0: doorH, y1: headH, mesh: hm });
+  return hm;
+}
+/* 真实墙面判定：返回该点可贴的墙面（axis/fixed/side/faceCoord），否则 null。
+   只认注册过的整高墙段，并排除门洞、交叉墙端与方柱 —— 装饰不再盲布。 */
+function l0Face(axis, fixed, side, u, margin = 0.35) {
+  const faceCoord = fixed + side * 0;         // 由调用方按 t 计算
+  let piece = null;
+  for (const p of l0WallPieces) {
+    if (p.axis !== axis || Math.abs(p.fixed - fixed) > 1e-6) continue;
+    if (u < p.a + margin || u > p.b - margin) continue;
+    piece = p;
+  }
+  if (!piece) return null;
+  for (const g of L0_GAPS) {
+    if (g.axis !== axis || Math.abs(g.fixed - fixed) > 1e-6) continue;
+    if (u > g.a - 0.35 && u < g.b + 0.35) return null;
+  }
+  for (const other of l0WallPieces) {
+    if (other.axis === axis) continue;
+    if (Math.abs(other.fixed - u) < 0.4 && other.a - 0.25 <= fixed && other.b + 0.25 >= fixed) return null;
+  }
+  return { axis, fixed, side, t: piece.t, face: fixed + side * piece.t / 2, piece };
+}
+function l0WallDecorOk(axis, fixed, side, u, margin) { return !!l0Face(axis, fixed, side, u, margin); }
+function flushInstanced(geo, mat, list, castShadow) {
+  if (!list.length) return null;
+  const inst = new THREE.InstancedMesh(geo, mat, list.length);
+  const d = new THREE.Object3D();
+  list.forEach((it, i) => {
+    d.position.set(it.x, it.y, it.z);
+    d.scale.set(it.sx || 1, it.sy || 1, it.sz || 1);
+    d.rotation.set(0, it.ry || 0, 0);
+    d.updateMatrix(); inst.setMatrixAt(i, d.matrix);
+  });
+  inst.castShadow = !!castShadow; inst.receiveShadow = true;
+  scene.add(inst);
+  return inst;
+}
+
+/* 两点之间的圆管：用四元数对齐轴向，避免欧拉角在不同朝向下把管子转到关外 */
+function pipeBetween(ax, ay, az, bx, by, bz, r, mat) {
+  const dir = new THREE.Vector3(bx - ax, by - ay, bz - az);
+  const len = dir.length();
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 10), mat);
+  mesh.position.set((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh);
+  const rec = { mesh, len, a: [ax, ay, az], b: [bx, by, bz], r };
+  l0Pipes.push(rec);
+  return rec;
+}
+
+/* 墙面管夹：长度与中心都从"墙内表面"量到"管子中心"，这样夹子两端真的同时碰到墙和管。
+   以前用固定 center/depth，第二根管与夹子之间留了 15cm 空隙、东墙那根夹子还跑到了管子另一侧。 */
+function pipeClampToWall(rec, u, along, wallFace, mat) {
+  const p = rec.a, y = p[1];
+  let mesh, d;
+  if (along === 'x') {                                  // 管沿 x 走，挂在垂直于 z 的墙上
+    d = Math.abs(p[2] - wallFace) + 0.05;
+    mesh = addBox(0.07, 0.05, d, u, y, (wallFace + p[2]) / 2, mat);
+  } else {                                              // 管沿 z 走，挂在垂直于 x 的墙上
+    d = Math.abs(p[0] - wallFace) + 0.05;
+    mesh = addBox(d, 0.05, 0.07, (wallFace + p[0]) / 2, y, u, mat);
+  }
+  l0Hangers.push({ kind: 'pipeClamp', pipe: rec, mesh, x: mesh.position.x, y, z: mesh.position.z, along, wallFace });
+  return mesh;
+}
+
+/* 顶棚吊杆：从管子中心一直顶到顶棚，两端同时接触 */
+function pipeHangFromCeil(rec, u, along, mat) {
+  const p = rec.a, h = L0H - p[1] + 0.06, cy = (L0H + p[1]) / 2;
+  const mesh = along === 'x'
+    ? addBox(0.05, h, 0.05, u, cy, p[2], mat)
+    : addBox(0.05, h, 0.05, p[0], cy, u, mat);
+  l0Hangers.push({ kind: 'pipeDrop', pipe: rec, mesh, x: mesh.position.x, y: p[1], z: mesh.position.z, y1: L0H });
+  return mesh;
 }
 
 (function buildLevel0() {
-  // 地板 / 天花板 / 外壳
-  const floorL0 = new THREE.Mesh(new THREE.PlaneGeometry(86, 48),
-    physicalMat(carpet, 86 / carpet.coverageX, 48 / carpet.coverageY, { roughness: 0.62, clearcoat: 0.05 }));
-  floorL0.rotation.x = -Math.PI / 2; floorL0.position.set(-107, 0, 0); scene.add(floorL0);
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(86, 48),
-    new THREE.MeshStandardMaterial({ map: texFrom(ceilL0.diffuse, 10, 5, true), roughness: 0.96 }));
-  l0TextureMaterials.add(floorL0.material); l0TextureMaterials.add(ceil.material);
-  ceil.rotation.x = Math.PI / 2; ceil.position.set(-107, L0H, 0); scene.add(ceil);
-  addPlane(86, L0H, -107, L0H / 2, -24, 0, 0, l0WallMat, wallpaper.coverageX);
-  addPlane(86, L0H, -107, L0H / 2, 24, 0, Math.PI, l0WallMat, wallpaper.coverageX);
-  addPlane(48, L0H, -150, L0H / 2, 0, 0, Math.PI / 2, l0WallMat, wallpaper.coverageX);
-  addPlane(48, L0H, -64, L0H / 2, 0, 0, -Math.PI / 2, l0WallMat, wallpaper.coverageX);
-
-  // 走廊（x -146..-74, z -4.5..4.5）
-  wall(-146, -4.5, -144, -4.5); wall(-140, -4.5, -95, -4.5); wall(-89, -4.5, -74, -4.5);
-  wall(-146, 4.5, -108, 4.5); wall(-102, 4.5, -88, 4.5); wall(-82, 4.5, -74, 4.5);
-  wall(-146, -4.5, -146, 4.5);
-  wall(-74, -6, -74, -2.2); wall(-74, 2.2, -74, 6);
-  // 出生房（北侧）
-  wall(-146, -18, -134, -18); wall(-146, -18, -146, -4.5); wall(-134, -18, -134, -4.5);
-  // R7 / R8（南侧侧室）
-  wall(-108, 16.5, -99, 16.5); wall(-108, 4.5, -108, 16.5); wall(-99, 4.5, -99, 16.5);
-  wall(-88, 16.5, -79, 16.5); wall(-88, 4.5, -88, 16.5); wall(-79, 4.5, -79, 16.5);
-  // R9（北侧黑暗死巷）
-  wall(-95, -17.5, -85, -17.5); wall(-95, -17.5, -95, -4.5); wall(-85, -17.5, -85, -4.5);
-  // 出口房
-  wall(-74, -6, -64, -6); wall(-74, 6, -64, 6);
-  // 迷宫短墙
-  wall(-140, 10.5, -128, 10.5); wall(-120, -11, -108, -11); wall(-96, 10.5, -88, 10.5); wall(-70, 12, -64, 12);
-
-  // 立柱（深灰粗方柱，如截图）
-  const colMatL0 = new THREE.MeshStandardMaterial({ color: 0x2c2b26, roughness: 0.92, metalness: 0.02 });
-  [[-140, -21], [-126, -21], [-112, -21], [-108, 20], [-92, 20], [-76, 20], [-120, 12],
-   [-134, 8], [-93, 10], [-68, 12], [-131, -8], [-102, -10]].forEach(([x, z]) => {
-    addBox(1.0, L0H, 1.0, x, L0H / 2, z, colMatL0);
-    COLLIDERS_L0.push({ x1: x - 0.54, x2: x + 0.54, z1: z - 0.54, z2: z + 0.54 });
-  });
-
-  // 荧光灯（大部分已烧毁，仅零星残存——手电筒成为关键）
-  const aliveIdx = new Set([0, 4, 7, 11]);
-  [[-138, 0], [-126, 0], [-114, 0], [-102, 0], [-90, 0], [-78, 0],
-   [-141, -8], [-141, -15], [-103, 11], [-83, 11], [-90, -11], [-68, 0]].forEach(([x, z]) => {
-    const light = new THREE.PointLight(0xffe9c0, 1.3, 8.5, 2);
-    light.position.set(x, 2.7, z); light.userData.base = 1.3;
-    scene.add(light);
-    const pmat = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffedc4, emissiveIntensity: 1.1 });
-    const panel = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.5), pmat);
-    panel.position.set(x, 2.97, z); panel.rotation.x = Math.PI / 2;
-    scene.add(panel);
-    l0Lights.push({ light, pmat, i: l0Lights.length, dead: !aliveIdx.has(l0Lights.length) });
-  });
-
-  // 办公角（截图同款：桌椅 + 盆栽 + 行李袋 + 单束暖光 + 黄门）
-  (function () {
-    const dark = new THREE.MeshStandardMaterial({ color: 0x23221f, roughness: 0.85 });
-    const metal = new THREE.MeshStandardMaterial({ color: 0x3a3a38, metalness: 0.5, roughness: 0.5 });
-    const desk = new THREE.Group();
-    const top = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.7), dark); top.position.y = 0.78; desk.add(top);
-    [[-0.72, -0.28], [0.72, -0.28], [-0.72, 0.28], [0.72, 0.28]].forEach(([lx, lz]) => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.78, 0.08), metal); leg.position.set(lx, 0.39, lz); desk.add(leg);
+  if (L12_V2_L0) {
+    // v2：42×24 紧凑后勤层，几何/碰撞/家具全部由 levels/l12-plan.js 的房间与门洞生成
+    L0V2 = createL0V2({
+      THREE, scene, addBox, addWorldUVBox, addDeck, matFor, L12_TEX,
+      COLLIDERS_L0, l0Lights, hemiL0, makeCanvas, makeSignTexture, L12P
     });
-    desk.position.set(-140.2, 0, -11.6); scene.add(desk);
-    const chair = new THREE.Group();
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.5), dark); seat.position.y = 0.5; chair.add(seat);
-    const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.08), dark); back.position.set(0, 0.82, -0.24); chair.add(back);
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 10), metal); pole.position.y = 0.28; chair.add(pole);
-    const cbase = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.06, 12), metal); cbase.position.y = 0.06; chair.add(cbase);
-    chair.position.set(-140.2, 0, -10.6); chair.rotation.y = 2.7; scene.add(chair);
-    const plant = new THREE.Group();
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.24, 10),
-      new THREE.MeshStandardMaterial({ color: 0x4a4a46, roughness: 0.8 })); pot.position.y = 0.12; plant.add(pot);
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x3a5a2c, roughness: 0.8 });
-    for (let i = 0; i < 5; i++) {
-      const l = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.6, 6), leafMat);
-      l.position.set(Math.sin(i * 1.26) * 0.1, 0.55, Math.cos(i * 1.26) * 0.1);
-      l.rotation.set(Math.sin(i) * 0.5, 0, Math.cos(i) * 0.5); plant.add(l);
-    }
-    plant.position.set(-141.4, 0, -11.2); scene.add(plant);
-    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.26, 0.3),
-      new THREE.MeshStandardMaterial({ color: 0x23201a, roughness: 0.9 }));
-    bag.position.set(-138.8, 0.13, -10.8); bag.rotation.y = 0.5; scene.add(bag);
-    // 单束聚光 + 灯管
-    const spot = new THREE.SpotLight(0xffe4ae, 34, 15, 0.66, 0.55, 1.5);
-    spot.position.set(-140.4, 2.9, -11.2); scene.add(spot); scene.add(spot.target);
-    spot.target.position.set(-140.4, 0, -11.2);
-    const tube = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.2),
-      new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffedc4, emissiveIntensity: 3.6 }));
-    tube.position.set(-140.4, 2.94, -11.2); scene.add(tube);
-    // 黄门（北墙装饰门框 + 亮门板）
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.4, 0.1), dark);
-    frame.position.set(-140.4, 1.2, -17.95); scene.add(frame);
-    const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2),
-      new THREE.MeshStandardMaterial({ color: 0xd8c26a, roughness: 0.55 }));
-    door.position.set(-140.4, 1.1, -17.88); scene.add(door);
-    COLLIDERS_L0.push({ x1: -141.2, x2: -139.4, z1: -12.1, z2: -11.0 });
-  })();
-
-  // 出口门（东墙 x=-64）
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.22, L0H, 3.0),
-    new THREE.MeshStandardMaterial({ color: 0x33342f, metalness: 0.55, roughness: 0.5 }));
-  frame.position.set(-63.9, L0H / 2, 0); scene.add(frame);
-  exitPanel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.35, 2.3),
-    new THREE.MeshStandardMaterial({ color: 0x1b1d20, metalness: 0.7, roughness: 0.45, emissive: 0x0c0d10 }));
-  exitPanel.position.set(-63.82, 1.18, 0); scene.add(exitPanel);
-  const signTex = makeSignTexture();
-  exitSignMat = new THREE.MeshStandardMaterial({
-    map: signTex, emissiveMap: signTex, color: 0x000000, emissive: 0xff2a2a, emissiveIntensity: 2.8 });
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.5), exitSignMat);
-  sign.position.set(-63.78, 2.72, 0); sign.rotation.y = -Math.PI / 2; scene.add(sign);
-  exitLight = new THREE.PointLight(0xff3333, 3.2, 7, 2); exitLight.position.set(-63.4, 2.4, 0); scene.add(exitLight);
+    exitPanel = L0V2.exitPanel; exitSignMat = L0V2.exitSignMat; exitLight = L0V2.exitLight;
+    l0FloorMat = L0V2.materials.floorMat;
+    return;
+  }
 })();
+function dark_cable() {
+  return new THREE.MeshStandardMaterial({ color: 0x1d1c1a, roughness: 0.85 });
+}
 
-function makeSignTexture() {
+function makeSignTexture(cn, en) {
   const c = makeCanvas(256, 96), g = c.getContext('2d');
   g.fillStyle = '#1e0404'; g.fillRect(0, 0, 256, 96);
-  g.fillStyle = '#ff2a2a'; g.font = 'bold 52px Arial';
+  g.fillStyle = '#ff2a2a'; g.font = 'bold 44px Arial';
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('EXIT', 128, 52);
+  g.fillText(en || cn, 128, 40);
+  if (en) { g.font = 'bold 22px Arial'; g.fillText(cn, 128, 74); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
-/* ---------------- 保险丝 ---------------- */
+/* ---------------- 保险丝（各有承载物：接待台 / 档案柜 / 配电柜） ---------------- */
 const fusesList = [];
 let nearestFuse = null;
-const FUSE_DEFS = [[-136, -16], [-90, -15], [-84, 14]];
+const FUSE_DEFS = [
+  { x: -134.4, z: 4.2, y: 0.72, on: '员工区休息桌' },
+  { x: -124.6, z: 7.2, y: 1.02, on: '档案出票台' },
+  { x: -124.0, z: -9.0, y: 1.66, on: '配电柜仪表托架' },
+];
 function fuseMesh() {
-  return new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.16),
-    new THREE.MeshStandardMaterial({ color: 0x241c0a, emissive: 0xff9b1e, emissiveIntensity: 2.6, roughness: 0.4 }));
+  // 有端帽的实体保险丝/维修件：陶瓷管身 + 两端金属帽 + 中间小视窗，不靠橙色发光方块占位
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.18, 14),
+    new THREE.MeshStandardMaterial({ color: 0x2b2620, roughness: 0.62, metalness: 0.1 }));
+  g.add(body);
+  const capMat = new THREE.MeshStandardMaterial({ color: 0xb9a887, roughness: 0.35, metalness: 0.85 });
+  for (const y of [-0.1, 0.1]) {
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.032, 14), capMat);
+    cap.position.y = y; g.add(cap);
+  }
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.03, 14),
+    new THREE.MeshStandardMaterial({ color: 0x6b4a1c, emissive: 0xffa63a, emissiveIntensity: 0.55, roughness: 0.5 }));
+  g.add(band);
+  const tag = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0xd8cdb2, roughness: 0.8 }));
+  tag.position.set(0.062, 0, 0); g.add(tag);
+  return g;
 }
-function spawnFuse(x, z) {
-  const m = fuseMesh(); m.position.set(x, 0.42, z); scene.add(m);
-  fusesList.push({ mesh: m, x, z, ph: Math.random() * 6.28 });
+function spawnFuse(def) {
+  const surface = def.y == null ? 0.30 : def.y;   // 承载物台面高度
+  const y = surface + 0.12;                       // 保险丝方块半高 0.12：坐在台面上，不陷进去
+  const m = fuseMesh(); m.position.set(def.x, y, def.z); scene.add(m);
+  fusesList.push({ mesh: m, x: def.x, z: def.z, y, surface, on: def.on || '', ph: Math.random() * 6.28 });
 }
-FUSE_DEFS.forEach(d => spawnFuse(d[0], d[1]));
+function spawnFuseList() {
+  for (const f of fusesList) scene.remove(f.mesh);
+  fusesList.length = 0;
+  FUSE_DEFS.forEach(spawnFuse);
+}
+spawnFuseList();
 function updateFuseProximity() {
-  let best = null, bestD = 1.7;
+  let best = null, bestD = 1.9;
   for (const f of fusesList) {
     const d = Math.hypot(player.x - f.x, player.z - f.z);
-    if (d < bestD) { bestD = d; best = f; }
+    if (d > bestD) continue;
+    // 高度必须在伸手可及范围内
+    if (f.y > player.y + 1.9 || f.y < player.y - 0.4) continue;
+    // 真实遮挡：从实际眼位（含蹲伏）看过去，端点只放 0.15m 接触容差
+    if (!fuseReachableFrom(f, player.x, player.y + EYE * crouchH, player.z)) continue;
+    bestD = d; best = f;
   }
   nearestFuse = best;
 }
+function fuseReachableFrom(f, ex, ey, ez) {
+  if (Math.hypot(ex - f.x, ez - f.z) > 1.9) return false;
+  if (f.y > player.y + 1.9 || f.y < player.y - 0.4) return false;
+  return !segmentBlockedByWalls(ex, ey, ez, f.x, f.y, f.z, 0.15);
+}
 function tryFuse() {
   if (!nearestFuse) return;
-  scene.remove(nearestFuse.mesh);
-  fusesList.splice(fusesList.indexOf(nearestFuse), 1);
+  // 执行时再校验一次：对象仍在列表里，且从当前眼位真的够得到（防止复位后按 E 远程拾取旧目标）
+  const target = nearestFuse;
+  if (fusesList.indexOf(target) < 0) { nearestFuse = null; return; }
+  if (!fuseReachableFrom(target, player.x, player.y + EYE * crouchH, player.z)) { nearestFuse = null; return; }
+  scene.remove(target.mesh);
+  fusesList.splice(fusesList.indexOf(target), 1);
   fuses++;
   synthFuse();
   document.getElementById('v-task').textContent = `收集保险丝 ${fuses}/3`;
@@ -2409,7 +2930,7 @@ function tryFuse() {
 }
 
 /* ---------------- 手电筒（Level 0 限定拾取） ---------------- */
-const FLASHLIGHT_DEF = { x: -105, z: 12 };
+const FLASHLIGHT_DEF = { x: -112.0, z: 4.0 };
 let flashlight = { owned: false, on: false, charge: 1.0 };
 let flashMesh = null, nearestFlash = null;
 const batteryList = [];
@@ -2445,7 +2966,7 @@ function spawnBattery(x, z) {
   const m = makeBatteryMesh(); m.position.set(x, 0, z); scene.add(m);
   batteryList.push({ mesh: m, x, z, ph: Math.random() * 6.28 });
 }
-const BATTERY_DEFS = [[-104, 13.5], [-90, -16.5]];
+const BATTERY_DEFS = [[-114.0, 8.4], [-127.0, -3.4]];
 BATTERY_DEFS.forEach(d => spawnBattery(d[0], d[1]));
 function updateBatteryProximity() {
   let best = null, bd = 1.9;
@@ -2550,227 +3071,482 @@ function updateFlashHud() {
   }
 }
 
-/* ---------------- 黑影实体（恐怖事件） ---------------- */
-const ENTITY_POINTS = [[-140, 10], [-122, -7], [-104, 12], [-90, -1], [-128, 17], [-112, -15], [-84, -16], [-69, 1]];
-/* 怪物骨架：部件在肩/髋枢轴上互相重叠成连续剪影；含 walk/swim/idle 程序动画 */
-function buildDweller(mat) {
-  const g = new THREE.Group();
-  const P = {};
-  const add = geo => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; return m; };
+/* ============================================================ 黑影实体（恐怖事件） */
+/* 独立建模（不再复用泳池人骨架）：驼背、长臂过膝、左右不对称、炭黑湿织物、暗红小眼。
+   移动走 A* 网格路径，撞墙不会穿墙；抓住玩家必须有视线，复位后进入统一惊吓冷却。 */
+let entityChasing = false, chaseSpeed = 2.2, chaseLeft = 0, entityUntil = 0;
+let entityState = 'idle', searchLeft = 0, gazeT = 0, replanT = 0, entityPath = null, pathIdx = 0;
+let horrorCoolUntil = 0;
+// 最后目击记忆：追逐时只有真正看得见才更新，隔墙后不再全知追踪
+const lastSeen = { x: 0, z: 0, t: 0, valid: false };
+let lostT = 0;
+function horrorCooldownReady() { return performance.now() >= horrorCoolUntil; }
+function markHorrorCooldown(ms) { horrorCoolUntil = performance.now() + ms; }
 
-  const hips = add(new THREE.SphereGeometry(0.115, 14, 10)); hips.position.y = 1.0; g.add(hips);
-  P.torso = add(new THREE.CapsuleGeometry(0.13, 0.4, 6, 14)); P.torso.position.y = 1.3; g.add(P.torso);
-  P.chest = add(new THREE.SphereGeometry(0.148, 14, 10)); P.chest.position.y = 1.56; g.add(P.chest);
-  const wetFront = new THREE.MeshBasicMaterial({ color: 0x6b6f70, transparent: true, opacity: 0.3, depthWrite: false });
-  const wetBelly = new THREE.Mesh(new THREE.CircleGeometry(0.125, 16), wetFront);
-  wetBelly.position.set(0, 1.34, 0.138); wetBelly.scale.set(1.0, 1.35, 1); g.add(wetBelly);
-  const ribMat = new THREE.MeshBasicMaterial({ color: 0x9aa0a0, transparent: true, opacity: 0.18, depthWrite: false });
-  for (const s of [-1, 1]) {
-    const rib = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.008, 6, 14, Math.PI * 0.85), ribMat);
-    rib.position.set(s * 0.03, 1.48, 0.14);
-    rib.rotation.set(Math.PI / 2, 0, s * 0.5);
-    g.add(rib);
-  }
-  const neck = add(new THREE.CylinderGeometry(0.034, 0.05, 0.16, 8)); neck.position.set(0, 1.79, 0.03); neck.rotation.x = 0.22; g.add(neck);
-  P.head = add(new THREE.SphereGeometry(0.115, 16, 12));
-  P.head.scale.set(0.8, 1.45, 0.94); P.head.position.y = 1.93; P.head.rotation.x = 0.16; g.add(P.head);
-  const jaw = add(new THREE.SphereGeometry(0.072, 12, 10));
-  jaw.scale.set(0.92, 0.78, 1.05); jaw.position.set(0, 1.84, 0.045); jaw.rotation.x = 0.3; g.add(jaw);
+function safeRespawn(level) {
+  markHorrorCooldown(5000);
+  entityUntil = 0; endChase(); entity.visible = false; entityState = 'idle';
+  // 复位会移动玩家：所有"当前可交互目标"缓存立即作废，禁止按 E 远程拾取旧目标
+  nearestFuse = null; nearestPickup = null;
+  if (typeof nearestFlash !== 'undefined') nearestFlash = null;
+  if (typeof nearestBattery !== 'undefined') nearestBattery = null;
+  if (level === 0) {
+    player.x = L0_SPAWN.x; player.z = L0_SPAWN.z; player.y = 0; player.vy = 0; player.grounded = true;
+    yaw = (LEVEL === 1 ? L37_SPAWN.yaw : L0_SPAWN.yaw); pitch = 0;
+  } else if (level === 1) {
+    player.x = L37_SPAWN.x; player.z = L37_SPAWN.z; player.y = groundAt(L37_SPAWN.x, L37_SPAWN.z);
+    player.vy = 0; player.grounded = true; yaw = L37_SPAWN.yaw; pitch = 0;
+  } else { respawnToLevelStart(); return; }
+  camera.position.set(player.x, player.y + EYE, player.z);
+  camera.rotation.set(pitch, yaw, 0);
+}
 
-  function arm(side) {
-    const a = new THREE.Group(); a.position.set(side * 0.185, 1.62, 0);
-    const up = add(new THREE.CapsuleGeometry(0.046, 0.42, 4, 8)); up.position.y = -0.24; a.add(up);
-    const el = add(new THREE.SphereGeometry(0.05, 8, 6)); el.position.y = -0.48; a.add(el);
-    const fo = add(new THREE.CapsuleGeometry(0.036, 0.48, 4, 8)); fo.position.y = -0.76; a.add(fo);
-    const hd = add(new THREE.ConeGeometry(0.042, 0.14, 8)); hd.position.y = -1.1; hd.rotation.x = Math.PI; a.add(hd);
-    for (let f = 0; f < 4; f++) {
-      const fg = add(new THREE.CapsuleGeometry(0.011, 0.13, 3, 5));
-      fg.position.set((f - 1.5) * 0.022, -1.22, -0.01);
-      fg.rotation.x = 0.38;
-      a.add(fg);
+/* ---------------- 导航网格（0.4m，A* 八向 + 视线平滑） ---------------- */
+const L0_NAV = (() => {
+  const cell = 0.4, x0 = BOUNDS_L0.x1, z0 = BOUNDS_L0.z1;
+  const nx = Math.ceil((BOUNDS_L0.x2 - BOUNDS_L0.x1) / cell), nz = Math.ceil((BOUNDS_L0.z2 - BOUNDS_L0.z1) / cell);
+  const walk = new Uint8Array(nx * nz);
+  const pad = 0.42;
+  for (let iz = 0; iz < nz; iz++) {
+    for (let ix = 0; ix < nx; ix++) {
+      const x = x0 + (ix + 0.5) * cell, z = z0 + (iz + 0.5) * cell;
+      let ok = 1;
+      for (let i = 0; i < COLLIDERS_L0.length; i++) {
+        const c = COLLIDERS_L0[i];
+        if (c.y1 != null && c.y1 > 0.75) continue;       // 高处的东西不挡脚
+        if (x > c.x1 - pad && x < c.x2 + pad && z > c.z1 - pad && z < c.z2 + pad) { ok = 0; break; }
+      }
+      walk[iz * nx + ix] = ok;
     }
-    g.add(a); return a;
   }
-  P.armL = arm(-1); P.armR = arm(1);
+  return { cell, x0, z0, nx, nz, walk, g: new Float32Array(nx * nz), came: new Int32Array(nx * nz), stamp: new Int32Array(nx * nz), seen: 0 };
+})();
+function l0Cell(x, z) {
+  const ix = Math.floor((x - L0_NAV.x0) / L0_NAV.cell), iz = Math.floor((z - L0_NAV.z0) / L0_NAV.cell);
+  if (ix < 0 || iz < 0 || ix >= L0_NAV.nx || iz >= L0_NAV.nz) return -1;
+  return iz * L0_NAV.nx + ix;
+}
+function l0CellCenter(i) {
+  const ix = i % L0_NAV.nx, iz = (i - ix) / L0_NAV.nx;
+  return { x: L0_NAV.x0 + (ix + 0.5) * L0_NAV.cell, z: L0_NAV.z0 + (iz + 0.5) * L0_NAV.cell };
+}
+function l0NearestWalkable(x, z) {
+  const i = l0Cell(x, z);
+  if (i >= 0 && L0_NAV.walk[i]) return i;
+  const c = Math.max(1, Math.round(1.5 / L0_NAV.cell));
+  let best = -1, bestD = Infinity;
+  for (let dz = -c; dz <= c; dz++) {
+    for (let dx = -c; dx <= c; dx++) {
+      const ix = Math.floor((x - L0_NAV.x0) / L0_NAV.cell) + dx;
+      const iz = Math.floor((z - L0_NAV.z0) / L0_NAV.cell) + dz;
+      if (ix < 0 || iz < 0 || ix >= L0_NAV.nx || iz >= L0_NAV.nz) continue;
+      const j = iz * L0_NAV.nx + ix;
+      if (!L0_NAV.walk[j]) continue;
+      const cc = l0CellCenter(j), d = Math.hypot(cc.x - x, cc.z - z);
+      if (d < bestD) { bestD = d; best = j; }
+    }
+  }
+  return best;
+}
+function l0Path(sx, sz, tx, tz) {
+  const s = l0NearestWalkable(sx, sz), t = l0NearestWalkable(tx, tz);
+  if (s < 0 || t < 0) return null;
+  const { nx, nz, walk, g, came, stamp } = L0_NAV;
+  const tag = ++L0_NAV.seen;
+  const heap = [s], hf = [0];
+  stamp[s] = tag; g[s] = 0; came[s] = -1;
+  const hcost = (i) => {
+    const a = i % nx, b = (i - a) / nx, c2 = t % nx, d2 = (t - c2) / nx;
+    const dx = Math.abs(a - c2), dz2 = Math.abs(b - d2);
+    return (dx + dz2) + (Math.SQRT2 - 2) * Math.min(dx, dz2);
+  };
+  const push = (i, f) => {
+    heap.push(i); hf.push(f);
+    let k = heap.length - 1;
+    while (k > 0) {
+      const p = (k - 1) >> 1;
+      if (hf[p] <= hf[k]) break;
+      [heap[p], heap[k]] = [heap[k], heap[p]]; [hf[p], hf[k]] = [hf[k], hf[p]]; k = p;
+    }
+  };
+  const pop = () => {
+    const top = heap[0];
+    const li = heap.pop(), lf = hf.pop();
+    if (heap.length) {
+      heap[0] = li; hf[0] = lf;
+      let k = 0;
+      for (;;) {
+        const l = k * 2 + 1, r = l + 1;
+        let m = k;
+        if (l < heap.length && hf[l] < hf[m]) m = l;
+        if (r < heap.length && hf[r] < hf[m]) m = r;
+        if (m === k) break;
+        [heap[m], heap[k]] = [heap[k], heap[m]]; [hf[m], hf[k]] = [hf[k], hf[m]]; k = m;
+      }
+    }
+    return top;
+  };
+  let guard = 0;
+  while (heap.length && guard++ < 60000) {
+    const cur = pop();
+    if (cur === t) break;
+    const cx = cur % nx, cz = (cur - cx) / nx;
+    for (let dz2 = -1; dz2 <= 1; dz2++) {
+      for (let dx2 = -1; dx2 <= 1; dx2++) {
+        if (!dx2 && !dz2) continue;
+        const ax = cx + dx2, az = cz + dz2;
+        if (ax < 0 || az < 0 || ax >= nx || az >= nz) continue;
+        const ni = az * nx + ax;
+        if (!walk[ni]) continue;
+        if (dx2 && dz2 && (!walk[cz * nx + ax] || !walk[az * nx + cx])) continue;   // 不切墙角
+        const ng = g[cur] + (dx2 && dz2 ? Math.SQRT2 : 1);
+        if (stamp[ni] !== tag) { stamp[ni] = tag; g[ni] = Infinity; came[ni] = -1; }
+        if (ng < g[ni]) { g[ni] = ng; came[ni] = cur; push(ni, ng + hcost(ni)); }
+      }
+    }
+  }
+  if (stamp[t] !== tag || (came[t] === -1 && t !== s)) return null;
+  const raw = [];
+  for (let i = t; i !== -1 && i !== s; i = came[i]) raw.push(i);
+  raw.reverse();
+  // 视线平滑：能直达的中间点直接跳过
+  const out = raw.map(l0CellCenter);
+  const smooth = [];
+  let i = 0;
+  while (i < out.length) {
+    let j = out.length - 1, picked = -1;
+    const fromX = smooth.length ? smooth[smooth.length - 1].x : sx;
+    const fromZ = smooth.length ? smooth[smooth.length - 1].z : sz;
+    for (; j > i; j--) {
+      if (!segmentBlockedByWalls(fromX, 0.9, fromZ, out[j].x, 0.9, out[j].z)) { picked = j; break; }
+    }
+    if (picked < 0) picked = i;
+    smooth.push(out[picked]);
+    i = picked + 1;
+  }
+  return smooth;
+}
 
+/* ---------------- 独立黑影片模型（2.2m，驼背长臂） ---------------- */
+function buildBlackFigure() {
+  const skinSet = { diffuse: 'textures/monster-skin.png', coverageX: 1.1, coverageY: 1.1 };
+  const skin = physicalMat(skinSet, 1.1, 1.1, {
+    color: 0x1c1a17, roughness: 0.64, metalness: 0.0,
+    clearcoat: 0.05, clearcoatRoughness: 0.85, emissive: 0x050506, emissiveIntensity: 0.55 });
+  const cloth = matFor(skinSet, 1.6, 1.6, { color: 0x121211, roughness: 0.55, metalness: 0.0, emissive: 0x030303, emissiveIntensity: 0.5 });
+  const hairM = new THREE.MeshStandardMaterial({ map: texFrom('textures/monster-hair.png', 1, 2, true), color: 0x0a0a09, roughness: 0.8 });
+  const g = new THREE.Group();
+  const R = {};
+  const cap = (r, len, m) => new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 6, 12), m);
+  const ball = (r, m, sx = 1, sy = 1, sz = 1) => {
+    const b = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 12), m);
+    b.scale.set(sx, sy, sz); return b;
+  };
+
+  // ---- 躯干：一条连续的旋成曲面（低开销 lathe），逐顶点做前倾剪切与收腰，
+  //      这样腹部不会出现"几节圆柱"的分节感，驼背也是几何本身而不是靠几块球拼。
+  R.spine = new THREE.Group(); R.spine.position.set(0, 1.08, 0); g.add(R.spine);
+  const prof = [[0.222, 0.00], [0.208, 0.11], [0.176, 0.26], [0.184, 0.40],
+                [0.216, 0.53], [0.226, 0.64], [0.196, 0.74], [0.150, 0.82],
+                [0.112, 0.87], [0.098, 0.89]];
+  const torsoGeo = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 26);
+  {
+    const pos = torsoGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      const s = Math.max(0, Math.min(1, y / 0.89));
+      // 越往上越向前（颈肩前伸），中段略回收形成收腰与弓背
+      const lean = 0.17 * Math.pow(s, 2.3) - 0.045 * Math.sin(s * Math.PI);
+      pos.setZ(i, pos.getZ(i) + lean);
+      pos.setX(i, pos.getX(i) * 1.05);
+      // 前后略扁、上背更厚：rx/rz 不同比例做有机截面
+      pos.setZ(i, pos.getZ(i) * 0.94 - (s > 0.45 ? (s - 0.45) * 0.10 : 0));
+    }
+    torsoGeo.computeVertexNormals();
+  }
+  R.torso = new THREE.Mesh(torsoGeo, cloth);
+  R.chest = R.torso;                                   // 兼容旧 rig 字段
+  R.spine.add(R.torso);
+  // 骨盆：与躯干底部重叠的扁球，臀部轮廓连续
+  R.pelvis = ball(0.215, cloth, 1.06, 0.78, 0.92);
+  R.pelvis.position.set(0, 1.04, -0.01); g.add(R.pelvis);
+
+  // ---- 颈与头：颈前伸、头略垂（驼背长臂的第一眼剪影靠这条前倾轴线）
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.105, 0.17, 12), skin);
+  neck.position.set(0, 0.95, 0.145); neck.rotation.x = 0.30; R.spine.add(neck);
+  R.head = new THREE.Group();
+  R.head.position.set(0, 1.015, 0.20); R.spine.add(R.head);
+  const skull = ball(0.148, skin, 0.86, 1.02, 1.04);
+  skull.position.set(0, 0.02, 0.005); R.head.add(skull);
+  // 后脑延长（动物的颅后部），前额收窄
+  const occiput = ball(0.115, skin, 0.95, 0.92, 1.0);
+  occiput.position.set(0, 0.03, -0.075); R.head.add(occiput);
+  const brow = ball(0.105, skin, 1.05, 0.40, 0.50);
+  brow.position.set(0, 0.062, 0.082); R.head.add(brow);
+  const jaw = ball(0.088, skin, 0.86, 0.70, 0.88);
+  jaw.position.set(0, -0.104, 0.018); R.head.add(jaw);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0503, emissive: 0x6d0f08, emissiveIntensity: 1.15, roughness: 0.78, metalness: 0.0 });
+  R.eyes = eyeMat;
+  R.eyeMeshes = [];
+  for (const s of [-1, 1]) {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.019, 10, 8), eyeMat);
+    e.scale.set(1.15, 0.42, 0.28);                       // 横向细、纵向压扁、深度贴壳
+    e.position.set(s * 0.050, 0.002, 0.144); R.head.add(e); R.eyeMeshes.push(e);   // 压在头壳表面外约 3mm，只露窄缝
+  }
+
+  // ---- 湿发：从头皮沿额面/鬓角/颈后向下垂（几何本身指向下，不靠旋转翻上去）
+  R.strands = [];
+  const strandGeo = (len, r) => {
+    const geo = new THREE.ConeGeometry(r, len, 5);     // 默认：锥尖 +y、粗底 -y
+    geo.rotateX(Math.PI);                              // 翻转：锥尖朝下
+    geo.translate(0, -len / 2, 0);                     // 粗底落在原点（发根），锥尖到 -len
+    return geo;
+  };
+  // 前后分簇：后脑/鬓角为主，前额只留少量偏侧细发，保证至少一侧眼窝可见
+  const hairFront = 4, hairBack = 10;
+  for (let i = 0; i < hairFront + hairBack; i++) {
+    const front = i < hairFront;
+    const k = front ? i / hairFront : (i - hairFront) / hairBack;
+    // 前额只两簇鬓角细发（长短不同、偏在一侧），后脑围绕 π 成片
+    const a = front
+      ? (k < 0.5 ? -1 : 1) * (0.62 + 0.22 * Math.abs(k - 0.5) * 2) + 0.06
+      : Math.PI + (k - 0.5) * 1.05;
+    const len = front ? 0.22 + k * 0.12 : 0.40 + Math.random() * 0.22;
+    const s = new THREE.Mesh(strandGeo(len, front ? 0.022 : 0.030), hairM);
+    const rad = front ? 0.140 : 0.135;
+    s.position.set(Math.sin(a) * rad, front ? 0.075 : 0.045, Math.cos(a) * rad + 0.005);
+    s.rotation.set(front ? -0.10 : 0.10, a, (Math.random() - 0.5) * 0.10);
+    s.userData.baseRotX = s.rotation.x;
+    s.userData.baseRotZ = s.rotation.z;
+    R.head.add(s); R.strands.push(s);
+  }
+
+  // ---- 长臂：肩 → 上臂 0.60 → 肘 → 前臂 0.58 → 腕 → 掌 + 五指（长短不同、带弯曲）
+  R.shoulderL = new THREE.Group(); R.shoulderL.position.set(-0.225, 0.78, 0.055); R.spine.add(R.shoulderL);
+  R.shoulderR = new THREE.Group(); R.shoulderR.position.set(0.232, 0.735, 0.075); R.spine.add(R.shoulderR);
+  function arm(side) {
+    const grp = new THREE.Group();
+    grp.rotation.z = side * 0.10;
+    grp.rotation.x = 0.12;
+    const shoulderBall = ball(0.088, cloth, 1.05, 0.95, 0.95);
+    grp.add(shoulderBall);
+    const upper = cap(0.060, 0.46, skin); upper.position.y = -0.30; grp.add(upper);
+    const el = new THREE.Group(); el.position.y = -0.60; grp.add(el);
+    const elbowBall = ball(0.064, skin, 1.0, 0.92, 1.0); el.add(elbowBall);
+    const fore = cap(0.050, 0.46, skin); fore.position.y = -0.30; el.add(fore);
+    const wrist = new THREE.Group(); wrist.position.y = -0.58; el.add(wrist);
+    const wristBall = ball(0.052, skin, 1.0, 0.85, 0.85); wrist.add(wristBall);
+    const palm = ball(0.058, skin, 1.05, 1.25, 0.52);
+    palm.position.set(0, -0.055, 0.005); wrist.add(palm);
+    const fingers = [];
+    // 五指：中指最长，食指/无名指次之，小指最短，拇指外撇；每根带轻微弯曲的管状曲面
+    const fSpec = [[-0.040, 0.135, 0.34], [-0.014, 0.175, 0.30], [0.012, 0.168, 0.32], [0.036, 0.140, 0.38], [0.058, 0.104, 0.46]];
+    for (let i = 0; i < fSpec.length; i++) {
+      const [xOff, len, curl] = fSpec[i];
+      const pivot = new THREE.Group();
+      pivot.position.set(xOff, -0.108, 0.004);
+      const pts = [];
+      for (let k = 0; k <= 3; k++) {
+        const u = k / 3;
+        pts.push(new THREE.Vector3(
+          xOff * 0.25 * u * u,
+          -len * u * (1 - 0.10 * u),
+          0.012 + curl * len * u * u * 0.55));
+      }
+      const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 7, 0.0125, 5, false);
+      pivot.add(new THREE.Mesh(geo, skin));
+      wrist.add(pivot); fingers.push(pivot);
+    }
+    const thumb = new THREE.Group();
+    thumb.position.set(side * -0.052, -0.062, 0.020);
+    const tPts = [];
+    for (let k = 0; k <= 3; k++) {
+      const u = k / 3;
+      tPts.push(new THREE.Vector3(side * -0.055 * u, -0.052 * u, 0.026 * u + 0.012 * u * u));
+    }
+    thumb.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tPts), 6, 0.0135, 5, false), skin));
+    wrist.add(thumb); fingers.push(thumb);
+    (side < 0 ? R.shoulderL : R.shoulderR).add(grp);
+    return { grp, el, wrist, fingers };
+  }
+  R.armL = arm(-1); R.armR = arm(1);
+
+  // ---- 腿：髋 1.06 → 膝 0.54 → 踝 0.05；脚是扁长的有机轮廓（不是方块）
   function leg(side) {
-    const l = new THREE.Group(); l.position.set(side * 0.085, 1.0, 0);
-    const th = add(new THREE.CapsuleGeometry(0.068, 0.4, 4, 8)); th.position.y = -0.24; l.add(th);
-    const kn = add(new THREE.SphereGeometry(0.06, 8, 6)); kn.position.y = -0.48; l.add(kn);
-    const sh = add(new THREE.CapsuleGeometry(0.046, 0.44, 4, 8)); sh.position.y = -0.74; l.add(sh);
-    const ft = add(new THREE.BoxGeometry(0.085, 0.05, 0.2)); ft.position.set(0, -0.95, 0.05); l.add(ft);
-    g.add(l); return l;
+    const hip = new THREE.Group();
+    hip.position.set(side * 0.112, 1.06, 0);
+    const thigh = cap(0.084, 0.36, cloth); thigh.position.y = -0.28; hip.add(thigh);
+    const knee = new THREE.Group(); knee.position.y = -0.52; hip.add(knee);
+    const kneeBall = ball(0.078, cloth, 1.0, 0.95, 1.0); knee.add(kneeBall);
+    const shin = cap(0.058, 0.36, skin); shin.position.y = -0.26; knee.add(shin);
+    const ankle = new THREE.Group(); ankle.position.y = -0.50; knee.add(ankle);
+    const heel = ball(0.062, skin, 1.0, 0.85, 1.15);
+    heel.position.set(0, -0.008, -0.018); ankle.add(heel);
+    const mid = ball(0.058, skin, 0.95, 0.62, 1.55);
+    mid.position.set(0, -0.022, 0.072); ankle.add(mid);
+    const toe = ball(0.040, skin, 0.90, 0.52, 1.05);
+    toe.position.set(0, -0.028, 0.168); ankle.add(toe);
+    g.add(hip);
+    return { hip, knee, ankle };
   }
-  P.legL = leg(-1); P.legR = leg(1);
-
-  g.userData.rig = P;
-  g.userData.anim = { t: Math.random() * 10, stride: 0 };
+  R.legL = leg(-1); R.legR = leg(1);
+  g.userData.rig = R; g.userData.skin = skin; g.userData.eyes = eyeMat; g.userData.hair = hairM;
+  g.userData.anim = { t: 0, stride: 0, twitch: 0 };
   return g;
 }
-
-function animateDweller(g, dt, mode) {
-  const P = g.userData.rig; if (!P) return;
-  const a = g.userData.anim; a.t += dt;
-  if (mode === 'walk') {
-    a.stride = Math.min(1, a.stride + dt * 2.5);
-    const s = a.t * 3.6, sw = Math.sin(s) * 0.42 * a.stride;
-    P.legL.rotation.x = sw; P.legR.rotation.x = -sw;
-    P.armL.rotation.x = -sw * 0.7 - 0.12; P.armR.rotation.x = sw * 0.7 - 0.12;
-    P.torso.rotation.x = 0.16 + Math.sin(s * 2) * 0.02;
-    P.chest.position.y = 1.55 + Math.abs(Math.sin(s)) * 0.015;
-  } else if (mode === 'swim') {
-    a.stride = Math.min(1, a.stride + dt * 2);
-    const s = a.t * 2.6;
-    P.legL.rotation.x = 0.15 + Math.sin(s) * 0.3 * a.stride;
-    P.legR.rotation.x = 0.15 + Math.sin(s + 0.35) * 0.3 * a.stride;
-    P.armL.rotation.x = -0.25 + Math.sin(s + 1.2) * 0.18 * a.stride;
-    P.armR.rotation.x = -0.25 + Math.sin(s + 1.5) * 0.18 * a.stride;
-    P.torso.rotation.x = Math.sin(s * 0.5) * 0.05;
+function animateBlackFigure(g, dt, mode) {
+  const R = g.userData.rig, A = g.userData.anim;
+  A.t += dt;
+  const t = A.t;
+  if (mode === 'walk' || mode === 'chase') {
+    const spd = mode === 'chase' ? 1.85 : 1.0;
+    A.stride += (1 - A.stride) * Math.min(1, dt * 3);
+    const s = Math.sin(t * 4.4 * spd) * A.stride;
+    R.legL.hip.rotation.x = s * 0.52; R.legR.hip.rotation.x = -s * 0.52;
+    R.legL.knee.rotation.x = Math.max(0, -s) * 0.7; R.legR.knee.rotation.x = Math.max(0, s) * 0.7;
+    // 左臂摆幅小于右臂（不对称）
+    R.armL.grp.rotation.x = 0.12 - s * 0.30; R.armR.grp.rotation.x = 0.12 + s * 0.46;
+    R.armL.el.rotation.x = -0.22 - Math.max(0, s) * 0.2; R.armR.el.rotation.x = -0.18 - Math.max(0, -s) * 0.24;
+    R.spine.rotation.x = mode === 'chase' ? 0.20 : 0.14;
+    R.spine.rotation.z = Math.sin(t * 4.4 * spd * 0.5) * 0.03;
+    R.head.rotation.x = -0.18 + Math.sin(t * 8.8 * spd) * 0.045;
+    R.head.rotation.z = Math.sin(t * 3.1) * 0.05;
+  } else if (mode === 'gaze') {
+    A.stride *= Math.max(0, 1 - dt * 3);
+    R.legL.hip.rotation.x *= 0.9; R.legR.hip.rotation.x *= 0.9;
+    R.spine.rotation.x += (0.24 - R.spine.rotation.x) * Math.min(1, dt * 2);
+    R.spine.rotation.z = Math.sin(t * 0.7) * 0.02;
+    R.head.rotation.x = -0.26 + Math.sin(t * 0.9) * 0.03;
+    R.head.rotation.z = 0.07 + Math.sin(t * 0.55) * 0.05;   // 头歪着看
+    A.twitch += dt;
+    const tw = Math.max(0, Math.sin(A.twitch * 11)) * 0.18;
+    for (const f of R.armR.fingers) f.rotation.x = 0.12 + tw;
+    R.armL.grp.rotation.x = 0.10; R.armR.grp.rotation.x = 0.14;
+    R.armL.el.rotation.x = -0.3; R.armR.el.rotation.x = -0.26;
   } else {
-    a.stride = Math.max(0, a.stride - dt * 2);
-    const b = Math.sin(a.t * 1.6);
-    P.chest.scale.setScalar(1 + b * 0.022);
-    P.torso.rotation.x = 0.05 + b * 0.015;
-    P.head.rotation.x = 0.1 + b * 0.03;
-    P.armL.rotation.x *= 0.95; P.armR.rotation.x *= 0.95;
-    P.legL.rotation.x *= 0.95; P.legR.rotation.x *= 0.95;
+    A.stride *= Math.max(0, 1 - dt * 4);
+    R.spine.rotation.x += (0.20 - R.spine.rotation.x) * Math.min(1, dt * 2);
   }
-  if (g.userData.strands) {
-    for (let i = 0; i < g.userData.strands.length; i++) {
-      const st = g.userData.strands[i];
-      st.rotation.x = (st.userData.bx || 0) + Math.sin(a.t * 1.8 + i) * 0.05 * (a.stride + 0.3);
-    }
+  // 湿发：围绕各自的基准角做小幅滞后摆动（发根在头皮、锥尖始终朝下，不会被翻成"天线"）
+  const swayAmp = mode === 'chase' ? 0.09 : 0.045;
+  for (let i = 0; i < R.strands.length; i++) {
+    const s = R.strands[i];
+    const front = i < 6;
+    const lag = Math.sin(t * (1.5 + i * 0.11) + i * 1.7) * swayAmp;
+    const bx = (s.userData.baseRotX || 0) + (front ? 0.04 : -0.03) + lag * 0.8;
+    s.rotation.x += (bx - s.rotation.x) * Math.min(1, dt * 2.5);
+    const bz = (s.userData.baseRotZ || 0) + Math.sin(t * 1.2 + i * 0.9) * swayAmp * 0.7;
+    s.rotation.z += (bz - s.rotation.z) * Math.min(1, dt * 2.0);
   }
 }
-
-
+const ENTITY_TARGET_HEIGHT = 2.20;         // 设计文档：驼背长臂、整体约 2.2m
 function makeEntity() {
-  const mat = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 1, metalness: 0 });
-  const g = buildDweller(mat);
-  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0202, emissive: 0xff2010, emissiveIntensity: 6 });
-  const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), eyeMat);
-  e1.position.set(-0.05, 1.9, 0.1); g.add(e1);
-  const e2 = e1.clone(); e2.position.x = 0.05; g.add(e2);
-  const glow = new THREE.PointLight(0xff2a14, 0.5, 2.6, 2);
-  glow.position.set(0, 1.9, 0.12); g.add(glow);
-  g.userData.eyes = eyeMat;
-  g.visible = false; scene.add(g); return g;
+  const g = buildBlackFigure();
+  // 用真实网格包围盒标定整体比例与眼灯高度，不手填放大系数
+  g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g);
+  g.userData.localHeight = Math.max(0.01, box.max.y - box.min.y);
+  g.userData.headLocalY = box.max.y - 0.06;
+  const eyeLight = new THREE.PointLight(0x8c1408, 0.45, 2.4, 2);
+  eyeLight.position.set(0, g.userData.headLocalY, 0.13); g.add(eyeLight);
+  g.userData.eyeLight = eyeLight;
+  return g;
 }
 const entity = makeEntity();
-let entityUntil = 0, creakTimer = 7, ambientTimer = 9, pingT = 1.2;
-function activateEntity(dur, minDist) {
-  const cands = ENTITY_POINTS.filter(p => Math.hypot(player.x - p[0], player.z - p[1]) > minDist);
-  const p = cands.length ? cands[Math.floor(Math.random() * cands.length)] : ENTITY_POINTS[0];
-  entity.position.set(p[0], 0, p[1]);
-  entity.visible = true;
-  entityUntil = performance.now() + dur * 1000;
-  synthKnock();
-}
-function jumpscare() {
-  synthScare();
-  stats.scares++;
-  const sf = document.getElementById('scare-flash');
-  sf.style.opacity = '1';
-  document.body.classList.add('scare');
-  setTimeout(() => document.body.classList.remove('scare'), 220);
-  setTimeout(() => { sf.style.opacity = '0'; }, 150);
-  showFlashText('它发现了你……');
-  entity.visible = false;
-  player.x = L0_RESPAWN.x; player.z = L0_RESPAWN.z; player.y = 0; player.vy = 0;
-  yaw = -Math.PI / 2; pitch = 0;
-}
+const ENTITY_SCALE = ENTITY_TARGET_HEIGHT / entity.userData.localHeight;
+entity.scale.setScalar(ENTITY_SCALE);
+entity.visible = false;
+scene.add(entity);
 
-/* ---------------- Level 0 每帧逻辑 ---------------- */
-let entityChasing = false, chaseSpeed = 0, chaseLeft = 0, hbTimer = 0;
-function endChase() {
-  entityChasing = false;
-  document.body.classList.remove('chase'); entity.visible = false;
-  if (droneNodes) droneNodes.g.gain.value = 0.05;
+const ENTITY_POINTS = [[-134.0, 4.2], [-125.0, 3.0], [-113.0, 3.4], [-124.0, -6.0], [-135.0, -4.4], [-112.0, -5.0], [-145.0, 2.0], [-128.0, 8.0], [-120.0, -8.0], [-137.0, 7.0]];
+function entityFaceTarget(x, z) { entity.rotation.y = Math.atan2(x - entity.position.x, z - entity.position.z); }
+function entityLOS() {
+  return !segmentBlockedByWalls(player.x, player.y + 1.4, player.z,
+    entity.position.x, entity.position.y + 1.6, entity.position.z);
+}
+function activateEntity(dur, minDist) {
+  if (horrorCooldownReady() === false) return;
+  const cands = ENTITY_POINTS.filter(p => Math.hypot(p[0] - player.x, p[1] - player.z) >= (minDist || 8));
+  if (!cands.length) return;
+  // 优先挑玩家当前看不到的点，避免凭空出现
+  const hidden = cands.filter(p => segmentBlockedByWalls(player.x, player.y + 1.4, player.z, p[0], 1.6, p[1]));
+  const pick = (hidden.length ? hidden : cands)[Math.floor(Math.random() * (hidden.length ? hidden.length : cands.length))];
+  entity.position.set(pick[0], 0, pick[1]);
+  entity.rotation.set(0, 0, 0);
+  entity.scale.setScalar(ENTITY_SCALE);
+  entity.visible = true;
+  entityState = 'gaze'; gazeT = 0; entityPath = null; pathIdx = 0; replanT = 0;
+  lastSeen.valid = false; lostT = 0;
+  entityUntil = performance.now() + (dur || 3) * 1000;
+  entityFaceTarget(player.x, player.z);
+  synthKnock();
 }
 function startChase(speed, dur) {
-  const cands = ENTITY_POINTS.filter(q => Math.hypot(player.x - q[0], player.z - q[1]) > 10);
-  const s = cands.length ? cands[Math.random() * cands.length | 0] : ENTITY_POINTS[0];
-  entity.position.set(s[0], 0, s[1]);
-  entity.visible = true;
-  entityChasing = true;
-  document.body.classList.add('chase'); chaseSpeed = speed; chaseLeft = dur; hbTimer = 0;
-  if (droneNodes) droneNodes.g.gain.value = 0.11;
-  synthKnock();
-}
-function updateLevel0(dt) {
-  if (LEVEL !== 0) return;
-  const t = performance.now() * 0.001;
-  hemi.intensity = 0.02; hemiL0.intensity = 0.12;
-  // 灯管闪烁（烧毁的偶尔抽搐一下）
-  for (const L of l0Lights) {
-    if (L.dead) {
-      const spark = Math.random() < 0.005 ? 0.9 : 0;
-      L.light.intensity = 1.3 * spark;
-      L.pmat.emissiveIntensity = 1.1 * Math.max(spark, 0.04);
-      continue;
+  entityChasing = true; chaseSpeed = speed || 2.2; chaseLeft = dur || 12;
+  // 起点必须有效：在关卡内、离玩家有反应距离、且能真的寻路过来。
+  // 否则（隐藏中 / 上次近身点 / 界外坐标）重新挑一个玩家看不见的远处出现点，
+  // 并保留 1.2s 攻击冷却作为反应窗口，避免"突然贴脸开打"。
+  const inBounds = entity.position.x > BOUNDS_L0.x1 + 1.2 && entity.position.x < BOUNDS_L0.x2 - 1.2 &&
+    entity.position.z > BOUNDS_L0.z1 + 1.2 && entity.position.z < BOUNDS_L0.z2 - 1.2;
+  const dPlayer0 = Math.hypot(entity.position.x - player.x, entity.position.z - player.z);
+  let needPick = !entity.visible || !inBounds || !Number.isFinite(entity.position.x) || dPlayer0 < 4.5;
+  if (!needPick && !l0Path(entity.position.x, entity.position.z, player.x, player.z)) needPick = true;
+  if (needPick) {
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw);   // 玩家视线方向
+    const cand = [];
+    for (const [x, z] of ENTITY_POINTS) {
+      const d = Math.hypot(x - player.x, z - player.z);
+      if (d < 7.5) continue;                                   // 至少 7.5m，留出反应距离
+      const dot = ((x - player.x) * fx + (z - player.z) * fz) / d;
+      if (dot > 0.25) continue;                                 // 不在玩家正前方
+      if (!l0Path(x, z, player.x, player.z)) continue;           // 必须能真的走过来
+      cand.push({ x, z, d, behind: dot < -0.1 });
     }
-    let f = 0.55 + 0.45 * Math.sin(t * 6.3 + L.i * 1.7) * Math.sin(t * 2.7 + L.i * 3.1);
-    if (Math.random() < 0.015) f = 0.05;
-    const mul = entity.visible ? 0.4 : 1;
-    f = Math.max(0.05, Math.min(1, f)) * mul;
-    L.light.intensity = 1.3 * f;
-    L.pmat.emissiveIntensity = 1.1 * f;
+    if (!cand.length) {                                          // 兜底：任何能寻路的点
+      for (const [x, z] of ENTITY_POINTS) {
+        const d = Math.hypot(x - player.x, z - player.z);
+        if (d > 5 && l0Path(x, z, player.x, player.z)) cand.push({ x, z, d, behind: false });
+      }
+    }
+    const behind = cand.filter(c => c.behind);
+    const pool = behind.length ? behind : cand;
+    if (pool.length) {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      entity.position.set(pick.x, 0, pick.z);
+    }
   }
-  // 保险丝浮动
-  for (const f of fusesList) {
-    f.mesh.position.y = 0.42 + Math.sin(t * 2.1 + f.ph) * 0.05;
-    f.mesh.rotation.y += dt * 1.2;
-  }
-  // 备用电池浮动
-  for (const b of batteryList) {
-    b.mesh.position.y = 0.1 + Math.sin(t * 1.7 + b.ph) * 0.05;
-    b.mesh.rotation.y += dt * 0.8;
-  }
-  // 环境杂音 / 远处黑影
-  creakTimer -= dt;
-  if (creakTimer <= 0) { synthCreak(); creakTimer = 6 + Math.random() * 10; }
-  // 保险丝方位感蜂鸣（越近越急，声像指示左右）
-  pingT -= dt;
-  if (pingT <= 0) {
-    let nf = null, nd = 1e9;
-    for (const f of fusesList) { const dd = Math.hypot(f.x - player.x, f.z - player.z); if (dd < nd) { nd = dd; nf = f; } }
-    if (nf) {
-      const dx = nf.x - player.x, dz = nf.z - player.z, len = Math.hypot(dx, dz) || 1;
-      const lateral = dx * (-_look.z) + dz * (_look.x);
-      synthPing(Math.max(-1, Math.min(1, lateral / len * 1.5)), nd < 8);
-      pingT = Math.max(0.34, Math.min(1.8, nd * 0.085));
-    } else pingT = 1.2;
-  }
-  ambientTimer -= dt;
-  if (ambientTimer <= 0 && !entityChasing) {
-    ambientTimer = 8 + Math.random() * 14;
-    if (Math.random() < 0.45) activateEntity(2.3, 14);
-  }
-  // 实体行为：追击 or 潜伏凝视
-  if (entityChasing) {
-    chaseLeft -= dt; hbTimer -= dt;
-    if (hbTimer <= 0) { synthHeartbeat(); hbTimer = 0.62; }
-    const dx = player.x - entity.position.x, dz = player.z - entity.position.z;
-    const d = Math.hypot(dx, dz) || 1;
-    entity.position.x += dx / d * chaseSpeed * dt;
-    entity.position.z += dz / d * chaseSpeed * dt;
-    entity.lookAt(player.x, 0, player.z);
-    animateDweller(entity, dt, "walk");
-    if (d < 1.15) { endChase(); jumpscare(); }
-    else if (chaseLeft <= 0) { endChase(); showFlashText('它停下了……消失在墙里'); }
-  } else if (entity.visible) {
-    entity.lookAt(player.x, 0, player.z);
-    animateDweller(entity, dt, "idle");
-    const d = Math.hypot(player.x - entity.position.x, player.z - entity.position.z);
-    if (d < 4.6) jumpscare();
-    else if (performance.now() > entityUntil) entity.visible = false;
-  }
-  // 出口触发
-  if (exitUnlocked && player.x < -66 && Math.abs(player.z) < 2.6) enterPoolrooms();
+  entity.position.y = 0;
+  entity.rotation.set(0, 0, 0);
+  entity.scale.setScalar(ENTITY_SCALE);
+  entity.visible = true; entityState = 'chase'; entityPath = null; pathIdx = 0; replanT = 0;
+  lastSeen.valid = false; lostT = 0;
+  markHorrorCooldown(1200);      // 反应窗口：刚进入追逐的 1.2s 内不会被抓
+  document.body.classList.add('chase');
+  synthHeartbeat();
 }
+function endChase() {
+  entityChasing = false; chaseLeft = 0;
+  if (entityState === 'chase') { entityState = 'search'; searchLeft = 1.5; }
+  document.body.classList.remove('chase');
+}
+function jumpscare() {
+  if (!horrorCooldownReady()) return;
+  synthScare();
+  stats.scares++;
+  document.body.classList.add('scare');
+  setTimeout(() => document.body.classList.remove('scare'), 620);
+  showFlashText('它发现了你……');
+  safeRespawn(LEVEL);
+  endChase();
+  entityState = 'idle';
+  entity.visible = false;
+  markHorrorCooldown(6500);
+}
+
 function openExitDoor() {
-  exitPanel.position.y = 2.9; // 门板升起（模拟开启）
+  exitPanel.position.y = 2.9;                        // 门板升起
   exitSignMat.emissive.set(0x37ff6e);
+  exitSignMat.emissiveIntensity = 2.2;
   exitLight.color.set(0x37ff6e); exitLight.intensity = 7;
 }
 function showLevelCard(title, sub) {
@@ -2782,12 +3558,109 @@ function showLevelCard(title, sub) {
   c.classList.add('show');
   setTimeout(() => c.classList.remove('show'), 1900);
 }
-
 function showFlashText(msg) {
   const el = document.getElementById('flash-text');
   el.textContent = msg; el.style.opacity = '1';
   setTimeout(() => { el.style.opacity = '0'; }, 1900);
 }
+
+let creakTimer = 0, ambientTimer = 0;
+function updateLevel0(dt) {
+  if (L12_FREEZE === 'entity') {
+    // 诊断冻结：保留呼吸/歪头动画，但不动位置、不触发追逐。
+    if (entity.visible) { entityFaceTarget(player.x, player.z); animateBlackFigure(entity, dt, 'gaze'); }
+    return;
+  }
+  hemiL0.intensity = 0.5;
+  // 灯管闪动
+  for (const L of l0Lights) {
+    L.t -= dt;
+    if (L.alive && L.t < 0 && Math.random() < 0.02) { L.t = 0.06 + Math.random() * 0.18; L.mat.emissiveIntensity = 0.08; }
+    else if (L.t < 0) L.mat.emissiveIntensity += (L.base - L.mat.emissiveIntensity) * Math.min(1, dt * 5);
+  }
+  // 保险丝 / 电池 浮动
+  for (const f of fusesList) { f.mesh.rotation.y += dt * 1.2; f.mesh.position.y = f.y + Math.sin(performance.now() * 0.0025 + f.ph) * 0.02; }
+  // 氛围事件
+  creakTimer -= dt;
+  if (creakTimer <= 0) { creakTimer = 8 + Math.random() * 14; synthCreak(); }
+  if (!entityChasing && horrorCooldownReady()) {
+    ambientTimer -= dt;
+    if (ambientTimer <= 0) {
+      ambientTimer = 22 + Math.random() * 20;
+      if (entityState === 'idle' && Math.random() < 0.5) activateEntity(2.6, 15);
+    }
+  }
+  const dx = player.x - entity.position.x, dz = player.z - entity.position.z;
+  const d = Math.hypot(dx, dz);
+  if (entity.visible && entityState === 'gaze') {
+    entityFaceTarget(player.x, player.z);
+    animateBlackFigure(entity, dt, 'gaze');
+    // 玩家正对并看得见 → 发现
+    const fx = Math.sin(yaw), fz = Math.cos(yaw);
+    const dot = (d > 0.01) ? (dx * fx + dz * fz) / d : 1;
+    if (entityLOS() && dot > 0.55 && d < 15) gazeT += dt; else gazeT = Math.max(0, gazeT - dt * 0.6);
+    if (gazeT > 0.9) { showFlashText('它看见你了——跑！'); startChase(2.25, 10); }
+    else if (performance.now() > entityUntil) { entityState = 'fade'; entityUntil = performance.now() + 700; }
+  } else if (entityState === 'fade') {
+    animateBlackFigure(entity, dt, 'idle');
+    entity.position.y -= dt * 0.9;
+    entity.scale.setScalar(Math.max(0.05, entity.scale.x - dt * 0.9));
+    if (performance.now() > entityUntil) { entity.visible = false; entity.position.y = 0; entity.scale.setScalar(ENTITY_SCALE); entityState = 'idle'; }
+  } else if (entityChasing) {
+    chaseLeft -= dt;
+    replanT -= dt;
+    // 记忆：只有真的看得见才更新"最后目击位置"；隔墙后不再全知追踪
+    const sees = entityLOS();
+    if (sees) { lastSeen.x = player.x; lastSeen.z = player.z; lastSeen.t = performance.now(); lastSeen.valid = true; lostT = 0; }
+    else lostT += dt;
+    const tgt = (sees || !lastSeen.valid) ? { x: player.x, z: player.z } : { x: lastSeen.x, z: lastSeen.z };
+    if (!sees && lostT > 0.6) lostT = Math.max(lostT, 0.6);
+    if (!entityPath || replanT <= 0) {
+      entityPath = l0Path(entity.position.x, entity.position.z, tgt.x, tgt.z);
+      pathIdx = 0; replanT = 0.45;
+    }
+    if (entityPath && entityPath.length) {
+      const wp = entityPath[Math.min(pathIdx, entityPath.length - 1)];
+      const wx = wp.x - entity.position.x, wz = wp.z - entity.position.z;
+      const wd = Math.hypot(wx, wz);
+      if (wd < 0.28) { pathIdx++; }
+      else {
+        const step = Math.min(chaseSpeed * dt, wd);
+        // collideCircle 返回 [x, z] 数组
+        const res = collideCircle(entity.position.x + (wx / wd) * step, entity.position.z + (wz / wd) * step, 0.32);
+        entity.position.x = res[0]; entity.position.z = res[1];
+      }
+    } else if (sees && d > 0.001) {
+      // 无路径但看得见：沿视线小步逼近（仍受碰撞约束）
+      const step = Math.min(chaseSpeed * dt, d);
+      const res = collideCircle(entity.position.x + (dx / d) * step, entity.position.z + (dz / d) * step, 0.32);
+      entity.position.x = res[0]; entity.position.z = res[1];
+    }
+    if (!Number.isFinite(entity.position.x) || !Number.isFinite(entity.position.z)) {
+      // 防守：任何异常坐标都退回最后目击点，绝不允许 NaN 传染
+      entity.position.x = lastSeen.valid ? lastSeen.x : L0_SPAWN.x;
+      entity.position.z = lastSeen.valid ? lastSeen.z : L0_SPAWN.z;
+      entityPath = null;
+    }
+    entityFaceTarget(tgt.x, tgt.z);
+    animateBlackFigure(entity, dt, 'chase');
+    if (d < 1.25 && entityLOS()) { jumpscare(); return; }
+    // 丢失视线 5s，或已摸到最后目击点，就开始搜寻
+    const distToSeen = lastSeen.valid ? Math.hypot(entity.position.x - lastSeen.x, entity.position.z - lastSeen.z) : 99;
+    if ((!sees && lostT > 5) || (!sees && lastSeen.valid && distToSeen < 0.9)) {
+      endChase(); showFlashText('它失去了你的踪迹…');
+    } else if (chaseLeft <= 0) { endChase(); showFlashText('它停下了……消失在墙里'); }
+  } else if (entityState === 'search') {
+    searchLeft -= dt;
+    animateBlackFigure(entity, dt, 'walk');
+    // 搜寻时只在原地缓慢转身看，不再追玩家坐标
+    entity.rotation.y += dt * 1.1;
+    if (searchLeft <= 0) { entityState = 'fade'; entityUntil = performance.now() + 700; }
+  }
+  // 出口：只有走到东端出口门前才推进关卡
+  if (exitUnlocked && player.x > -109.95 && player.x < -108.0 && player.z > -6.9 && player.z < -3.1 && player.y < 0.8) enterPoolrooms();
+}
+
 function enterPoolrooms() {
   if (transitioning) return;
   transitioning = true;
@@ -2795,6 +3668,7 @@ function enterPoolrooms() {
   document.getElementById('level-fade').style.opacity = '1';
   entity.visible = false;
   entityChasing = false;
+  entityState = 'idle';
   document.body.classList.remove('chase');
   setTimeout(() => {
     LEVEL = 1;
@@ -2803,11 +3677,9 @@ function enterPoolrooms() {
     scene.environment = ENV_TEX;
     ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
     scene.fog = new THREE.FogExp2(0xbfc9c4, 0.016);
-    hemi.intensity = 0.5;
     scene.background = new THREE.Color(0x0a1014);
     hemi.intensity = 0.5; hemiL0.intensity = 0;
     if (droneNodes) droneNodes.g.gain.value = 0.012;
-    // 泳池恐怖系统初始化（进馆 15~30s 后发生第一次停电）
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     applyRoomSound(1); startAmbience(1);
     showLevelCard('LEVEL 37', '泳池层 · 游泳馆');
@@ -2817,12 +3689,14 @@ function enterPoolrooms() {
     setPanelDefaults(0.48, 0.36, 0.016);
     lurker.visible = false;
     poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
-    wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
+    wake.visible = false;
+    watcher.userData.skin.emissiveIntensity = 0.15;
+    watcher.userData.eyes.emissiveIntensity = 1.5;
     watcher.rotation.set(0, 0, 0);
-    watcher.position.set(-3, POOLS[0].bottom, -12.2);
+    { const h = watcherHome(); watcher.position.set(h.x, h.y, h.z); }
     for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
-    player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0;
-    yaw = 0; pitch = 0;
+    player.x = L37_SPAWN.x; player.z = L37_SPAWN.z; player.y = groundAt(L37_SPAWN.x, L37_SPAWN.z); player.vy = 0;
+    yaw = L37_SPAWN.yaw; pitch = 0;
     camera.position.set(player.x, player.y + EYE, player.z); camera.rotation.set(pitch, yaw, 0);
     prepareLevelRendering();
     flashlight.on = false; updateFlashHud();
@@ -2831,6 +3705,45 @@ function enterPoolrooms() {
     showFlashText('Level 37 — 泳池层');
     renderPreparation.then(() => { document.getElementById('level-fade').style.opacity = '0'; transitioning = false; });
   }, 520);
+}
+
+/* 第二关直达预览（?level=37[&px=&pz=]）：只建关并摆好玩家，不写任何记录/进度 */
+function enterPoolroomsPreview(x, z) {
+  runPreview = true;                     // 本次不是全流程，结算/记录一律按预览处理
+  LEVEL = 1;
+  camera.layers.set(0);
+  setStationPresentation(false);
+  scene.environment = ENV_TEX;
+  ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
+  scene.fog = new THREE.FogExp2(0xbfc9c4, 0.016);
+  scene.background = new THREE.Color(0x0a1014);
+  hemi.intensity = 0.5; hemiL0.intensity = 0;
+  if (droneNodes) droneNodes.g.gain.value = 0.012;
+  poolIntroShown = true; poolDark.active = false; poolDark.timer = 25 + Math.random() * 15;
+  applyRoomSound(1); startAmbience(1);
+  skyLight.intensity = 1.15; skyLight.castShadow = true;
+  flashLight.castShadow = false;
+  resetLockerHorror();
+  setPanelDefaults(0.48, 0.36, 0.016);
+  lurker.visible = false;
+  poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
+  wake.visible = false;
+  watcher.userData.skin.emissiveIntensity = 0.15;
+  watcher.userData.eyes.emissiveIntensity = 1.5;
+  watcher.rotation.set(0, 0, 0);
+  { const h = watcherHome(); watcher.position.set(h.x, h.y, h.z); }
+  for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
+  const px = Number.isFinite(x) ? x : L37_SPAWN.x;
+  const pz = Number.isFinite(z) ? z : L37_SPAWN.z;
+  player.x = px; player.z = pz; player.y = groundAt(px, pz); player.vy = 0; player.grounded = true;
+  yaw = L37_SPAWN.yaw; pitch = 0;
+  camera.position.set(player.x, player.y + EYE, player.z); camera.rotation.set(pitch, yaw, 0);
+  flashlight.on = false; updateFlashHud();
+  document.getElementById('v-task').textContent = '直达预览 · 不记录进度';
+  document.getElementById('level-tag').textContent = 'LEVEL 37 · 泳池层（预览）';
+  prepareLevelRendering();
+  showLevelCard('LEVEL 37', '泳池层 · 直达预览');
+  renderPreparation.then(() => { document.getElementById('level-fade').style.opacity = '0'; transitioning = false; });
 }
 
 /* ============================================================ 可乘坐地铁车厢（内外部建模） */
@@ -5286,7 +6199,7 @@ function beginLevel4Ride(choice) {
 /* ============================================================ 第一人称控制器 */
 const RADIUS = 0.35, EYE = 1.62;
 const player = { x: L0_SPAWN.x, y: 0, z: L0_SPAWN.z, vy: 0, grounded: true };
-let yaw = -Math.PI / 2, pitch = 0;
+let yaw = (L12P.L0.spawn.yaw == null ? 0 : L12P.L0.spawn.yaw), pitch = 0;
 let prevFeetY = 0;   // 入水水花检测
 const keys = new Set();
 let sensitivity = 1.8;
@@ -5340,7 +6253,14 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => keys.delete(e.code));
 
 function respawnToLevelStart() {
-  if (LEVEL === 0) { player.x = L0_SPAWN.x; player.z = L0_SPAWN.z; player.y = 0; player.vy = 0; yaw = -Math.PI / 2; pitch = 0; }
+  // 任何分支都会移动玩家：先把"当前可交互目标"缓存全部作废，避免复位后按 E 拾取旧目标
+  nearestFuse = null; nearestPickup = null; nearestFlash = null; nearestBattery = null;
+  if (LEVEL === 0) {
+    // 统一的关卡起点安全复位：清追逐 + 给一段无攻击窗口，避免复位瞬间又被抓住
+    safeRespawn(0);
+    yaw = (LEVEL === 1 ? L37_SPAWN.yaw : L0_SPAWN.yaw); pitch = 0;
+    markHorrorCooldown(4000);
+  }
   else if (LEVEL === 2) {
     if (l3State.boarded) {
       l3State.boarded = false; l3State.rideDone = false; l3State.rideChoice = false; l3State.rideT = 0;
@@ -5364,6 +6284,13 @@ function respawnToLevelStart() {
     l4Flash.on = false;
     syncCameraToPlayer();
     updateFlashHud();
+  }
+  else if (LEVEL === 1) {
+    // 泳池层：回到南侧入口缓冲区的安全出生点，并给恐怖机制统一冷却，避免刚落地就被抓
+    player.x = L37_SPAWN.x; player.z = L37_SPAWN.z; player.y = groundAt(L37_SPAWN.x, L37_SPAWN.z);
+    player.vy = 0; player.grounded = true; yaw = L37_SPAWN.yaw; pitch = 0;
+    markHorrorCooldown(5000);
+    if (typeof poolMonster === 'object' && poolMonster) { poolMonster.cool = Math.max(poolMonster.cool, 5); poolMonster.swim = false; poolMonster.phase = 'retreat'; }
   }
   else { player.x = 0; player.z = 18.2; player.y = groundAt(0, 18.2); player.vy = 0; yaw = 0; pitch = 0; }
   showFlashText('已复位到本关起点');
@@ -5471,7 +6398,8 @@ function updatePlayer(dt) {
   if (player.grounded && il > 0) {
     stepTimer -= dt;
     if (stepTimer <= 0) {
-      const surface = LEVEL === 0 ? 'carpet' : (LEVEL === L4_LEVEL ? 'concrete' : (submerged ? 'water' : (player.x < -16.1 ? 'concrete' : 'tile')));
+      // 西侧更衣淋浴区（x < -14）是水泥地，其余池厅是瓷砖
+      const surface = LEVEL === 0 ? 'carpet' : (LEVEL === L4_LEVEL ? 'concrete' : (submerged ? 'water' : (player.x < -14 ? 'concrete' : 'tile')));
       if (crouching) synthStepSoft(surface); else synthStep(surface);
       stepTimer = (crouching ? 0.62 : (running ? 0.30 : 0.44)) + (Math.random() - 0.5) * 0.10;
     }
@@ -5504,23 +6432,38 @@ function updatePickups(dt) {
     const dx = player.x - pk.x, dz = player.z - pk.z;
     const d = Math.hypot(dx, dz) || 1;
     // 恐怖机制：处于玩家视野之外时，漂浮物会缓缓向玩家漂移
+    // —— 但只在所属水体的可漂浮矩形内移动，不会上岸、不会穿过池壁
     if (LEVEL === 1 && d > 3.2 && d < 15) {
       const dot = (-dx / d) * _look.x + (-dz / d) * _look.z;
       if (dot < -0.05) {
-        pk.x += (dx / d) * dt * 0.38;
-        pk.z += (dz / d) * dt * 0.38;
+        pk.x = Math.max(pk.rect.x1, Math.min(pk.rect.x2, pk.x + (dx / d) * dt * 0.38));
+        pk.z = Math.max(pk.rect.z1, Math.min(pk.rect.z2, pk.z + (dz / d) * dt * 0.38));
         pk.mesh.position.x = pk.x; pk.mesh.position.z = pk.z;
       }
     }
-    if (d < bestD) { bestD = d; best = pk; }
+    if (d < bestD) {
+      // 拾取要求：够得着的水平距离 + 真实高度差 + 视线不被墙体/池壁挡住
+        const sameWater = waterLevelAt(player.x, player.z) !== null && pk.waterY != null;
+        const dy = sameWater ? 0 : Math.abs(pk.waterY - (player.y + 0.4));
+      if (dy > 1.0) continue;
+      if (segmentBlockedByWalls(player.x, player.y + 1.0, player.z, pk.x, pk.waterY, pk.z)) continue;
+      bestD = d; best = pk;
+    }
   }
   nearestPickup = best;
 }
 function tryPickup() {
-  if (!nearestPickup) return;
-  scene.remove(nearestPickup.mesh);
-  if (nearestPickup.halo) scene.remove(nearestPickup.halo);
-  const idx = pickups.indexOf(nearestPickup);
+  const pk = nearestPickup;
+  if (!pk) return;
+  // 二次校验：目标必须仍在列表里、同层、可及且未被遮挡（复位/换关后旧提示不能远程生效）
+  if (pickups.indexOf(pk) < 0) { nearestPickup = null; return; }
+  // 水平半径与 updatePickups 的 bestD 一致（1.7m）：缓存过期或被推离后不允许远程拾取
+  if (Math.hypot(player.x - pk.x, player.z - pk.z) > 1.7) { nearestPickup = null; return; }
+  if (!(waterLevelAt(player.x, player.z) !== null && pk.waterY != null) && Math.abs(pk.waterY - (player.y + 0.4)) > 1.0) { nearestPickup = null; return; }
+  if (segmentBlockedByWalls(player.x, player.y + 1.0, player.z, pk.x, pk.waterY, pk.z)) { nearestPickup = null; return; }
+  scene.remove(pk.mesh);
+  if (pk.halo) scene.remove(pk.halo);
+  const idx = pickups.indexOf(pk);
   if (idx >= 0) pickups.splice(idx, 1);
   pickedCount++;
   document.getElementById('v-pick').textContent = `${pickedCount} / ${PICK_TOTAL}`;
@@ -5630,7 +6573,7 @@ function resetGame() {
   // 保险丝
   for (const f of fusesList) scene.remove(f.mesh);
   fusesList.length = 0; fuses = 0;
-  FUSE_DEFS.forEach(d => spawnFuse(d[0], d[1]));
+FUSE_DEFS.forEach(d => spawnFuse(d));   // FUSE_DEFS 现在是对象数组 {x,z,y,on}
   // 手电筒
   if (flashMesh) { scene.remove(flashMesh); flashMesh = null; }
   flashlight = { owned: false, on: false, charge: 1.0 };
@@ -5659,7 +6602,7 @@ function resetGame() {
   ACTIVE_COLLIDERS = COLLIDERS_L0; ACTIVE_BOUNDS = BOUNDS_L0;
   scene.fog = new THREE.FogExp2(0x0b0a08, 0.075);
   scene.background = new THREE.Color(0x060605);
-  hemi.intensity = 0.02; hemiL0.intensity = 0.12;
+  hemi.intensity = 0.06; hemiL0.intensity = 0.32;
   if (droneNodes) droneNodes.g.gain.value = 0.05;
   entity.visible = false;
   entityChasing = false;
@@ -5677,11 +6620,11 @@ function resetGame() {
   poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
   wake.visible = false; watcher.userData.skin.emissiveIntensity = 0.15; watcher.userData.eyes.emissiveIntensity = 1.5;
   watcher.rotation.set(0, 0, 0);
-  watcher.position.set(-3, POOLS[0].bottom, -12.2);
+  { const _w0 = watcherHome(); watcher.position.set(_w0.x, _w0.y, _w0.z); }
   for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.5; }
   // 玩家
   player.x = L0_SPAWN.x; player.z = L0_SPAWN.z; player.y = 0; player.vy = 0;
-  yaw = -Math.PI / 2; pitch = 0;
+  yaw = (LEVEL === 1 ? L37_SPAWN.yaw : L0_SPAWN.yaw); pitch = 0;
   camera.position.set(player.x, player.y + EYE, player.z); camera.rotation.set(pitch, yaw, 0);
   prepareLevelRendering();
   // UI
@@ -5776,6 +6719,8 @@ scene.traverse(o => {
 let flashHudT = 0, lowBeepT = 2.5;
 let ftAcc = 0, ftN = 0, qStep = 0, skyShadowTick = 0;
 let renderReady = false, renderPreparation = Promise.resolve(), renderPreparationId = 0;
+// 诊断取样（仅 ?diag=1 生效）：真实绘制帧数 + 屏幕亮度，供无头截图判断"确实画出来了"
+let DIAG_ON = false, diagDrawFrames = 0, diagLum = 0, diagLumMax = 0, diagLumMin = 1;
 const preparedLevels = new Map();
 function getLevelTextureMaterials() {
   if (LEVEL === 0) return l0TextureMaterials;
@@ -5933,6 +6878,28 @@ renderer.setAnimationLoop(() => {
   }
   updateConductorLight();
   if (renderReady) composer.render();
+  // 诊断取样：每 4 帧读 9 个屏幕点，判断"是真实画面还是黑帧/未出图"
+  if (renderReady && DIAG_ON) {
+    diagDrawFrames++;
+    if ((diagDrawFrames & 3) === 1) {
+      try {
+        const gl = renderer.getContext();
+        renderer.setRenderTarget(null);
+        const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
+        const px = new Uint8Array(4);
+        let sum = 0, n = 0, mx = 0, mn = 1;
+        for (let iy = 0; iy < 3; iy++) {
+          for (let ix = 0; ix < 3; ix++) {
+            gl.readPixels(Math.floor(w * (0.2 + ix * 0.3)), Math.floor(h * (0.2 + iy * 0.3)),
+              1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+            const l = (px[0] * 0.2126 + px[1] * 0.7152 + px[2] * 0.0722) / 255;
+            sum += l; n++; if (l > mx) mx = l; if (l < mn) mn = l;
+          }
+        }
+        diagLum = sum / Math.max(1, n); diagLumMax = mx; diagLumMin = mn;
+      } catch (e) { /* 取样失败不影响渲染 */ }
+    }
+  }
  } catch (err) { showErr(err && err.message ? err.message : String(err)); }
 });
 
@@ -5945,6 +6912,11 @@ else if (new URLSearchParams(location.search).get('level') === '4') {
   // 直达预览：不写全流程记录，只建关并准备画面
   runPreview = true;
   enterLevel4({ instant: true, mode: new URLSearchParams(location.search).get('ride') === '1' ? 'ride' : 'preview' });
+}
+else if (new URLSearchParams(location.search).get('level') === '37') {
+  // 第二关直达预览：不写档、不改统计，只把泳池层建成并摆好机位
+  const qp = new URLSearchParams(location.search);
+  enterPoolroomsPreview(parseFloat(qp.get('px')), parseFloat(qp.get('pz')));
 }
 else prepareLevelRendering();
 // 调试：?train=1 让末班车直接停稳并开门（配合 ?cam= 截图 / 联调）
@@ -5998,6 +6970,78 @@ if (camDbg) {
         prepareLevelRendering();
       }
     }
+    // 仅诊断机位启用：第一/二关怪物姿态固定检查（?cam=…&l12view=entity|drowned-stand|drowned-swim）
+    const l12view = new URLSearchParams(location.search).get('l12view') || '';
+    if (l12view === 'topdown') {
+    // 诊断俯视：隐藏 2.45m 以上的天花/梁/灯盘构造，仅用于平面诊断截图（非正式构图）
+    scene.traverse(o => { if (o.isMesh && o.position.y > 2.45) o.visible = false; });
+    if (typeof hemi !== 'undefined' && hemi) hemi.intensity = 1.1;
+    if (typeof hemiL0 !== 'undefined' && hemiL0) hemiL0.intensity = 1.2;
+    if (scene.fog) { window.__l12Fog = scene.fog; scene.fog = null; }   // 俯视诊断距离远超 L0 雾密度，去掉雾才不会整片黑
+    window.__l12DiagFill = new THREE.AmbientLight(0xffffff, 2.4);
+    scene.add(window.__l12DiagFill);
+  } else if (LEVEL === 0 && l12view === 'entity') {
+      L12_FREEZE = 'entity';
+      entity.visible = true;
+      entityState = 'gaze';
+      entityUntil = performance.now() + 1e7;
+      entity.scale.setScalar(ENTITY_SCALE);
+      entity.position.set(-131.6, 0, 0.4);
+      // 固定朝向（不跟玩家转）：正面/侧面机位用同一实体 yaw，只有相机在动。
+      // 朝向 -X（走廊西向），相机放在西侧看到正脸、放在南侧看到侧影。
+      entity.rotation.set(0, -Math.PI / 2, 0);
+      animateBlackFigure(entity, 0.016, 'gaze');
+    } else if (LEVEL === 1 && (l12view === 'drowned-stand' || l12view === 'drowned-swim')) {
+      const mp = POOLS[0];
+      L12_FREEZE = l12view;
+      // 面朝 +X（相机在东侧向西看），这样才能拍到正脸而不是后脑
+      if (l12view === 'drowned-swim') {
+        watcher.rotation.set(DROWNED_SWIM_ROT, Math.PI / 2, 0, 'YXZ');
+        watcher.position.set(mp.x1 + (mp.x2 - mp.x1) * 0.55, drownedSwimY(DROWNED_SWIM_ROT, mp.water), mp.zDeep1 + (mp.zEnd - mp.zDeep1) * 0.45);
+      } else {
+        watcher.rotation.set(0, Math.PI / 2, 0, 'YXZ');
+        watcher.position.set(mp.x1 + (mp.x2 - mp.x1) * 0.55, mp.bottom + DROWNED_FOOT_LIFT, mp.zDeep1 + (mp.zEnd - mp.zDeep1) * 0.45);
+      }
+      animateDrowned(watcher, 0.016, l12view === 'drowned-swim' ? 'swim' : 'stand');
+    } else if (LEVEL === 0 && l12view === 'entity-head') {
+      // 头脸近景：按真实 head 世界坐标放相机（1.05m），只用于诊断取证
+      L12_FREEZE = 'entity';
+      entity.visible = true;
+      entityState = 'gaze';
+      entityUntil = performance.now() + 1e7;
+      entity.scale.setScalar(ENTITY_SCALE);
+      entity.position.set(-131.6, 0, 0.4);
+      entity.rotation.set(0, -Math.PI / 2, 0);
+      animateBlackFigure(entity, 0.016, 'gaze');
+      entity.updateMatrixWorld(true);
+      const hpE = new THREE.Vector3();
+      entity.userData.rig.head.getWorldPosition(hpE);
+      const fwdE = new THREE.Vector3(0, 0, 1).applyQuaternion(entity.quaternion);   // 沿模型真实朝向取景
+      camera.position.set(hpE.x + fwdE.x * 1.05 + 0.02, hpE.y + 0.02, hpE.z + fwdE.z * 1.05 + 0.04);
+      camera.rotation.set(0, 0, 0);
+      camera.lookAt(hpE.x, hpE.y - 0.03, hpE.z);
+      const dbgL1 = new THREE.PointLight(0xfff0e2, 2.4, 3.2, 2);
+      dbgL1.position.set(hpE.x + fwdE.x * 0.55, hpE.y + 0.12, hpE.z + fwdE.z * 0.55 + 0.08);
+      dbgL1.userData.l12diagLight = true; scene.add(dbgL1);
+    } else if (LEVEL === 1 && l12view === 'drowned-head') {
+      // 池中人头脸近景：站在第一条泳道中央（x=9），相机在同泳道内侧 1.0m，避开泳道绳
+      const mpH = POOLS[0];
+      L12_FREEZE = 'drowned-stand';
+      watcher.rotation.set(0, Math.PI / 2, 0, 'YXZ');
+      watcher.position.set(mpH.x1 + 1.0, mpH.bottom + DROWNED_FOOT_LIFT, -12.0);   // 第一条泳道中央（x=9），相机留在同泳道内不越过泳道绳（x=10）
+      animateDrowned(watcher, 0.016, 'stand');
+      watcher.updateMatrixWorld(true);
+      const hpH = new THREE.Vector3();
+      watcher.userData.rig.head.getWorldPosition(hpH);
+      const fwdH = new THREE.Vector3(0, 0, 1).applyQuaternion(watcher.quaternion);
+      const camY = Math.max(hpH.y + 0.06, mpH.water + 0.34);   // 抬到水面之上，避免水面把画面切开
+      camera.position.set(hpH.x + fwdH.x * 0.9 + 0.02, camY, hpH.z + fwdH.z * 0.9 + 0.02);
+      camera.rotation.set(0, 0, 0);
+      camera.lookAt(hpH.x, hpH.y - 0.02, hpH.z);
+      const dbgL2 = new THREE.PointLight(0xfff4ea, 0.7, 2.4, 2);   // 诊断用极弱漫射补光（非正式场景照明）
+      dbgL2.position.set(hpH.x + fwdH.x * 0.55, camY + 0.10, hpH.z + fwdH.z * 0.55 + 0.08);
+      dbgL2.userData.l12diagLight = true; scene.add(dbgL2);
+    }
     // 调试信息浮层（?dbg=1）
     if (new URLSearchParams(location.search).get('dbg') === '1') {
       const dbg = document.createElement('div');
@@ -6018,6 +7062,7 @@ if (camDbg) {
 }
 // ?diag=1：运行状态写入 <title>，供无头浏览器验证
 if (new URLSearchParams(location.search).get('diag') === '1') {
+  DIAG_ON = true;
   setInterval(() => {
     try {
       let ray = null;
@@ -6035,11 +7080,43 @@ if (new URLSearchParams(location.search).get('diag') === '1') {
                  hit.object.children.length, hit.object.material.side];
         }
       } catch (e) { ray = 'err'; }
+      // 机位有效性：相机不能落在墙体/家具/池壁碰撞盒里（否则拍到的是柜门或墙皮）
+      let camBlocked = false;
+      try {
+        const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+        camBlocked = ACTIVE_COLLIDERS.some(c =>
+          cx > c.x1 - 0.22 && cx < c.x2 + 0.22 && cz > c.z1 - 0.22 && cz < c.z2 + 0.22 &&
+          (c.y1 == null || cy > c.y1) && (c.y2 == null || cy < c.y2 + 0.1));
+      } catch (e) { camBlocked = 'err'; }
       document.title = JSON.stringify({
         lv: LEVEL, cols: ACTIVE_COLLIDERS.length,
+        camBlocked,
         p: [player.x, player.y, player.z].map(v => Math.round(v * 100) / 100),
         cam: [camera.position.x, camera.position.y, camera.position.z].map(v => Math.round(v * 100) / 100),
-        tk: l3TicketCount, brk: l3State.breakerOn, lvr: l3State.leverOn, ray
+        tk: l3TicketCount, brk: l3State.breakerOn, lvr: l3State.leverOn, ray,
+        ready: !!(renderReady && diagDrawFrames > 8 && diagLumMax > 0.03),
+        frames: diagDrawFrames,
+        lum: Math.round(diagLum * 1000) / 1000,
+        lumMax: Math.round(diagLumMax * 1000) / 1000,
+        lumMin: Math.round(diagLumMin * 1000) / 1000,
+        budget: (() => {
+          let meshes = 0, inst = 0, lights = 0, tris = 0;
+          scene.traverse(o => {
+            if (o.isMesh || o.isInstancedMesh) {
+              meshes++;
+              if (o.isInstancedMesh) inst++;
+              if (o.geometry && o.geometry.index) tris += o.geometry.index.count / 3 * (o.isInstancedMesh ? o.count : 1);
+            }
+            if (o.isLight) lights++;
+          });
+          const inf = renderer.info;
+          return {
+            meshes, inst, lights, tris: Math.round(tris),
+            calls: inf.render.calls, rtris: inf.render.triangles,
+            geos: inf.memory.geometries, tex: inf.memory.textures,
+            progs: inf.programs ? inf.programs.length : -1
+          };
+        })()
       });
     } catch (e) { document.title = 'diag-err ' + e.message; }
   }, 300);

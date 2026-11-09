@@ -1,0 +1,65 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-05T06:20:42.064Z",
+  "browserPid": 16368,
+  "cdpPort": 7050,
+  "shots": [
+    {
+      "name": "L0-32-entity-head",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-IjQAXS\\L0-32-entity-head-NOTREADY.png",
+      "bytes": 111678,
+      "ok": false,
+      "ready": false,
+      "camBlocked": null,
+      "waited": 75117,
+      "diag": null,
+      "probe": {
+        "title": "后室 · 泳池 Poolrooms — 自由行走",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "ReferenceError: eyeGap is not defined\n    at buildBlackFigure (http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1:4224:41)\n    at makeEntity (http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1:4351:13)\n    at http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1:4362:16",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [
+        "ReferenceError: eyeGap is not defined\n    at buildBlackFigure (http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1:4224:41)\n    at makeEntity (http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1:4351:13)\n    at http://127.0.0.1:8571/backrooms-pool.html?cam=-132.7,2.02,0.44,-1.5708,0&l12view=entity-head&diag=1:4362:16"
+      ],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L37-35-drowned-head",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-IjQAXS\\L37-35-drowned-head-NOTREADY.png",
+      "bytes": 113132,
+      "ok": false,
+      "ready": false,
+      "camBlocked": null,
+      "waited": 75271,
+      "diag": null,
+      "probe": {
+        "title": "后室 · 泳池 Poolrooms — 自由行走",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "ReferenceError: eyeGap is not defined\n    at buildBlackFigure (http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1:4224:41)\n    at makeEntity (http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1:4351:13)\n    at http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1:4362:16"
+      ],
+      "gameErrors": [
+        "ReferenceError: eyeGap is not defined\n    at buildBlackFigure (http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1:4224:41)\n    at makeEntity (http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1:4351:13)\n    at http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1:4362:16"
+      ],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

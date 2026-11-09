@@ -1,0 +1,25 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-tGCwvb
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-uAD3Yp
+browser pid=3904 port=10908
+shot L0-20-spawn-v2 OK bytes=1769133 ready=true camBlocked=false waited=29876ms frames=12 lum=0.079/0.19 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-147,0.02,0],"cam":[-147,1.62,0],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":2312,"tex":108,"progs":46}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L0-21-archive-v2 OK bytes=1779225 ready=true camBlocked=false waited=20541ms frames=12 lum=0.09/0.162 calls=1
+   diag {"lv":0,"p":[-120.6,-0.05,5.4],"cam":[-120.6,1.55,5.4],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":676,"tex":101,"progs":38}}
+shot L0-22-switchgear-v2 OK bytes=1949928 ready=true camBlocked=false waited=24028ms frames=12 lum=0.209/0.837 calls=1
+   diag {"lv":0,"p":[-120.4,-0.1,-6.2],"cam":[-120.4,1.5,-6.2],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":259,"tex":101,"progs":38}}
+shot L0-23-topdown-v2 OK bytes=1135964 ready=true camBlocked=false waited=22538ms frames=12 lum=0.007/0.044 calls=1
+   diag {"lv":0,"p":[-129,20.4,0],"cam":[-129,22,0],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":983,"tex":101,"progs":38}}
+shot L0-25-linen-loop OK bytes=1810573 ready=true camBlocked=false waited=24325ms frames=12 lum=0.072/0.167 calls=1
+   diag {"lv":0,"p":[-121.6,-0.02,6.9],"cam":[-121.6,1.58,6.9],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":580,"tex":101,"progs":38}}
+shot L37-31-lobby-spawn OK bytes=1863215 ready=true camBlocked=false waited=43597ms frames=9 lum=0.184/0.321 calls=1
+   diag {"lv":1,"p":[0,0.02,22.5],"cam":[0,1.62,22.5],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":2184,"tex":109,"progs":46}}
+shot L37-20-lobby-guide OK bytes=1737897 ready=true camBlocked=false waited=48611ms frames=11 lum=0.11/0.179 calls=1
+   diag {"lv":0,"p":[2.4,0.02,23.4],"cam":[2.4,1.62,23.4],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":1964,"tex":109,"progs":47}}
+shot L37-23-pool-hall OK bytes=2074285 ready=true camBlocked=false waited=41227ms frames=11 lum=0.378/0.666 calls=1
+   diag {"lv":1,"p":[13,0.02,1.6],"cam":[13,1.62,1.6],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":1255,"tex":107,"progs":46}}
+shot L37-25-hot-spring OK bytes=2027983 ready=true camBlocked=false waited=30310ms frames=12 lum=0.316/0.637 calls=1
+   diag {"lv":1,"p":[-20,0.02,-12.4],"cam":[-20,1.62,-12.4],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":66,"tris":432847,"calls":1,"rtris":1,"geos":999,"tex":103,"progs":46}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-tGCwvb\shots-report.json
+SHOTS-OK 9

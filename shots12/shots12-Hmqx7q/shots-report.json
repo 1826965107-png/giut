@@ -1,0 +1,132 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-05T06:03:57.672Z",
+  "browserPid": 51936,
+  "cdpPort": 10612,
+  "shots": [
+    {
+      "name": "L0-30-entity-face",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-134.2,1.58,0.4,-1.5708,-0.02&l12view=entity&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-Hmqx7q\\L0-30-entity-face-NOTREADY.png",
+      "bytes": 32547,
+      "ok": false,
+      "ready": false,
+      "camBlocked": null,
+      "waited": 75045,
+      "diag": null,
+      "probe": {
+        "title": "127.0.0.1",
+        "gl": "none",
+        "ren": "none",
+        "w": 0,
+        "h": 0
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document"
+      ],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L0-31-entity-34",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-133.6,1.62,1.0,-1.28,-0.08&l12view=entity&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-Hmqx7q\\L0-31-entity-34-NOTREADY.png",
+      "bytes": 32547,
+      "ok": false,
+      "ready": false,
+      "camBlocked": null,
+      "waited": 75002,
+      "diag": null,
+      "probe": {
+        "title": "127.0.0.1",
+        "gl": "none",
+        "ren": "none",
+        "w": 0,
+        "h": 0
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document"
+      ],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-32-drowned-stand-close",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=17.6,1.30,-14.0,1.5708,-0.26&l12view=drowned-stand&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-Hmqx7q\\L37-32-drowned-stand-close-NOTREADY.png",
+      "bytes": 32547,
+      "ok": false,
+      "ready": false,
+      "camBlocked": null,
+      "waited": 75026,
+      "diag": null,
+      "probe": {
+        "title": "127.0.0.1",
+        "gl": "none",
+        "ren": "none",
+        "w": 0,
+        "h": 0
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document"
+      ],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-33-drowned-swim-close",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=17.2,0.45,-14.0,1.5708,-0.20&l12view=drowned-swim&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-Hmqx7q\\L37-33-drowned-swim-close-NOTREADY.png",
+      "bytes": 32547,
+      "ok": false,
+      "ready": false,
+      "camBlocked": null,
+      "waited": 75389,
+      "diag": null,
+      "probe": {
+        "title": "127.0.0.1",
+        "gl": "none",
+        "ren": "none",
+        "w": 0,
+        "h": 0
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document",
+        "LOADFAIL net::ERR_CONNECTION_REFUSED Document",
+        "LOADFAIL net::ERR_ABORTED Document"
+      ],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

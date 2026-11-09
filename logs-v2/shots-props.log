@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-ZYDFZC
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-DfEzMC
+browser pid=3916 port=1706
+shot L37-01-entry OK bytes=1868718 ready=true camBlocked=false waited=30366ms frames=11 lum=0.237/0.322 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[3,0.02,20.5],"cam":[3,1.62,20.5],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2133,"inst":132,"lights":68,"tris":394271,"calls":1,"rtris":1,"geos":556,"tex":98,"progs":41}}
+   NET 404 http://127.0.0.1:8556/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-02-mainpool OK bytes=1853681 ready=true camBlocked=false waited=33454ms frames=11 lum=0.227/0.296 calls=1
+   diag {"lv":1,"p":[0,0.02,10.2],"cam":[0,1.62,10.2],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2133,"inst":132,"lights":68,"tris":394271,"calls":1,"rtris":1,"geos":544,"tex":98,"progs":40}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-ZYDFZC\shots-report.json
+SHOTS-OK 2

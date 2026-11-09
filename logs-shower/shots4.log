@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-NoiYJ9
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-M6psPN
+browser pid=13448 port=6856
+shot L37-22-shower-W OK bytes=1881555 ready=true camBlocked=false waited=47448ms frames=12 lum=0.242/0.383 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[-26.5,-0.02,5.62],"cam":[-26.5,1.58,5.62],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3561,"inst":170,"lights":66,"tris":434754,"calls":1,"rtris":1,"geos":1373,"tex":91,"progs":46}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-36-shower-E OK bytes=1875869 ready=true camBlocked=false waited=48229ms frames=9 lum=0.226/0.382 calls=1
+   diag {"lv":1,"p":[26.5,-0.02,5.62],"cam":[26.5,1.58,5.62],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3561,"inst":170,"lights":66,"tris":434754,"calls":1,"rtris":1,"geos":2313,"tex":91,"progs":46}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-NoiYJ9\shots-report.json
+SHOTS-OK 2

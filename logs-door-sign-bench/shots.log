@@ -1,0 +1,15 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-78oVQn
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-zAcmda
+browser pid=21324 port=1372
+shot fix-archive-door OK bytes=2286387 ready=true camBlocked=false waited=22203ms frames=12 lum=0.139/0.228 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-125.6,0.02,0],"cam":[-125.6,1.62,0],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3461,"inst":170,"lights":66,"tris":433554,"calls":1,"rtris":1,"geos":213,"tex":83,"progs":36}}
+   NET 404 http://127.0.0.1:8555/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot fix-archive-room OK bytes=1749114 ready=true camBlocked=false waited=23540ms frames=12 lum=0.057/0.097 calls=1
+   diag {"lv":0,"p":[-125.6,0.02,2.8],"cam":[-125.6,1.62,2.8],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3461,"inst":170,"lights":66,"tris":433554,"calls":1,"rtris":1,"geos":177,"tex":83,"progs":36}}
+shot fix-locker-sign OK bytes=1827392 ready=true camBlocked=false waited=38896ms frames=11 lum=0.238/0.268 calls=1
+   diag {"lv":1,"p":[-8.4,0.02,14],"cam":[-8.4,1.62,14],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3461,"inst":170,"lights":66,"tris":433554,"calls":1,"rtris":1,"geos":1101,"tex":85,"progs":44}}
+shot fix-bench-legs OK bytes=1932210 ready=true camBlocked=false waited=36667ms frames=11 lum=0.164/0.297 calls=1
+   diag {"lv":1,"p":[-21.5,-0.65,11],"cam":[-21.5,0.95,11],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3461,"inst":170,"lights":66,"tris":433554,"calls":1,"rtris":1,"geos":1227,"tex":85,"progs":45}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-78oVQn\shots-report.json
+SHOTS-OK 4

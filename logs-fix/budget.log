@@ -1,0 +1,118 @@
+BUDGET {
+ "L0": {
+  "label": "L0",
+  "meshes": 390,
+  "instanced": 0,
+  "instCount": 0,
+  "triangles": 5270,
+  "lights": 10,
+  "lightsOn": 9,
+  "shadowCasters": 334,
+  "materials": 53,
+  "geometries": 375,
+  "textures": 12
+ },
+ "L37": {
+  "label": "L37",
+  "meshes": 678,
+  "instanced": 8,
+  "instCount": 281,
+  "triangles": 44481,
+  "lights": 34,
+  "lightsOn": 32,
+  "shadowCasters": 422,
+  "materials": 145,
+  "geometries": 665,
+  "textures": 78
+ },
+ "sceneAll": {
+  "label": "scene",
+  "meshes": 2148,
+  "visMeshes": 1735,
+  "instanced": 131,
+  "instCount": 6496,
+  "triangles": 450447,
+  "visTriangles": 366616,
+  "lights": 67,
+  "visLights": 63,
+  "shadowCasters": 1525,
+  "materials": 357,
+  "geometries": 2057,
+  "textures": 148
+ },
+ "l0LightEntries": 16,
+ "poolLightEntries": 28,
+ "lockerLightEntries": 4,
+ "pools": [
+  {
+   "name": "main",
+   "w": 12,
+   "len": 25,
+   "bottom": -2.05,
+   "water": -0.3,
+   "steps": 4
+  },
+  {
+   "name": "train",
+   "w": 8,
+   "len": 8,
+   "bottom": -1.15,
+   "water": -0.3,
+   "steps": 2
+  },
+  {
+   "name": "echo",
+   "w": 8,
+   "len": 6,
+   "bottom": -0.62,
+   "water": -0.14,
+   "steps": 1
+  }
+ ],
+ "pickups": [
+  {
+   "kind": "duck",
+   "body": "main",
+   "x": 0.5,
+   "z": 2,
+   "waterY": -0.3
+  },
+  {
+   "kind": "ring",
+   "body": "main",
+   "x": -5.5,
+   "z": -6,
+   "waterY": -0.3
+  },
+  {
+   "kind": "duck",
+   "body": "train",
+   "x": 18,
+   "z": -1,
+   "waterY": -0.3
+  },
+  {
+   "kind": "duck",
+   "body": "train",
+   "x": 22,
+   "z": 2,
+   "waterY": -0.3
+  },
+  {
+   "kind": "duck",
+   "body": "echo",
+   "x": -8,
+   "z": -22,
+   "waterY": -0.14
+  },
+  {
+   "kind": "ring",
+   "body": "echo",
+   "x": -6,
+   "z": -21,
+   "waterY": -0.14
+  }
+ ],
+ "collidersL0": 88,
+ "collidersL37": 102
+}

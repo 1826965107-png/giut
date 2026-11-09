@@ -1,0 +1,732 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-05T00:02:01.203Z",
+  "browserPid": 22288,
+  "cdpPort": 8296,
+  "shots": [
+    {
+      "name": "L37-20-lobby-guide",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0,1.62,22.2,0,-0.02&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-20-lobby-guide.png",
+      "bytes": 1765971,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 29115,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          0,
+          0.02,
+          22.2
+        ],
+        "cam": [
+          0,
+          1.62,
+          22.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.264,
+        "lumMax": 0.298,
+        "lumMin": 0.233,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 627,
+          "tex": 109,
+          "progs": 42
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[0,0.02,22.2],\"cam\":[0,1.62,22.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.264,\"lumMax\":0.298,\"lumMin\":0.233,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":627,\"tex\":109,\"progs\":42}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L37-21-shoe-lockW",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-8.6,1.62,13.2,1.35,-0.04&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-21-shoe-lockW.png",
+      "bytes": 1888036,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 25524,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          -8.6,
+          0.02,
+          13.2
+        ],
+        "cam": [
+          -8.6,
+          1.62,
+          13.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.244,
+        "lumMax": 0.369,
+        "lumMin": 0.021,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 840,
+          "tex": 105,
+          "progs": 41
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[-8.6,0.02,13.2],\"cam\":[-8.6,1.62,13.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.244,\"lumMax\":0.369,\"lumMin\":0.021,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":840,\"tex\":105,\"progs\":41}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-22-shower-W",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-9.4,1.55,4.0,1.5708,0&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-22-shower-W.png",
+      "bytes": 1924617,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 25797,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          -9.4,
+          -0.05,
+          4
+        ],
+        "cam": [
+          -9.4,
+          1.55,
+          4
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.224,
+        "lumMax": 0.383,
+        "lumMin": 0.017,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 830,
+          "tex": 105,
+          "progs": 41
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[-9.4,-0.05,4],\"cam\":[-9.4,1.55,4],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.224,\"lumMax\":0.383,\"lumMin\":0.017,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":830,\"tex\":105,\"progs\":41}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-23-pool-hall",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=13,1.62,1.6,0,-0.07&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-23-pool-hall.png",
+      "bytes": 1967325,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 27042,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          13,
+          0.02,
+          1.6
+        ],
+        "cam": [
+          13,
+          1.62,
+          1.6
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.337,
+        "lumMax": 0.678,
+        "lumMin": 0.04,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 560,
+          "tex": 107,
+          "progs": 41
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[13,0.02,1.6],\"cam\":[13,1.62,1.6],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.337,\"lumMax\":0.678,\"lumMin\":0.04,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":560,\"tex\":107,\"progs\":41}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-24-pool-poolside",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=5.2,1.62,-6,-1.2,-0.05&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-24-pool-poolside-NOTREADY.png",
+      "bytes": 1515969,
+      "ok": false,
+      "ready": false,
+      "camBlocked": true,
+      "waited": 75775,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": true,
+        "p": [
+          5.2,
+          0.02,
+          -6
+        ],
+        "cam": [
+          5.2,
+          1.62,
+          -6
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0.12,
+          "StandardMaterial",
+          "5d5b55",
+          "nomap",
+          "-",
+          0.42,
+          "BoxGeometry",
+          [
+            4.9,
+            0.06,
+            -6
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 52,
+        "lum": 0.269,
+        "lumMax": 0.645,
+        "lumMin": 0.021,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 526,
+          "tex": 103,
+          "progs": 41
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":true,\"p\":[5.2,0.02,-6],\"cam\":[5.2,1.62,-6],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0.12,\"StandardMaterial\",\"5d5b55\",\"nomap\",\"-\",0.42,\"BoxGeometry\",[4.9,0.06,-6],0,0],\"ready\":true,\"frames\":52,\"lum\":0.269,\"lumMax\":0.645,\"lumMin\":0.021,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":526,\"tex\":103,\"progs\":41}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1360,
+        "h": 765
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-25-hot-spring",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-20,1.62,-12.4,0.35,-0.10&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-25-hot-spring.png",
+      "bytes": 1920662,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 25967,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          -20,
+          0.02,
+          -12.4
+        ],
+        "cam": [
+          -20,
+          1.62,
+          -12.4
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.292,
+        "lumMax": 0.629,
+        "lumMin": 0.031,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 434,
+          "tex": 103,
+          "progs": 40
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[-20,0.02,-12.4],\"cam\":[-20,1.62,-12.4],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.292,\"lumMax\":0.629,\"lumMin\":0.031,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":434,\"tex\":103,\"progs\":40}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-26-quiet-cold",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-13.4,1.62,-19.4,-1.15,-0.12&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-26-quiet-cold.png",
+      "bytes": 1954522,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 29353,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          -13.4,
+          0.02,
+          -19.4
+        ],
+        "cam": [
+          -13.4,
+          1.62,
+          -19.4
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0.02,
+          "BasicMaterial",
+          "ffffff",
+          "img",
+          "-",
+          "-",
+          "PlaneGeometry",
+          [
+            -13.35,
+            0.02,
+            -19
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.279,
+        "lumMax": 0.514,
+        "lumMin": 0.031,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 542,
+          "tex": 107,
+          "progs": 42
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[-13.4,0.02,-19.4],\"cam\":[-13.4,1.62,-19.4],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0.02,\"BasicMaterial\",\"ffffff\",\"img\",\"-\",\"-\",\"PlaneGeometry\",[-13.35,0.02,-19],0,0],\"ready\":true,\"frames\":11,\"lum\":0.279,\"lumMax\":0.514,\"lumMin\":0.031,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":542,\"tex\":107,\"progs\":42}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-27-sauna",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-21.4,1.55,-8.0,1.5708,-0.03&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-27-sauna.png",
+      "bytes": 1767191,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 22554,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          -21.4,
+          -0.05,
+          -8
+        ],
+        "cam": [
+          -21.4,
+          1.55,
+          -8
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0.02,
+          "BasicMaterial",
+          "ffffff",
+          "img",
+          "-",
+          "-",
+          "PlaneGeometry",
+          [
+            -20.55,
+            0.02,
+            -8.3
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.21,
+        "lumMax": 0.357,
+        "lumMin": 0.006,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 791,
+          "tex": 101,
+          "progs": 36
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[-21.4,-0.05,-8],\"cam\":[-21.4,1.55,-8],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0.02,\"BasicMaterial\",\"ffffff\",\"img\",\"-\",\"-\",\"PlaneGeometry\",[-20.55,0.02,-8.3],0,0],\"ready\":true,\"frames\":12,\"lum\":0.21,\"lumMax\":0.357,\"lumMin\":0.006,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":791,\"tex\":101,\"progs\":36}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-28-rest-link",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0,1.62,-29.4,1.5708,-0.03&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-28-rest-link.png",
+      "bytes": 1919071,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 26727,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          0,
+          0.02,
+          -29.4
+        ],
+        "cam": [
+          0,
+          1.62,
+          -29.4
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.262,
+        "lumMax": 0.411,
+        "lumMin": 0.02,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 863,
+          "tex": 107,
+          "progs": 42
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[0,0.02,-29.4],\"cam\":[0,1.62,-29.4],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.262,\"lumMax\":0.411,\"lumMin\":0.02,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":863,\"tex\":107,\"progs\":42}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-29-deck-sign-close",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=6.9,1.42,-9.9,0,-0.62&diag=1",
+      "png": "shots12\\shots12-xSkwmg\\L37-29-deck-sign-close.png",
+      "bytes": 2319818,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 25454,
+      "diag": {
+        "lv": 1,
+        "cols": 143,
+        "camBlocked": false,
+        "p": [
+          6.9,
+          -0.18,
+          -9.9
+        ],
+        "cam": [
+          6.9,
+          1.42,
+          -9.9
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d9d2c4",
+          "img",
+          "nm",
+          0.82,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.376,
+        "lumMax": 0.642,
+        "lumMin": 0.199,
+        "budget": {
+          "meshes": 2194,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391797,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 481,
+          "tex": 105,
+          "progs": 40
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":143,\"camBlocked\":false,\"p\":[6.9,-0.18,-9.9],\"cam\":[6.9,1.42,-9.9],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d9d2c4\",\"img\",\"nm\",0.82,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.376,\"lumMax\":0.642,\"lumMin\":0.199,\"budget\":{\"meshes\":2194,\"inst\":127,\"lights\":66,\"tris\":391797,\"calls\":1,\"rtris\":1,\"geos\":481,\"tex\":105,\"progs\":40}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

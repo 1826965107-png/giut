@@ -1,0 +1,84 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-05T06:26:16.471Z",
+  "browserPid": 44892,
+  "cdpPort": 11642,
+  "shots": [
+    {
+      "name": "L37-35-drowned-head",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-P5YXTf\\L37-35-drowned-head.png",
+      "bytes": 1963995,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 28765,
+      "diag": {
+        "lv": 1,
+        "cols": 144,
+        "camBlocked": false,
+        "p": [
+          9.95,
+          -1.5,
+          -12
+        ],
+        "cam": [
+          8.68,
+          -0.13,
+          -12
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          -0.28,
+          "ShaderMaterial",
+          "-",
+          "nomap",
+          "-",
+          "-",
+          "PlaneGeometry",
+          [
+            13,
+            -0.28,
+            -12.7
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.518,
+        "lumMax": 0.869,
+        "lumMin": 0.093,
+        "budget": {
+          "meshes": 3528,
+          "inst": 170,
+          "lights": 66,
+          "tris": 434207,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1055,
+          "tex": 91,
+          "progs": 44
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":144,\"camBlocked\":false,\"p\":[9.95,-1.5,-12],\"cam\":[8.68,-0.13,-12],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[-0.28,\"ShaderMaterial\",\"-\",\"nomap\",\"-\",\"-\",\"PlaneGeometry\",[13,-0.28,-12.7],0,0],\"ready\":true,\"frames\":11,\"lum\":0.518,\"lumMax\":0.869,\"lumMin\":0.093,\"budget\":{\"meshes\":3528,\"inst\":170,\"lights\":66,\"tris\":434207,\"calls\":1,\"rtris\":1,\"geos\":1055,\"tex\":91,\"progs\":44}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}

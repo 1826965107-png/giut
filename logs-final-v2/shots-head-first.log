@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-ginsSH
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-UeNcvu
+browser pid=38524 port=4059
+shot L0-32-entity-head OK bytes=2491413 ready=true camBlocked=false waited=36523ms frames=11 lum=0.226/0.564 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-132.7,0.42,0.44],"cam":[-132.83,2.03,0.44],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3525,"inst":170,"lights":67,"tris":434162,"calls":1,"rtris":1,"geos":2068,"tex":97,"progs":49}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-35-drowned-head OK bytes=1752113 ready=true camBlocked=false waited=60799ms frames=9 lum=0.537/0.95 calls=1
+   diag {"lv":1,"p":[9.95,-1.5,-12],"cam":[10.7,-0.13,-12],"ray":[-0.28,"ShaderMaterial","-","nomap","-","-","PlaneGeometry",[13,-0.28,-12.7],0,0],"budget":{"meshes":3525,"inst":170,"lights":67,"tris":434162,"calls":1,"rtris":1,"geos":2104,"tex":97,"progs":49}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-ginsSH\shots-report.json
+SHOTS-OK 2

@@ -1,0 +1,17 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-oDShsq
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-fhgQCz
+browser pid=9436 port=5474
+shot L0-20-spawn-v2 OK bytes=1743415 ready=true camBlocked=false waited=20020ms frames=11 lum=0.085/0.179 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-147,0.02,0],"cam":[-147,1.62,0],"ray":[0,"StandardMaterial","d6ccb8","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2132,"inst":127,"lights":66,"tris":391389,"calls":1,"rtris":1,"geos":909,"tex":94,"progs":42}}
+   NET 404 http://127.0.0.1:8556/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L0-21-archive-v2 OK bytes=1799024 ready=true camBlocked=false waited=15196ms frames=12 lum=0.101/0.165 calls=1
+   diag {"lv":0,"p":[-120.6,-0.05,5.4],"cam":[-120.6,1.55,5.4],"ray":[0,"StandardMaterial","d6ccb8","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2132,"inst":127,"lights":66,"tris":391389,"calls":1,"rtris":1,"geos":247,"tex":87,"progs":32}}
+shot L0-22-switchgear-v2 OK bytes=1936570 ready=true camBlocked=false waited=16495ms frames=12 lum=0.193/0.837 calls=1
+   diag {"lv":0,"p":[-120.4,-0.1,-6.2],"cam":[-120.4,1.5,-6.2],"ray":[0,"StandardMaterial","d6ccb8","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2132,"inst":127,"lights":66,"tris":391389,"calls":1,"rtris":1,"geos":142,"tex":87,"progs":33}}
+shot L0-23-topdown-v2 OK bytes=1427272 ready=true camBlocked=false waited=17745ms frames=12 lum=0.025/0.063 calls=1
+   diag {"lv":0,"p":[-129,13.9,0],"cam":[-129,15.5,0],"ray":[0,"StandardMaterial","d6ccb8","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2132,"inst":127,"lights":66,"tris":391389,"calls":1,"rtris":1,"geos":353,"tex":87,"progs":33}}
+shot L0-24-service-vest-v2 OK bytes=1851346 ready=true camBlocked=false waited=19871ms frames=11 lum=0.112/0.195 calls=1
+   diag {"lv":0,"p":[-114.5,0,-5],"cam":[-114.5,1.6,-5],"ray":[0,"StandardMaterial","d6ccb8","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2132,"inst":127,"lights":66,"tris":391389,"calls":1,"rtris":1,"geos":635,"tex":95,"progs":41}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-oDShsq\shots-report.json
+SHOTS-OK 5

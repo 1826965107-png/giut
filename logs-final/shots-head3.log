@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-WbEgNt
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-pYCPTM
+browser pid=25092 port=12677
+shot L0-32-entity-head OK bytes=2499694 ready=true camBlocked=false waited=36796ms frames=12 lum=0.235/0.495 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-132.7,0.42,0.44],"cam":[-132.85,2.03,0.44],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3528,"inst":170,"lights":67,"tris":434207,"calls":1,"rtris":1,"geos":2070,"tex":97,"progs":49}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-35-drowned-head OK bytes=1957015 ready=true camBlocked=false waited=33030ms frames=11 lum=0.605/0.93 calls=1
+   diag {"lv":1,"p":[9.95,-1.5,-12],"cam":[8.7,-0.13,-12],"ray":[-0.28,"ShaderMaterial","-","nomap","-","-","PlaneGeometry",[13,-0.28,-12.7],0,0],"budget":{"meshes":3528,"inst":170,"lights":67,"tris":434207,"calls":1,"rtris":1,"geos":1054,"tex":91,"progs":47}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-WbEgNt\shots-report.json
+SHOTS-OK 2

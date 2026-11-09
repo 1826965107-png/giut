@@ -1,0 +1,23 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-QyYV35
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-Ly0Yh3
+browser pid=10500 port=4589
+shot L0-07-socket-wall OK bytes=1572264 ready=true camBlocked=false waited=23503ms frames=12 lum=0.217/0.236 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-136,-0.25,-3.6],"cam":[-136,1.35,-3.6],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":77,"tex":93,"progs":35}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L0-08-door-gap OK bytes=1592203 ready=true camBlocked=false waited=23858ms frames=12 lum=0.191/0.253 calls=1
+   diag {"lv":0,"p":[-140.5,0,-2.6],"cam":[-140.5,1.6,-2.6],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":82,"tex":93,"progs":35}}
+shot L0-09-lintel-lowangle FAIL bytes=1571279 ready=false camBlocked=true waited=75309ms frames=32 lum=0.126/0.214 calls=1
+   diag {"lv":0,"p":[-127.6,-1,2.7],"cam":[-127.6,0.6,2.7],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":853,"tex":99,"progs":44}}
+shot L0-10-lintel-back OK bytes=1539734 ready=true camBlocked=false waited=28878ms frames=12 lum=0.069/0.152 calls=1
+   diag {"lv":0,"p":[-124.6,-0.1,2.7],"cam":[-124.6,1.5,2.7],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":98,"tex":93,"progs":36}}
+shot L0-11-floor OK bytes=1589025 ready=true camBlocked=false waited=25713ms frames=12 lum=0.111/0.224 calls=1
+   diag {"lv":0,"p":[-118,-0.3,1.2],"cam":[-118,1.3,1.2],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":112,"tex":93,"progs":35}}
+shot L0-12-switchgear OK bytes=1578024 ready=true camBlocked=false waited=24876ms frames=12 lum=0.085/0.14 calls=1
+   diag {"lv":0,"p":[-88,-0.05,-18.2],"cam":[-88,1.55,-18.2],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":37,"tex":93,"progs":34}}
+shot L37-10-vestibule-door OK bytes=1806318 ready=true camBlocked=false waited=35291ms frames=11 lum=0.732/0.955 calls=1
+   diag {"lv":1,"p":[1,-0.05,16.6],"cam":[1,1.55,16.6],"ray":[0,"PhysicalMaterial","ffffff","img","nm",0.45,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":546,"tex":99,"progs":41}}
+shot L37-11-equip-window OK bytes=1718267 ready=true camBlocked=false waited=32632ms frames=12 lum=0.663/0.694 calls=1
+   diag {"lv":1,"p":[21.5,0.1,-10.5],"cam":[21.5,1.7,-10.5],"ray":[0,"PhysicalMaterial","d2dbe0","img","nm",0.45,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2143,"inst":131,"lights":67,"tris":397159,"calls":1,"rtris":1,"geos":413,"tex":93,"progs":35}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-QyYV35\shots-report.json
+SHOTS-DONE-WITH-ISSUES 1

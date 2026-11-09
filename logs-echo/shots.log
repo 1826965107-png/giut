@@ -1,0 +1,15 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-wbAARr
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-NVQBJS
+browser pid=24948 port=7020
+shot L37-03-echo-room OK bytes=2116168 ready=true camBlocked=false waited=24097ms frames=12 lum=0.514/0.691 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[-8,-0.15,-17.6],"cam":[-8,1.45,-17.6],"ray":[0,"StandardMaterial","e3e6df","img","nm",0.86,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2144,"inst":131,"lights":67,"tris":397171,"calls":1,"rtris":1,"geos":419,"tex":90,"progs":40}}
+   NET 404 http://127.0.0.1:8556/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-12-echo-floor-sign OK bytes=2020960 ready=true camBlocked=false waited=33428ms frames=11 lum=0.531/0.739 calls=1
+   diag {"lv":1,"p":[-17,-0.1,-23],"cam":[-17,1.5,-23],"ray":[0,"StandardMaterial","e3e6df","img","nm",0.86,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2144,"inst":131,"lights":67,"tris":397171,"calls":1,"rtris":1,"geos":553,"tex":94,"progs":42}}
+shot L37-13-echo-floor-wide OK bytes=1950975 ready=true camBlocked=false waited=32919ms frames=11 lum=0.464/0.722 calls=1
+   diag {"lv":1,"p":[-17.6,0.02,-24.6],"cam":[-17.6,1.62,-24.6],"ray":[0,"StandardMaterial","e3e6df","img","nm",0.86,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2144,"inst":131,"lights":67,"tris":397171,"calls":1,"rtris":1,"geos":555,"tex":94,"progs":42}}
+shot L37-14-north-corridor OK bytes=1850862 ready=true camBlocked=false waited=25891ms frames=12 lum=0.622/0.893 calls=1
+   diag {"lv":1,"p":[4,0,-22],"cam":[4,1.6,-22],"ray":[0,"StandardMaterial","e3e6df","img","nm",0.86,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2144,"inst":131,"lights":67,"tris":397171,"calls":1,"rtris":1,"geos":441,"tex":90,"progs":39}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-wbAARr\shots-report.json
+SHOTS-OK 4

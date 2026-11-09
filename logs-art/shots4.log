@@ -1,0 +1,9 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-c5nuav
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-A904xH
+browser pid=28288 port=2109
+shot L0-23-topdown-v2 OK bytes=1673857 ready=true camBlocked=false waited=18850ms frames=12 lum=0.1/0.215 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-129,20.4,0],"cam":[-129,22,0],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3556,"inst":174,"lights":67,"tris":432847,"calls":1,"rtris":1,"geos":694,"tex":100,"progs":36}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-c5nuav\shots-report.json
+SHOTS-OK 1

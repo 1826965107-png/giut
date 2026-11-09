@@ -1,0 +1,9 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-DOLc1M
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-94Oz3a
+browser pid=26052 port=12263
+shot fix-shower-light OK bytes=1938579 ready=true camBlocked=false waited=26285ms frames=11 lum=0.298/0.706 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[-24,0.02,5.25],"cam":[-24,1.62,5.25],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3488,"inst":170,"lights":66,"tris":436146,"calls":1,"rtris":1,"geos":984,"tex":87,"progs":43}}
+   NET 404 http://127.0.0.1:8555/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-DOLc1M\shots-report.json
+SHOTS-OK 1

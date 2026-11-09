@@ -1,0 +1,84 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-01T12:03:51.351Z",
+  "browserPid": 29040,
+  "cdpPort": 9383,
+  "shots": [
+    {
+      "name": "L0-13-north-door-x128",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-132,1.5,-1.2,-0.79,0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-cwZZLI\\L0-13-north-door-x128.png",
+      "bytes": 1620186,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 27415,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": false,
+        "p": [
+          -132,
+          -0.1,
+          -1.2
+        ],
+        "cam": [
+          -132,
+          1.5,
+          -1.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.109,
+        "lumMax": 0.244,
+        "lumMin": 0.004,
+        "budget": {
+          "meshes": 2144,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397171,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 811,
+          "tex": 99,
+          "progs": 44
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":false,\"p\":[-132,-0.1,-1.2],\"cam\":[-132,1.5,-1.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.109,\"lumMax\":0.244,\"lumMin\":0.004,\"budget\":{\"meshes\":2144,\"inst\":131,\"lights\":67,\"tris\":397171,\"calls\":1,\"rtris\":1,\"geos\":811,\"tex\":99,\"progs\":44}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}

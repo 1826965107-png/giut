@@ -1,0 +1,84 @@
+{
+  "base": "http://127.0.0.1:8556/backrooms-pool.html",
+  "when": "2026-11-04T15:05:16.709Z",
+  "browserPid": 9340,
+  "cdpPort": 11284,
+  "shots": [
+    {
+      "name": "L0-22-switchgear-v2",
+      "url": "http://127.0.0.1:8556/backrooms-pool.html?cam=-120.4,1.5,-6.2,0.97,0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-sDst0b\\L0-22-switchgear-v2.png",
+      "bytes": 1934373,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 17715,
+      "diag": {
+        "lv": 0,
+        "cols": 68,
+        "camBlocked": false,
+        "p": [
+          -120.4,
+          -0.1,
+          -6.2
+        ],
+        "cam": [
+          -120.4,
+          1.5,
+          -6.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "d6ccb8",
+          "img",
+          "nm",
+          0.95,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 13,
+        "lum": 0.193,
+        "lumMax": 0.837,
+        "lumMin": 0.022,
+        "budget": {
+          "meshes": 2132,
+          "inst": 127,
+          "lights": 66,
+          "tris": 391389,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 142,
+          "tex": 87,
+          "progs": 33
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":68,\"camBlocked\":false,\"p\":[-120.4,-0.1,-6.2],\"cam\":[-120.4,1.5,-6.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"d6ccb8\",\"img\",\"nm\",0.95,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":13,\"lum\":0.193,\"lumMax\":0.837,\"lumMin\":0.022,\"budget\":{\"meshes\":2132,\"inst\":127,\"lights\":66,\"tris\":391389,\"calls\":1,\"rtris\":1,\"geos\":142,\"tex\":87,\"progs\":33}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8556/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}

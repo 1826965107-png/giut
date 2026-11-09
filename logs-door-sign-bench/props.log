@@ -1,0 +1,9 @@
+file:///D:/AI/%E5%B7%A5%E4%BD%9C%E6%96%87%E4%BB%B6%E5%A4%B9/%E6%B8%B8%E6%88%8F/levels/l12-props.js:149
+        seat.userData.benchId = p.id;
+             ^
+
+TypeError: Cannot read properties of undefined (reading 'userData')
+    at Module.createL37Props (file:///D:/AI/%E5%B7%A5%E4%BD%9C%E6%96%87%E4%BB%B6%E5%A4%B9/%E6%B8%B8%E6%88%8F/levels/l12-props.js:149:14)
+    at D:\AI\工作文件夹\游戏\tools\v2\l37-props-check.cjs:131:11
+
+Node.js v24.19.0

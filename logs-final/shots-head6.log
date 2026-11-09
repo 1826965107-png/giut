@@ -1,0 +1,9 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-ruKkXX
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-yK2P12
+browser pid=27856 port=4998
+shot L0-32-entity-head OK bytes=2492504 ready=true camBlocked=false waited=35994ms frames=11 lum=0.226/0.564 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-132.7,0.42,0.44],"cam":[-132.83,2.03,0.44],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3525,"inst":170,"lights":67,"tris":434162,"calls":1,"rtris":1,"geos":2067,"tex":97,"progs":49}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-ruKkXX\shots-report.json
+SHOTS-OK 1

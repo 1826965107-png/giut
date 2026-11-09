@@ -1,0 +1,48 @@
+  // 4) 天花：木格栅（接待/更衣/桑拿）+ 矿物板与结构梁（湿区），带灯槽与线性灯
+  const artCtx = {
+    THREE, scene, addBox, addWorldUVBox, COLLIDERS,
+    mats: { ceil: l12CeilPanelMat, ceilDark: l12CeilMat, trim: l12MetalMat, wood: l12WoodMat, stone: l12SpaWallMat, metal: l12MetalMat },
+  };
+  const WOOD_CEIL = new Set(['lobby', 'shoe', 'lockW', 'lockE', 'sauna']);
+  const HALLS = new Set(['poolA', 'poolB', 'spaA', 'spaB', 'wetHall', 'wetSpine', 'restLink']);
+  for (const r of L37_ROOMS_V2) {
+    const h = l12RoomH(r);
+    if (WOOD_CEIL.has(r.id)) {
+      slatCeiling(artCtx, r, { h, gap: 0.18, slat: 0.06 });
+      linearCove(artCtx, { len: Math.min(6, (r.x2 - r.x1) - 1.2), x: (r.x1 + r.x2) / 2, z: r.z1 + 0.9, y: h - 0.12, dir: 'x' });
+    } else {
+      const w = r.x2 - r.x1, d = r.z2 - r.z1;
+      const panels = [];
+      const nx = Math.max(1, Math.round(w / 5.0)), nz = Math.max(1, Math.round(d / 5.0));
+      for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
+        panels.push({ x: r.x1 + (i + 0.5) * (w / nx), z: r.z1 + (k + 0.5) * (d / nz), w: 1.5, d: 0.5 });
+      }
+      panelCeiling(artCtx, r, { h, panels, tile: 2.0, cove: true, tray: HALLS.has(r.id) });
+      if (HALLS.has(r.id)) beamRibs(artCtx, r, { h, every: 6 });
+    }
+    L12_SHELL_LOG.ceilings++;
+  }
+  // 4b) 墙裙：湿区石材、干区木饰面（下部 0.72m + 细压条），避开门洞
+  for (const r of L37_ROOMS_V2) {
+    const stone = HALLS.has(r.id);
+    wainscot(artCtx, r, L37_DOORS_V2, { h: 0.72, mat: stone ? l12SpaWallMat : l12WoodMat });
+  }
+  // 4c) 高侧磨砂窗：池厅东墙 / 温泉厅西墙（窗台与上沿齐全，只做发光面，不新增点光）
+  {
+    const frostMat = new THREE.MeshStandardMaterial({
+      color: 0xf3f0e6, emissive: 0xf6efdc, emissiveIntensity: 0.85, roughness: 0.85, transparent: true, opacity: 0.92 });
+    const winRow = (x, z1, z2, yBase, yTop, faceSign) => {
+      for (let z = z1; z <= z2 + 0.01; z += 3.4) {
+        const pane = new THREE.Mesh(new THREE.PlaneGeometry(2.4, yTop - yBase), frostMat);
+        pane.position.set(x + faceSign * 0.02, (yBase + yTop) / 2, z);
+        pane.rotation.y = faceSign > 0 ? -Math.PI / 2 : Math.PI / 2;
+        scene.add(pane);
+        addBox(0.10, 0.10, 2.5, x - faceSign * 0.02, yBase - 0.05, z, l12MetalMat, 1.0);
+        addBox(0.10, 0.10, 2.5, x - faceSign * 0.02, yTop + 0.05, z, l12MetalMat, 1.0);
+        addBox(0.10, yTop - yBase, 0.08, x - faceSign * 0.02, (yBase + yTop) / 2, z - 1.22, l12MetalMat, 1.0);
+        addBox(0.10, yTop - yBase, 0.08, x - faceSign * 0.02, (yBase + yTop) / 2, z + 1.22, l12MetalMat, 1.0);
+      }
+    };
+    winRow(27.86, -25, -3, 2.55, 3.70, -1);
+    winRow(-27.86, -24, -6, 2.55, 3.70, 1);
+  }

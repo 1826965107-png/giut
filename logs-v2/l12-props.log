@@ -1,0 +1,220 @@
+
+—— L37 外壳与水体数据 ——
+✓ 主厅无吊顶压低、回声室/设备间有独立低顶棚  [H=4.4 echo=2.55 equip=3.05]
+✗ 外壳尺寸符合设计（x -28..30, z -28..24）  [=-28..28/-32..24]
+✗ 三个水体：主池 / 训练池 / 浅水回声池  [游泳主池(10×25) 温热主汤池(10×8) 静汤池(6×6) 冷水池(3×3.000000000000001)]
+✗ L37 外壳与水体数据 抛出异常: Cannot read properties of undefined (reading 'x2')
+
+—— L37 池台阶：单级落差、模型与 groundAt 同源 ——
+TypeError: Cannot read properties of undefined (reading 'x2')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7867:13
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7859:1
+✓ 所有池台阶单级落差 ≤ 0.62m（控制器上限）  [最大 0.52m @ cold 0.00→-0.52]
+✓ 每一级台阶的地面高度都能在真实网格中找到对应实体  [检查 9 级，不一致 0]
+
+—— L37 真实行走：入池 → 池底 → 出池 ——
+✓ 从入口出生点能规划出走到主池深处的路径  [91 个路点]
+✓ 连续 WASD 真实走到主池深处（无瞬移）  [帧=686 最大单帧位移=0.057m]
+✓ 每帧位移不超过控制器速度上限  [maxStep=0.057m]
+
+—— L37 其余两池也可真实进出 ——
+✗ L37 真实行走：入池 → 池底 → 出池 抛出异常: Cannot read properties of undefined (reading 'bottom')
+TypeError: Cannot read properties of undefined (reading 'bottom')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7934:33
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7923:1
+✗ L37 其余两池也可真实进出 抛出异常: Cannot read properties of undefined (reading 'bottom')
+TypeError: Cannot read properties of undefined (reading 'bottom')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7951:57
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7944:1
+
+—— L37 出生点与五个功能区连通、双回路 ——
+✓ 出生点在南侧入口缓冲的干地上（不在水里/墙里）  [(0,20)]
+✓ 出生点不与任何碰撞体重叠  [余量=2.250m]
+✗ 五个功能区（含附属间）都能从入口走到  [不可达: 更衣区淋浴间]
+✓ 封死主池北门后，仍可经西更衣区绕到回声室（回路 1）  [149 个路点]
+✓ 封死更衣区北门后，仍可经主池厅西门进入更衣区（回路 2）  [109 个路点]
+✗ 负对照：墙体内部位置不会被当作可达目标  [终点距墙芯 0.28m]
+
+—— L37 六个漂浮物：水体归属、可达、不能上岸 ——
+✓ 共六个漂浮物  [实际 6]
+✗ 四只鸭子 + 两个救生圈  [duck,ring,duck,ring,duck,ring]
+✗ 三个水体各两个漂浮物  [{"pool":2,"hot":2,"quiet":2}]
+✓ 六个漂浮物都落在各自水体范围内  [OK]
+✓ 六个漂浮物都能从入口真实走到（含下水）  [六个目标全部可达]
+✓ 漂浮物漂移 20s 后仍留在所属水体（不会漂上岸/穿池壁）  [越界 0]
+
+—— L37 拾取：遮挡与高度 ——
+✗ L37 拾取：遮挡与高度 抛出异常: Cannot read properties of undefined (reading 'water')
+TypeError: Cannot read properties of undefined (reading 'water')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8043:32
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8041:1
+
+—— L37 池中人：只属于主池、不上岸、不隔墙抓取 ——
+✗ L37 池中人：只属于主池、不上岸、不隔墙抓取 抛出异常: Cannot read properties of undefined (reading 'x1')
+TypeError: Cannot read properties of undefined (reading 'x1')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8090:20
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8085:1
+
+—— L37 游姿高度用真实包围盒校验 ——
+✗ L37 游姿高度用真实包围盒校验 抛出异常: Cannot read properties of undefined (reading 'water')
+TypeError: Cannot read properties of undefined (reading 'water')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8165:54
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8153:1
+
+—— L37 站→游→站：真实 updatePoolHorror 多帧不浮出水面 ——
+✗ L37 站→游→站：真实 updatePoolHorror 多帧不浮出水面 抛出异常: Cannot read properties of undefined (reading 'bottom')
+TypeError: Cannot read properties of undefined (reading 'bottom')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8192:32
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8188:1
+
+—— L0 房间化与分段视线 ——
+✓ 第一关外壳仍是 86×48m  [86×48]
+✓ 出生点无法一眼看穿到东端出口（视线被错位门廊切断）
+✓ 对照：同一房间内近距视线畅通（遮挡函数没有一律返回 true）
+✓ 六个新房间 + 出口前厅都能从出生点走到  [7 个房间全部连通]
+✓ 截断走廊一处环节后仍能绕行到达出口（存在闭合回路 1）  [194 个路点]
+✓ 截断另一处环节后仍能绕行到达出口（存在闭合回路 2）  [191 个路点]
+
+—— L0 真实行走：出生点 → 三枚保险丝 ——
+✓ 三枚保险丝都能真实走到并进入可交互范围  [接待台@-140,-14 y=1.02 路点42 帧448 | 档案柜@-128.6,-21.4 y=1.42 路点53 帧605 | 配电柜@-86,-22.9 y=1.52 路点145 帧1164]
+✓ 三枚保险丝都放在真实家具/柜体的台面上（不是浮空）  [3/3]
+✓ 负对照：玩家与保险丝之间插入真实墙体后无法拾取（且无墙时可拾取）  [样本 3，无墙可拾取 3，有墙仍可拾取 0]
+
+—— L0 保险丝：真实柜体正/背面、高低视点、围住目标的墙 ——
+✓ 同一枚保险丝：柜体正面看得到、背面被柜体挡住  [正面=true 背面挡住=true]
+✓ 遮挡随视点变化：站姿可拾取、蹲到台面以下会被挡住、隔层一律拒绝  [方向 3，站姿可拾取 3，蹲姿被挡 2，降层误判 0]
+✓ 把墙围在目标四周时依然判定被遮挡（容差不会整体豁免承载物）  [无墙=true 围住=true 移除后恢复=true]
+✓ 安全复位会清空 nearestFuse / nearestPickup 缓存  [有目标=true 清空=true]
+✓ 没有有效目标时按 E 不会增加保险丝数量  [before=0 after=0 keep=false]
+
+—— L0 黑影：独立模型、绕墙追逐、最后目击记忆 ——
+✓ 黑影整体高度接近设计的 2.2m  [实测 2.20m]
+✓ 脚掌贴地，没有悬空或埋进地板  [最低点 -0.020]
+✓ 左右肩节点存在且分别挂载手臂
+✓ 左臂挂在左肩节点下（不是从地面长出来的独立手臂）  [children=1]
+✓ 手臂从肩部向下延伸到膝下高度  [肩组 y 0.41..1.89]
+✓ 指尖垂到膝盖以下（长臂特征）  [指尖最低 0.406m]
+✓ 所有黑影出现点都能寻路到出生点  [10 个点]
+✓ 追逐全程怪物坐标始终有限（没有 NaN）  [nan=0]
+✓ 追逐全程没有穿进墙体（真实碰撞推出）  [最小间隙 -0.000m]
+✓ 追逐每帧位移受速度上限约束（无瞬移）  [maxStep=0.043m]
+✓ 存在可用于"躲在墙后"的测试落点  [-134,16]
+✓ 丢失视线后"最后目击位置"不再被更新为玩家新位置  [记忆偏移 0.00m]
+✓ 怪物没有直接穿墙扑到藏起来的玩家身上  [最近距离 26.41m]
+✓ 丢失踪迹后追逐会结束/转搜寻（不再无限全知追踪）  [chasing=false]
+
+—— L0 攻击节奏、复位与出口门阈值 ——
+✓ startChase 会把隐藏/界外的实体重选到有效出生点  [d=27.59m 界内=true 可寻路=true]
+✓ startChase 给出反应窗口（不是开场即抓）  [剩余 1195ms]
+✓ 贴身抓取会触发一次  [首帧=0 scares +1]
+✓ 被抓后玩家回到关卡起点  [距起点 0.00m (-144.00,0.00)]
+✓ 冷却期内贴身也不会连环抓  [scares Δ=0]
+✓ 负对照：在走廊中段（x=-70）不会误触发进入下一关  [x=-70.00]
+✓ 走到东端出口门内会真正推进到第二关  [transitioning=true]
+✓ 负对照：出口门外的侧向位置不会推进关卡  [z=6.00]
+✓ 保险丝没集齐时出口不会开启  [exitUnlocked=false]
+
+—— 复位与关卡衔接（不丢进度） ——
+✗ 复位与关卡衔接（不丢进度） 抛出异常: Cannot read properties of undefined (reading 'water')
+TypeError: Cannot read properties of undefined (reading 'water')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8579:61
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8574:1
+
+—— 第二关直达预览（?level=37）：建关到位但不写档 ——
+✓ 预览入口直接进入第二关并使用泳池层的碰撞/边界  [LEVEL=1]
+✓ 预览出生点落在入口地面（不卡墙、不悬空）  [距入口 0.00 y=0.00]
+✓ 预览不写任何记录（本地存档逐字节不变）  [runPreview=true 存档变化=false]
+✓ 预览出生点能走到主池边的步道  [路点 23]
+
+—— L0 门洞收口：每个真实缺口上方都有门楣网格，接顶棚、不挡通行 ——
+✓ 登记到真实门洞数量  [19 个]
+✓ 每个门洞都能找到对应门楣（没有门头黑洞）  [全部命中]
+✓ 门楣网格的上下沿与登记的门头高度一致  [19 个]
+✓ 门楣横向跨度覆盖整个洞口（不是一条细梁）  [全部覆盖]
+✓ 门楣与顶棚之间没有漏空  [漏空 0]
+✓ 门楣碰撞只占门头以上（净高通行不受影响）  [19 条, y1>=2.18]
+✓ 负对照：门洞本来是通的，补成整高墙后才会挡住视线  [之前通过=true 之后被挡=true]
+
+—— L0 墙面装饰：插座/百叶/水渍都贴在真实墙面上，且不覆盖门洞 ——
+✓ 生成到的插座面板数量  [22 个]
+✓ 每个插座都贴在实际墙面上（没有站在空中的插座板）  [全部贴面]
+✓ 没有插座落进门洞  [无]
+✓ 负对照：门洞里的位置既不算贴面也会被判为覆盖门洞  [x=-140.5]
+✓ 负对照：l0Face 在门洞处返回 null、在实墙处返回墙面  [门洞/实墙判定正确]
+✓ 通风口/百叶全部紧贴墙面（不再漂在门洞上方）  [全部贴面]
+✓ 没有通风口落进门洞  [无]
+✓ 百叶窗 12 片叶片都在窗框中心线上  [12 片]
+✓ 窗框（上下框 + 两侧立框）确实存在  [16 件]
+✓ 生成到的水渍贴花数量  [4 处]
+✓ 每处水渍都贴在墙面上（不嵌进墙里）  [全部贴面]
+✓ 水渍朝向与墙面法向一致（不会背对房间）  [朝向正确]
+✓ 负对照：门洞里放不了水渍（l0Face 返回 null）  [返回 null]
+
+—— L0 陈设接地与管线支撑：最低点贴地、管线落在关内且有管夹/吊杆 ——
+✓ 参与接地点检查的陈设数量  [23 件]
+✓ 所有地面陈设的最低点都贴着地面（没有悬空/插进地板）  [全部贴地]
+✓ 侧台四条腿落在台面投影内（不会踩在台面外）  [-0.47/-0.22 0.47/-0.22 -0.47/0.22 0.47/0.22]
+✓ 登记到的管线数量（含服务横廊横穿管）  [5 根]
+✓ 所有管线端点都在关内（原缺陷把管放到了 z=-78 的关外）  [全部在关内]
+✓ 每根管线的支撑同时接触管体与墙面/顶棚（≥2 处）  [支撑两端都接实]
+✓ 服务横廊管线沿 z 横穿走廊（不再沿 x）  [(-87.00,2.62,-5.00)->(-87.00,2.62,5.00)]
+✓ 负对照：夹偏 15cm 不碰管、挂到管子另一侧不碰墙（都不算支撑）  [离管15cm 不相交=true 管子另一侧 不贴墙=true]
+✓ 负对照：关外坐标会被判出来、关内坐标通过  [z=-78 判为关外]
+
+—— L0 墙面 UV：世界米制尺度、同一堵墙被门洞切段后相位连续 ——
+✓ 参与检查的墙面顶点数  [320 个]
+✓ 所有墙段共用同一把绝对尺子（相位跨段连续）  [常数项全为 0]
+✓ 贴图尺度是世界米制（1/c 每米，不随段长变化）  [c=4.00]
+✓ 负对照：旧的按段重起 UV 会产生明显相位偏移  [偏移 35.63]
+✓ L0 墙纸浮雕强度收敛在 0.10~0.22  [normalScale=0.16]
+✓ 墙纸接近哑光  [rough=0.95 metal=0.00]
+✓ 地毯浮雕很浅（不把污渍变浮雕）  [normalScale=0.12]
+✓ 地毯无镜面反光、无派生粗糙度亮斑  [rough=0.95 metal=0.00]
+✓ 负对照：默认派生浮雕强度确实会超过上限  [naive=0.80]
+
+—— L37 门洞与观察窗：门楣补到局部顶棚，窗下有实墙 ——
+✓ 登记到的门楣数量  [21 个]
+✓ 每个 L37 门洞上方都有实体门楣（上下沿与登记一致）  [21 个]
+✓ 门楣不越过全场顶棚（不会穿顶）  [无]
+✓ 门楣碰撞只占门头以上（净高保持通行）  [21 条，最低 y1=2.30]
+✗ 回声室门楣按局部低顶 L37_ECHO_H 收口  [0 个 top=2.55]
+✓ 登记到设备间观察窗  [z -12.00..-9.00]
+✓ 观察窗占位是整幅实墙碰撞（不能从玻璃穿过去）  [y 0.00..4.40]
+✓ 窗台以下有实体墙面（不是悬空的窗）  [窗台 1.18]
+✓ 窗楣以上到设备间顶也有实体墙面  [窗楣 2.52 顶 3.05]
+
+—— L37 回声池地面：接大厅同一张 pool-floor.png、统一米制 UV、低反光防滑 ——
+✗ 地面图片资产同时被回声池与大厅使用（不是各用一套）  []
+✗ 回声室与北廊两片地面都绑定了该材质  [0 片]
+✓ 回声池地面材质的贴图资产是 textures/pool-floor.png  [textures/pool-floor.png]
+✓ 该资产没有走到兜底图（Node 侧绑定；浏览器加载见截图取证）  [status=loading]
+✓ 地面不是物理材质（没有 clearcoat 通道）  [MeshStandardMaterial]
+✓ 粗糙度落在低反光防滑区间 0.8–0.95  [roughness=0.860]
+✓ 金属度为 0（不再是金属面板）  [metalness=0.000]
+✓ 没有派生 roughnessMap 把最终粗糙度乘低  [null]
+✓ 法线强度约 0.12（弱起伏，不是浮雕砖）  [ns=0.120]
+✗ 地面 UV 以米为单位（u=x, v=-z），同一张图在世界坐标里相位连续  [0 片，最大偏差 -Infinity]
+✓ 环境反射强度压低  [env=0.22]
+✗ 回声池与大厅地面使用同一 repeat（整张石砖图覆盖 6m → repeat 1/6）  [echo=0.1667 hall=n/a]
+✓ 负对照：旧画布物理地面（clearcoat+强法向）会被判不合格  [clearcoat=0.45 ns=0.80]
+
+—— L37 池深标识：按真实顶点投影避让柱脚，旧坐标必须被判重叠 ——
+✗ 登记到真实柱脚网格（有厚度，不是空盒子）  [4 个柱脚，厚度 4.40m]
+✗ 找到浅水回声池地贴  [缺失]
+✗ L37 池深标识：按真实顶点投影避让柱脚，旧坐标必须被判重叠 抛出异常: Cannot read properties of undefined (reading 'mesh')
+TypeError: Cannot read properties of undefined (reading 'mesh')
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:9017:39
+    at __section (file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:7652:9)
+    at file:///C:/Users/18269/AppData/Local/Temp/dsh-RbyXTY/l12-node-9636.mjs:8960:1
+
+第一/二关 Node 回归：110/132  PASS
+失败项：外壳尺寸符合设计（x -28..30, z -28..24） / 三个水体：主池 / 训练池 / 浅水回声池 / L37 外壳与水体数据 抛出异常 / L37 真实行走：入池 → 池底 → 出池 抛出异常 / L37 其余两池也可真实进出 抛出异常 / 五个功能区（含附属间）都能从入口走到 / 负对照：墙体内部位置不会被当作可达目标 / 四只鸭子 + 两个救生圈 / 三个水体各两个漂浮物 / L37 拾取：遮挡与高度 抛出异常 / L37 池中人：只属于主池、不上岸、不隔墙抓取 抛出异常 / L37 游姿高度用真实包围盒校验 抛出异常 / L37 站→游→站：真实 updatePoolHorror 多帧不浮出水面 抛出异常 / 复位与关卡衔接（不丢进度） 抛出异常 / 回声室门楣按局部低顶 L37_ECHO_H 收口 / 地面图片资产同时被回声池与大厅使用（不是各用一套） / 回声室与北廊两片地面都绑定了该材质 / 地面 UV 以米为单位（u=x, v=-z），同一张图在世界坐标里相位连续 / 回声池与大厅地面使用同一 repeat（整张石砖图覆盖 6m → repeat 1/6） / 登记到真实柱脚网格（有厚度，不是空盒子） / 找到浅水回声池地贴 / L37 池深标识：按真实顶点投影避让柱脚，旧坐标必须被判重叠 抛出异常
+第一/二关回归失败：exit 1

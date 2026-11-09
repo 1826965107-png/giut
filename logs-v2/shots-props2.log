@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-rXOfHV
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-8DayTh
+browser pid=24504 port=4839
+shot L37-01-entry OK bytes=1869250 ready=true camBlocked=false waited=30431ms frames=11 lum=0.239/0.33 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[3,0.02,20.5],"cam":[3,1.62,20.5],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2155,"inst":132,"lights":68,"tris":394535,"calls":1,"rtris":1,"geos":572,"tex":98,"progs":41}}
+   NET 404 http://127.0.0.1:8556/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-04-locker-shower OK bytes=1747374 ready=true camBlocked=false waited=31200ms frames=11 lum=0.21/0.292 calls=1
+   diag {"lv":1,"p":[-19,0.02,12],"cam":[-19,1.62,12],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":2155,"inst":132,"lights":68,"tris":394535,"calls":1,"rtris":1,"geos":548,"tex":98,"progs":40}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-rXOfHV\shots-report.json
+SHOTS-OK 2

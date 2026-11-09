@@ -1,0 +1,588 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-01T11:46:44.600Z",
+  "browserPid": 10500,
+  "cdpPort": 4589,
+  "shots": [
+    {
+      "name": "L0-07-socket-wall",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-136,1.35,-3.6,0,-0.1&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L0-07-socket-wall.png",
+      "bytes": 1572264,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 23503,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": false,
+        "p": [
+          -136,
+          -0.25,
+          -3.6
+        ],
+        "cam": [
+          -136,
+          1.35,
+          -3.6
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.217,
+        "lumMax": 0.236,
+        "lumMin": 0.182,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 77,
+          "tex": 93,
+          "progs": 35
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":false,\"p\":[-136,-0.25,-3.6],\"cam\":[-136,1.35,-3.6],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.217,\"lumMax\":0.236,\"lumMin\":0.182,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":77,\"tex\":93,\"progs\":35}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L0-08-door-gap",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-140.5,1.6,-2.6,0,0.02&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L0-08-door-gap.png",
+      "bytes": 1592203,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 23858,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": false,
+        "p": [
+          -140.5,
+          0,
+          -2.6
+        ],
+        "cam": [
+          -140.5,
+          1.6,
+          -2.6
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.191,
+        "lumMax": 0.253,
+        "lumMin": 0.02,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 82,
+          "tex": 93,
+          "progs": 35
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":false,\"p\":[-140.5,0,-2.6],\"cam\":[-140.5,1.6,-2.6],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.191,\"lumMax\":0.253,\"lumMin\":0.02,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":82,\"tex\":93,\"progs\":35}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L0-09-lintel-lowangle",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-127.6,0.6,2.7,-1.5708,0.28&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L0-09-lintel-lowangle-NOTREADY.png",
+      "bytes": 1571279,
+      "ok": false,
+      "ready": false,
+      "camBlocked": true,
+      "waited": 75309,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": true,
+        "p": [
+          -127.6,
+          -1,
+          2.7
+        ],
+        "cam": [
+          -127.6,
+          0.6,
+          2.7
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 32,
+        "lum": 0.126,
+        "lumMax": 0.214,
+        "lumMin": 0.012,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 853,
+          "tex": 99,
+          "progs": 44
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":true,\"p\":[-127.6,-1,2.7],\"cam\":[-127.6,0.6,2.7],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":32,\"lum\":0.126,\"lumMax\":0.214,\"lumMin\":0.012,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":853,\"tex\":99,\"progs\":44}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L0-10-lintel-back",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-124.6,1.5,2.7,1.5708,0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L0-10-lintel-back.png",
+      "bytes": 1539734,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 28878,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": false,
+        "p": [
+          -124.6,
+          -0.1,
+          2.7
+        ],
+        "cam": [
+          -124.6,
+          1.5,
+          2.7
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.069,
+        "lumMax": 0.152,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 98,
+          "tex": 93,
+          "progs": 36
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":false,\"p\":[-124.6,-0.1,2.7],\"cam\":[-124.6,1.5,2.7],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.069,\"lumMax\":0.152,\"lumMin\":0,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":98,\"tex\":93,\"progs\":36}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L0-11-floor",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-118,1.3,1.2,0,-0.5&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L0-11-floor.png",
+      "bytes": 1589025,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 25713,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": false,
+        "p": [
+          -118,
+          -0.3,
+          1.2
+        ],
+        "cam": [
+          -118,
+          1.3,
+          1.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.111,
+        "lumMax": 0.224,
+        "lumMin": 0.025,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 112,
+          "tex": 93,
+          "progs": 35
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":false,\"p\":[-118,-0.3,1.2],\"cam\":[-118,1.3,1.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.111,\"lumMax\":0.224,\"lumMin\":0.025,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":112,\"tex\":93,\"progs\":35}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L0-12-switchgear",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?cam=-88,1.55,-18.2,0,0.14&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L0-12-switchgear.png",
+      "bytes": 1578024,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 24876,
+      "diag": {
+        "lv": 0,
+        "cols": 88,
+        "camBlocked": false,
+        "p": [
+          -88,
+          -0.05,
+          -18.2
+        ],
+        "cam": [
+          -88,
+          1.55,
+          -18.2
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.95,
+          "PlaneGeometry",
+          [
+            -107,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.085,
+        "lumMax": 0.14,
+        "lumMin": 0.006,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 37,
+          "tex": 93,
+          "progs": 34
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":0,\"cols\":88,\"camBlocked\":false,\"p\":[-88,-0.05,-18.2],\"cam\":[-88,1.55,-18.2],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"ffffff\",\"img\",\"nm\",0.95,\"PlaneGeometry\",[-107,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.085,\"lumMax\":0.14,\"lumMin\":0.006,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":37,\"tex\":93,\"progs\":34}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-10-vestibule-door",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=1,1.55,16.6,-0.62,0.06&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L37-10-vestibule-door.png",
+      "bytes": 1806318,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 35291,
+      "diag": {
+        "lv": 1,
+        "cols": 102,
+        "camBlocked": false,
+        "p": [
+          1,
+          -0.05,
+          16.6
+        ],
+        "cam": [
+          1,
+          1.55,
+          16.6
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.45,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.732,
+        "lumMax": 0.955,
+        "lumMin": 0.586,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 546,
+          "tex": 99,
+          "progs": 41
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":102,\"camBlocked\":false,\"p\":[1,-0.05,16.6],\"cam\":[1,1.55,16.6],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.45,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.732,\"lumMax\":0.955,\"lumMin\":0.586,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":546,\"tex\":99,\"progs\":41}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L37-11-equip-window",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=21.5,1.7,-10.5,-1.5708,0.02&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-QyYV35\\L37-11-equip-window.png",
+      "bytes": 1718267,
+      "ok": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 32632,
+      "diag": {
+        "lv": 1,
+        "cols": 102,
+        "camBlocked": false,
+        "p": [
+          21.5,
+          0.1,
+          -10.5
+        ],
+        "cam": [
+          21.5,
+          1.7,
+          -10.5
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "d2dbe0",
+          "img",
+          "nm",
+          0.45,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.663,
+        "lumMax": 0.694,
+        "lumMin": 0.607,
+        "budget": {
+          "meshes": 2143,
+          "inst": 131,
+          "lights": 67,
+          "tris": 397159,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 413,
+          "tex": 93,
+          "progs": 35
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":102,\"camBlocked\":false,\"p\":[21.5,0.1,-10.5],\"cam\":[21.5,1.7,-10.5],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"d2dbe0\",\"img\",\"nm\",0.45,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.663,\"lumMax\":0.694,\"lumMin\":0.607,\"budget\":{\"meshes\":2143,\"inst\":131,\"lights\":67,\"tris\":397159,\"calls\":1,\"rtris\":1,\"geos\":413,\"tex\":93,\"progs\":35}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

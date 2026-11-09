@@ -1,0 +1,15 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-cZfBsT
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-uoNSZs
+browser pid=10884 port=3629
+shot L37-22-shower-W OK bytes=1707710 ready=true camBlocked=false waited=42487ms frames=11 lum=0.172/0.246 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[-22,-0.05,5.36],"cam":[-22,1.55,5.36],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3561,"inst":170,"lights":66,"tris":434754,"calls":1,"rtris":1,"geos":1180,"tex":91,"progs":46}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-36-shower-E OK bytes=1697226 ready=true camBlocked=false waited=47436ms frames=10 lum=0.171/0.25 calls=1
+   diag {"lv":1,"p":[22,-0.05,5.36],"cam":[22,1.55,5.36],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3561,"inst":170,"lights":66,"tris":434754,"calls":1,"rtris":1,"geos":1226,"tex":89,"progs":46}}
+shot L37-37-shower-corridor OK bytes=1711259 ready=true camBlocked=false waited=43624ms frames=11 lum=0.181/0.298 calls=1
+   diag {"lv":1,"p":[-19.6,-0.1,5.34],"cam":[-19.6,1.5,5.34],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3561,"inst":170,"lights":66,"tris":434754,"calls":1,"rtris":1,"geos":1085,"tex":89,"progs":46}}
+shot L37-38-shower-inside OK bytes=1693768 ready=true camBlocked=false waited=42621ms frames=11 lum=0.148/0.202 calls=1
+   diag {"lv":1,"p":[-24.1,-0.08,3.55],"cam":[-24.1,1.52,3.55],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3561,"inst":170,"lights":66,"tris":434754,"calls":1,"rtris":1,"geos":1098,"tex":91,"progs":46}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-cZfBsT\shots-report.json
+SHOTS-OK 4

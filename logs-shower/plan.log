@@ -1,0 +1,194 @@
+
+== L37 房间与门洞 ==
+  OK   L37 房间互不重叠  [0 重叠]
+  OK   L37 z=24 gap[-2,2] 外墙  [lobby]
+  OK   L37 z=16 gap[-2,2]  [lobby + shoe]
+  OK   L37 x=-6 gap[13.2,14.8]  [shoe + lockW]
+  OK   L37 x=6 gap[13.2,14.8]  [shoe + lockE]
+  OK   L37 x=-6 gap[8,9.6]  [svc + lockW]
+  OK   L37 z=6 gap[-14,-11.6]  [lockW + shwW]
+  OK   L37 z=6 gap[11.6,14]  [lockE + shwE]
+  OK   L37 x=-6 gap[3,5]  [shwW + wetHall]
+  OK   L37 x=6 gap[3,5]  [shwE + wetHall]
+  OK   L37 z=2 gap[-4.6,-2.6]  [wetHall + spaB]
+  OK   L37 z=2 gap[-1.4,1.4]  [wetHall + wetSpine]
+  OK   L37 z=2 gap[2.6,4.6]  [wetHall + poolA]
+  OK   L37 x=-2 gap[-24,-20]  [spaA + wetSpine]
+  OK   L37 x=2 gap[-24,-20]  [wetSpine + poolA]
+  OK   L37 z=-12 gap[-16,-13]  [spaA + spaB]
+  OK   L37 x=-22 gap[-10,-6]  [spaB + sauna]
+  OK   L37 z=-28 gap[-18,-14]  [spaA + restLink]
+  OK   L37 z=-28 gap[-1.4,1.4]  [wetSpine + restLink]
+  OK   L37 z=-28 gap[16,20]  [poolA + restLink]
+  OK   L37 z=-20 gap[23.4,25.4]  [poolB + equip]
+  OK   L37 x=22 gap[-10,-6]  [poolA + poolB]
+
+== L37 连通与回环 ==
+  OK   L37 出生点在房间内  [lobby]
+  OK   L37 lobby → lobby 可达
+  OK   L37 lobby → shoe 可达
+  OK   L37 lobby → svc 可达
+  OK   L37 lobby → lockW 可达
+  OK   L37 lobby → lockE 可达
+  OK   L37 lobby → shwW 可达
+  OK   L37 lobby → shwE 可达
+  OK   L37 lobby → wetHall 可达
+  OK   L37 lobby → spaA 可达
+  OK   L37 lobby → spaB 可达
+  OK   L37 lobby → sauna 可达
+  OK   L37 lobby → wetSpine 可达
+  OK   L37 lobby → poolA 可达
+  OK   L37 lobby → poolB 可达
+  OK   L37 lobby → equip 可达
+  OK   L37 lobby → restLink 可达
+  OK   L37 环路数 5  [20 边 / 16 房]
+
+== L37 禁止直连 ==
+  OK   L37 forbiddenPairs 引用的房间 id 都存在  [0 个未知]
+  OK   L37 shoe 不直连 wetHall
+  OK   L37 shoe 不直连 wetSpine
+  OK   L37 svc 不直连 wetHall
+  OK   L37 svc 不直连 wetSpine
+  OK   L37 lobby 不直连 lockW
+  OK   L37 lobby 不直连 lockE
+  OK   L37 lobby 不直连 svc
+  OK   L37 equip 不直连 restLink
+  OK   L37 equip 不直连 poolA
+  OK   L37 sauna 不直连 restLink
+
+== L0 房间与门洞 ==
+  OK   L0 房间互不重叠  [0 重叠]
+  OK   L0 x=-140 gap[-0.9,0.9]  [entry + corr]
+  OK   L0 z=1.2 gap[-137.2,-135.4]  [corr + staff]
+  OK   L0 z=1.2 gap[-126.5,-124.7]  [corr + archive]
+  OK   L0 z=1.2 gap[-115.5,-113.7]  [corr + linen]
+  OK   L0 z=-1.2 gap[-126.5,-124.7]  [corr + maint]
+  OK   L0 z=-1.2 gap[-115.5,-113.7]  [corr + vest]
+  OK   L0 x=-131 gap[6,7.8]  [staff + archive]
+  OK   L0 x=-119 gap[-7.6,-5.8]  [maint + vest]
+  OK   L0 x=-119 gap[6,7.8]  [archive + linen]
+  OK   L0 x=-140 gap[-5.8,-4.2]  [entry + store]
+  OK   L0 x=-131 gap[-7.6,-5.8]  [maint + store]
+  OK   L0 x=-108 gap[-6.5,-3.5] 外墙  [vest]
+
+== L0 连通与回环 ==
+  OK   L0 出生点在房间内  [entry]
+  OK   L0 entry → entry 可达
+  OK   L0 entry → corr 可达
+  OK   L0 entry → staff 可达
+  OK   L0 entry → archive 可达
+  OK   L0 entry → linen 可达
+  OK   L0 entry → maint 可达
+  OK   L0 entry → vest 可达
+  OK   L0 entry → store 可达
+  OK   L0 环路数 4  [11 边 / 8 房]
+
+== L0 禁止直连 ==
+  OK   L0 forbiddenPairs 引用的房间 id 都存在  [0 个未知]
+  OK   L0 entry 不直连 maint
+  OK   L0 entry 不直连 vest
+  OK   L0 corr 不直连 store
+  OK   L0 staff 不直连 linen
+
+== L37 干湿顺序 ==
+  OK   lobby→wetHall 必经淋浴间  [shoe→lockW→shwW→wetHall]
+  OK   鞋区不直通湿区  [lobby,lockW,lockE]
+  OK   布草间不直通湿区  [lockW]
+  OK   设备间不是游客必经路（移除其门后湿区仍全通）
+
+== L37 池体净距 ==
+  OK   pool 位于房间内  [poolA]
+  OK   pool 四周绕池净距 ≥2.2m  [W6.0 E4.0 N2.8 S2.2]
+  OK   pool 尺寸 10.0×25.0m
+  OK   pool 单级台阶 ≤0.62m  [最大 0.40m]
+  OK   pool 台阶横向在池内
+  OK   pool 台阶 0 纵向在池内
+  OK   pool 台阶 1 纵向在池内
+  OK   pool 台阶 2 纵向在池内
+  OK   pool 台阶 3 纵向在池内
+  OK   hot 位于房间内  [spaA]
+  OK   hot 四周绕池净距 ≥2.2m  [W2.8 E13.2 N4.0 S4.0]
+  OK   hot 尺寸 10.0×8.0m
+  OK   hot 单级台阶 ≤0.62m  [最大 0.32m]
+  OK   hot 台阶横向在池内
+  OK   hot 台阶 0 纵向在池内
+  OK   hot 台阶 1 纵向在池内
+  OK   quiet 位于房间内  [spaA]
+  OK   quiet 四周绕池净距 ≥2.2m  [W16.0 E4.0 N6.0 S4.0]
+  OK   quiet 尺寸 6.0×6.0m
+  OK   quiet 单级台阶 ≤0.62m  [最大 0.28m]
+  OK   quiet 台阶横向在池内
+  OK   quiet 台阶 0 纵向在池内
+  OK   cold 位于房间内  [spaB]
+  OK   cold 四周绕池净距 ≥2.2m  [W2.8 E14.2 N2.2 S8.8]
+  OK   cold 尺寸 3.0×3.0m
+  OK   cold 单级台阶 ≤0.62m  [最大 0.42m]
+  OK   cold 台阶横向在池内
+  OK   cold 台阶 0 纵向在池内
+  OK   cold 台阶 1 纵向在池内
+  OK   仅主池设泳道
+  OK   主池 5 条泳道  [5]
+
+== L37 收集物与池中人 ==
+  OK   拾取 duck@11,-6 所属水体存在  [pool]
+  OK   拾取 duck 在 pool 水体内  [11,-6]
+  OK   拾取 ring@15.4,-16 所属水体存在  [pool]
+  OK   拾取 ring 在 pool 水体内  [15.4,-16]
+  OK   拾取 duck@-20,-18.5 所属水体存在  [hot]
+  OK   拾取 duck 在 hot 水体内  [-20,-18.5]
+  OK   拾取 ring@-23,-21 所属水体存在  [hot]
+  OK   拾取 ring 在 hot 水体内  [-23,-21]
+  OK   拾取 duck@-9,-18 所属水体存在  [quiet]
+  OK   拾取 duck 在 quiet 水体内  [-9,-18]
+  OK   拾取 ring@-8,-20.5 所属水体存在  [quiet]
+  OK   拾取 ring 在 quiet 水体内  [-8,-20.5]
+  OK   共 6 件收集物
+  OK   pool 分配 2 件  [2]
+  OK   hot 分配 2 件  [2]
+  OK   quiet 分配 2 件  [2]
+  OK   池中人点位 10,-6 在主池内
+  OK   池中人点位 15,-12 在主池内
+  OK   池中人点位 12,-19 在主池内
+  OK   池中人点位 16,-23 在主池内
+  OK   池中人点位 9,-15 在主池内
+  OK   池中人点位 13,-3 在主池内
+
+== L0 回环与出口 ==
+  OK   存在对外出口门
+  OK   出口位于服务前室  [vest]
+  OK   entry → vest 可达
+  OK   staff ↔ archive 回环 1 存在
+  OK   store ↔ maint 回环 2 存在
+  OK   L0 毛可走面积 760m² 在 700–880  [760]
+  OK   L0 外包 42×24m ≤ 44×26
+  OK   L0 出生点在房间内
+
+== L37 面积与尺度 ==
+  OK   L37 毛面积 2812m²
+  OK   lobby 尺度 20.0×8.0
+  OK   shoe 尺度 12.0×4.0
+  OK   svc 尺度 12.0×6.0
+  OK   lockW 尺度 22.0×10.0
+  OK   lockE 尺度 22.0×10.0
+  OK   shwW 尺度 22.0×4.0
+  OK   shwE 尺度 22.0×4.0
+  OK   wetHall 尺度 12.0×4.0
+  OK   spaA 尺度 26.0×16.0
+  OK   spaB 尺度 20.0×14.0
+  OK   sauna 尺度 6.0×8.0
+  OK   wetSpine 尺度 4.0×30.0
+  OK   poolA 尺度 20.0×30.0
+  OK   poolB 尺度 6.0×22.0
+  OK   equip 尺度 6.0×8.0
+  OK   restLink 尺度 56.0×4.0
+  OK   L37 出生点在房间内
+  OK   主汤/静汤在温泉厅内
+  OK   冷水池在 spaB 内
+  OK   桑拿间独立局部低顶  [SAUNA]
+
+== 负对照（旧几何必须被同一套判据判为不合法） ==
+  OK   旧 L0 外包 86×48 会被判超限  [86×48]
+  OK   旧主池坐标放进新泳池厅会被判绕池净距不足  [W-11.0]
+  OK   旧训练池坐标会越出新泳池厅（不能当合法水体）  [z-4..4 vs -28..2]
+
+PLAN-CHECK  pass=168 fail=0

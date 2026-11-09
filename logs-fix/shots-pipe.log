@@ -1,0 +1,11 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-nxsLCV
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-5S847R
+browser pid=3676 port=6625
+shot L0-12-switchgear OK bytes=1576804 ready=true camBlocked=false waited=22957ms frames=14 lum=0.084/0.141 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-88,-0.05,-18.2],"cam":[-88,1.55,-18.2],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2144,"inst":131,"lights":67,"tris":397171,"calls":1,"rtris":1,"geos":34,"tex":93,"progs":34}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L0-13-north-door-x128 OK bytes=1539793 ready=true camBlocked=false waited=24625ms frames=12 lum=0.173/0.242 calls=1
+   diag {"lv":0,"p":[-128.5,-0.05,-2.4],"cam":[-128.5,1.55,-2.4],"ray":[0,"StandardMaterial","ffffff","img","nm",0.95,"PlaneGeometry",[-107,0,0],0,0],"budget":{"meshes":2144,"inst":131,"lights":67,"tris":397171,"calls":1,"rtris":1,"geos":93,"tex":93,"progs":35}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-nxsLCV\shots-report.json
+SHOTS-OK 2

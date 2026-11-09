@@ -1,0 +1,13 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-FnpGbZ
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-obUWkG
+browser pid=32732 port=5587
+shot L0-32-entity-head OK bytes=2288165 ready=true camBlocked=false waited=36382ms frames=12 lum=0.132/0.188 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":0,"p":[-132.7,0.42,0.44],"cam":[-132.85,2.03,0.44],"ray":[0,"StandardMaterial","e4dac6","img","nm",0.95,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":2069,"tex":97,"progs":49}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+shot L37-34-pool-coping OK bytes=2154506 ready=true camBlocked=false waited=29139ms frames=11 lum=0.411/0.839 calls=1
+   diag {"lv":1,"p":[5.7,-0.3,-12],"cam":[5.7,1.3,-12],"ray":[0,"StandardMaterial","d9d2c4","img","nm",0.82,"ShapeGeometry",[0,0,0],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":1102,"tex":91,"progs":45}}
+shot L37-35-drowned-head FAIL bytes=1987475 ready=false camBlocked=true waited=75061ms frames=36 lum=0.535/0.907 calls=1
+   diag {"lv":1,"p":[9.95,-1.5,-12],"cam":[8.09,-0.13,-12],"ray":[-0.28,"ShaderMaterial","-","nomap","-","-","PlaneGeometry",[13,-0.28,-12.7],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":1058,"tex":91,"progs":44}}
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-FnpGbZ\shots-report.json
+SHOTS-DONE-WITH-ISSUES 1

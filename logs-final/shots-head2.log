@@ -1,0 +1,9 @@
+SHOT_DIR D:\AI\工作文件夹\游戏\shots12\shots12-P5YXTf
+PROFILE_DIR C:\Users\18269\AppData\Local\Temp\edge-l12-prof-HFWwjJ
+browser pid=44892 port=11642
+shot L37-35-drowned-head OK bytes=1963995 ready=true camBlocked=false waited=28765ms frames=11 lum=0.518/0.869 calls=1 NET_ERR=1 JS_ERR=1
+   diag {"lv":1,"p":[9.95,-1.5,-12],"cam":[8.68,-0.13,-12],"ray":[-0.28,"ShaderMaterial","-","nomap","-","-","PlaneGeometry",[13,-0.28,-12.7],0,0],"budget":{"meshes":3528,"inst":170,"lights":66,"tris":434207,"calls":1,"rtris":1,"geos":1055,"tex":91,"progs":44}}
+   NET 404 http://127.0.0.1:8571/favicon.ico
+   ERR Failed to load resource: the server responded with a status of 404 (Not Found)
+SHOT_REPORT D:\AI\工作文件夹\游戏\shots12\shots12-P5YXTf\shots-report.json
+SHOTS-OK 1

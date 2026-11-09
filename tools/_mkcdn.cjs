@@ -2,9 +2,12 @@
 // 旧版本把源工作区绝对路径写死在这里，
 // 一运行就会覆盖工作区以外的文件；现在所有路径都以本文件所在目录推导，
 // 只读写当前制作目录里的 backrooms-pool.html / backrooms-pool-online.html。
-// 用法：node tools/_mkcdn.cjs
+// 用法：node tools/_mkcdn.cjs          生成 CDN 版
+//       node tools/_mkcdn.cjs --check  只校验：online 版是否等于"本地版仅 importmap 两行不同"
 const fs = require('node:fs');
 const path = require('node:path');
+
+const CHECK_ONLY = process.argv.includes('--check');
 
 const root = path.resolve(__dirname, '..');
 const src = path.join(root, 'backrooms-pool.html');
@@ -37,6 +40,26 @@ for (const [exact, to, re] of PAIRS) {
 if (s.indexOf(CDN_BUILD) < 0 || s.indexOf(CDN_ADDONS) < 0) {
   throw new Error('替换后仍没有 CDN 地址，拒绝写出坏文件');
 }
+if (CHECK_ONLY) {
+  if (!fs.existsSync(dst)) {
+    console.error('CHECK-FAIL  没有 CDN 版文件：' + dst);
+    process.exit(1);
+  }
+  const cur = fs.readFileSync(dst, 'utf8');
+  if (cur === s) {
+    console.log('CHECK-OK  online 与本地版仅 importmap 两行不同（' + cur.length + ' 字节）');
+    process.exit(0);
+  }
+  let i = 0;
+  while (i < cur.length && i < s.length && cur[i] === s[i]) i++;
+  console.error('CHECK-FAIL  CDN 版与本地版不同步');
+  console.error('  expected bytes ' + s.length + ' / actual bytes ' + cur.length);
+  console.error('  首个差异偏移 ' + i);
+  console.error('  expected: ' + JSON.stringify(s.slice(i, i + 90)));
+  console.error('  actual  : ' + JSON.stringify(cur.slice(i, i + 90)));
+  process.exit(1);
+}
+
 // levels/ 与 textures/ 这些相对路径保持本地（随页面一起发布）
 fs.writeFileSync(dst, s, 'utf8');
 console.log('本地版 : ' + src);
