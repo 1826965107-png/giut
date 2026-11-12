@@ -10,33 +10,37 @@ function bx(ctx, ...args) { const m = ctx.addBox(...args); if (m) m.userData.l12
 function tagMesh(m) { if (m) m.userData.l12art = true; return m; }
 
 export function makeBoardTexture(THREE, lines, opts = {}) {
-  const W = opts.px || 512, H = opts.py || 256;
+  const W = opts.px || 1024, H = opts.py || 640;
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const g = c.getContext('2d');
-  g.fillStyle = opts.bg || '#2b2f30'; g.fillRect(0, 0, W, H);
-  // 深铜灰底 + 细铜色边框
-  g.strokeStyle = opts.edge || '#8a7550'; g.lineWidth = 6;
-  g.strokeRect(10, 10, W - 20, H - 20);
+  const palette = opts.variant === 'direction'
+    ? { bg: '#3f6870', ink: '#f3f6f1', secondary: '#d4e5e3', meta: '#b9d6d3', accent: '#b0ceca' }
+    : { bg: '#f1f3ef', ink: '#253e45', secondary: '#52696f', meta: '#668086', accent: '#6e9396' };
+  g.fillStyle = opts.bg || palette.bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = palette.accent;
+  g.fillRect(W * 0.045, H * 0.16, Math.max(2, W * 0.003), H * 0.68);
   const rows = Array.isArray(lines) ? lines : [lines];
-  const title = opts.title;
-  let y = H * 0.20;
-  if (title) {
-    g.fillStyle = opts.titleColor || '#f3ead6';
-    g.font = `bold ${Math.round(H * 0.17)}px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`;
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(title, W / 2, y);
-    y += H * 0.17;
-    g.strokeStyle = 'rgba(200,180,140,0.5)'; g.lineWidth = 3;
-    g.beginPath(); g.moveTo(W * 0.18, y - H * 0.05); g.lineTo(W * 0.82, y - H * 0.05); g.stroke();
-    y += H * 0.04;
-  }
   g.textAlign = 'left';
-  g.fillStyle = opts.text || '#e9e2d2';
-  g.font = `${Math.round(H * 0.085)}px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`;
-  for (const ln of rows) {
-    g.fillText(ln, W * 0.10, y);
-    y += H * 0.115;
+  g.textBaseline = 'middle';
+  const textWidth = W * (opts.arrow ? 0.66 : 0.83);
+  function line(text, y, size, color, weight = 400) {
+    const family = '"Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
+    g.font = `${weight} ${Math.round(size)}px ${family}`;
+    const measured = g.measureText(text).width;
+    if (measured > textWidth) g.font = `${weight} ${Math.floor(size * textWidth / measured)}px ${family}`;
+    g.fillStyle = color;
+    g.fillText(text, W * 0.085, y);
+  }
+  line(opts.meta || 'DIRECTORY', H * 0.15, H * 0.085, palette.meta, 500);
+  if (opts.title) line(opts.title, H * (rows.length > 1 ? 0.37 : 0.45), H * 0.23, palette.ink, 500);
+  for (let i = 0; i < rows.length; i++) {
+    line(rows[i], H * (rows.length > 1 ? 0.60 + i * 0.13 : 0.76), H * 0.105, palette.secondary);
+  }
+  if (opts.arrow) {
+    g.font = `400 ${Math.round(H * 0.34)}px "Segoe UI Symbol", sans-serif`;
+    g.textAlign = 'center'; g.fillStyle = palette.ink;
+    g.fillText(opts.arrow, W * 0.88, H * 0.48);
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -185,9 +189,17 @@ export function wainscot(ctx, room, doors, o = {}) {
     const cuts = (doors || []).filter(d => d.axis === e.axis && Math.abs(d.coord - e.coord) < 0.01)
       .map(d => [Math.max(e.a, d.gap[0]), Math.min(e.b, d.gap[1])])
       .filter(g => g[1] > g[0]).sort((p, q) => p[0] - q[0]);
+    // 门洞两侧各让出 4mm：护墙/压条端面若正好贴在洞口切面上，会与墙体切面同平面同朝向，
+  // 玩家斜看时沿洞口出现 z-fighting 虚线（门框闪烁的同类问题）。也让开 6mm 的门套立框内表面
+  // （端面在 -2.004，立框内表面在 -2.006，差 2mm，不会同面）。这几毫米裸墙藏在门套立框后面。
+  const CLEAR = 0.004;
     let cur = e.a;
     const segs = [];
-    for (const g of cuts) { if (g[0] > cur) segs.push([cur, g[0]]); cur = Math.max(cur, g[1]); }
+    for (const g of cuts) {
+      const end = g[0] - CLEAR;
+      if (end > cur) segs.push([cur, end]);
+      cur = Math.max(cur, Math.min(e.b, g[1] + CLEAR));
+    }
     if (cur < e.b) segs.push([cur, e.b]);
     // 贴合室内墙面：墙面在 coord ± wallT/2，板中心再向室内推 t/2 + 2mm
     const off = e.dir * (wallT / 2 + t / 2 + 0.002);
@@ -257,20 +269,19 @@ export function drainGrates(ctx, pool, o = {}) {
   return inst;
 }
 
-/* 真实墙面指示牌：深铜灰底 + 暖白字，背板与墙留 2mm，边框不穿柱 */
+/* 瓷白哑光导览牌：灰蓝文字、细金属收边，安装在真实墙面上。 */
 export function wallBoard(ctx, o) {
   const { THREE, scene } = ctx;
   const tex = makeBoardTexture(THREE, o.lines || [], {
-    title: o.title, bg: o.bg || '#2b2f30', text: o.text || '#ece4d2',
-    edge: o.edge || '#8a7550', px: o.px, py: o.py,
+    title: o.title, bg: o.bg, meta: o.meta, px: o.px, py: o.py,
   });
   const w = o.w || 1.6, h = o.h || 0.9;
-  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.72, metalness: 0.12, emissive: 0x1a1712, emissiveIntensity: 0.25 });
+  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.94, metalness: 0, envMapIntensity: 0.1 });
   const isZ = (o.face || 'z+')[0] === 'z';
-  bx(ctx, isZ ? w + 0.06 : 0.05, h + 0.06, isZ ? 0.05 : w + 0.06, o.x, o.y, o.z, ctx.mats.metal || ctx.mats.trim, 1.0);
+  bx(ctx, isZ ? w + 0.025 : 0.03, h + 0.025, isZ ? 0.03 : w + 0.025, o.x, o.y, o.z, ctx.mats.metal || ctx.mats.trim, 1.0);
   const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-  face.position.set(o.x + (o.face === 'x+' ? 0.031 : o.face === 'x-' ? -0.031 : 0),
-    o.y, o.z + (o.face === 'z+' ? 0.031 : o.face === 'z-' ? -0.031 : 0));
+  face.position.set(o.x + (o.face === 'x+' ? 0.016 : o.face === 'x-' ? -0.016 : 0),
+    o.y, o.z + (o.face === 'z+' ? 0.016 : o.face === 'z-' ? -0.016 : 0));
   if (o.face === 'x+') face.rotation.y = Math.PI / 2;
   if (o.face === 'x-') face.rotation.y = -Math.PI / 2;
   if (o.face === 'z-') face.rotation.y = Math.PI;

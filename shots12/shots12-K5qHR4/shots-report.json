@@ -1,0 +1,482 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-12T11:43:39.268Z",
+  "browserPid": 2144,
+  "cdpPort": 10591,
+  "shots": [
+    {
+      "name": "DF-01-lobby-shoe-front",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0.6,1.62,20.2,0.136,0.0&camseq=0.020,0.004,0.0022,0,90&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-lobby-shoe-front.png",
+      "bytes": 1753073,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-lobby-shoe-front-f2.png",
+          "bytes": 1757182
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-lobby-shoe-front-f3.png",
+          "bytes": 1757996
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-lobby-shoe-front-f4.png",
+          "bytes": 1758319
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-lobby-shoe-front-f5.png",
+          "bytes": 1762247
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-lobby-shoe-front-f6.png",
+          "bytes": 1763764
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 47265,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          0.6,
+          0.02,
+          20.2
+        ],
+        "cam": [
+          0.78,
+          1.62,
+          20.24
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 9,
+        "lum": 0.727,
+        "lumMax": 0.865,
+        "lumMin": 0.45,
+        "budget": {
+          "meshes": 3470,
+          "inst": 170,
+          "lights": 66,
+          "tris": 435306,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1398,
+          "tex": 85,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[0.6,0.02,20.2],\"cam\":[0.78,1.62,20.24],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":9,\"lum\":0.727,\"lumMax\":0.865,\"lumMin\":0.45,\"budget\":{\"meshes\":3470,\"inst\":170,\"lights\":66,\"tris\":435306,\"calls\":1,\"rtris\":1,\"geos\":1398,\"tex\":85,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "DF-02-lobby-shoe-oblique",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-2.2,1.62,19.4,0.30,-0.02&camseq=0.022,0.006,0.0026,0,90&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-02-lobby-shoe-oblique.png",
+      "bytes": 1777141,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-02-lobby-shoe-oblique-f2.png",
+          "bytes": 1779252
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-02-lobby-shoe-oblique-f3.png",
+          "bytes": 1783693
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-02-lobby-shoe-oblique-f4.png",
+          "bytes": 1781026
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-02-lobby-shoe-oblique-f5.png",
+          "bytes": 1782871
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-02-lobby-shoe-oblique-f6.png",
+          "bytes": 1784275
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 49657,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          -2.2,
+          0.02,
+          19.4
+        ],
+        "cam": [
+          -2,
+          1.62,
+          19.45
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 9,
+        "lum": 0.73,
+        "lumMax": 0.843,
+        "lumMin": 0.212,
+        "budget": {
+          "meshes": 3470,
+          "inst": 170,
+          "lights": 66,
+          "tris": 435306,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1371,
+          "tex": 85,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[-2.2,0.02,19.4],\"cam\":[-2,1.62,19.45],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":9,\"lum\":0.73,\"lumMax\":0.843,\"lumMin\":0.212,\"budget\":{\"meshes\":3470,\"inst\":170,\"lights\":66,\"tris\":435306,\"calls\":1,\"rtris\":1,\"geos\":1371,\"tex\":85,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "DF-03-lobby-shoe-up",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0.4,1.62,18.6,0.10,0.34&camseq=0.022,0.004,0.0024,0,90&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-lobby-shoe-up.png",
+      "bytes": 1790795,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-lobby-shoe-up-f2.png",
+          "bytes": 1790524
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-lobby-shoe-up-f3.png",
+          "bytes": 1788325
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-lobby-shoe-up-f4.png",
+          "bytes": 1794606
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-lobby-shoe-up-f5.png",
+          "bytes": 1794156
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-lobby-shoe-up-f6.png",
+          "bytes": 1799780
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 57997,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          0.4,
+          0.02,
+          18.6
+        ],
+        "cam": [
+          0.62,
+          1.62,
+          18.64
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 10,
+        "lum": 0.786,
+        "lumMax": 0.828,
+        "lumMin": 0.656,
+        "budget": {
+          "meshes": 3470,
+          "inst": 170,
+          "lights": 66,
+          "tris": 435306,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1388,
+          "tex": 85,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[0.4,0.02,18.6],\"cam\":[0.62,1.62,18.64],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":10,\"lum\":0.786,\"lumMax\":0.828,\"lumMin\":0.656,\"budget\":{\"meshes\":3470,\"inst\":170,\"lights\":66,\"tris\":435306,\"calls\":1,\"rtris\":1,\"geos\":1388,\"tex\":85,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "DF-01-OLD-lobby-shoe-front",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0.6,1.62,20.2,0.136,0.0&camseq=0.020,0.004,0.0022,0,90&oldcasing=1&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-OLD-lobby-shoe-front.png",
+      "bytes": 1755326,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-OLD-lobby-shoe-front-f2.png",
+          "bytes": 1756091
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-OLD-lobby-shoe-front-f3.png",
+          "bytes": 1755582
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-OLD-lobby-shoe-front-f4.png",
+          "bytes": 1758206
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-OLD-lobby-shoe-front-f5.png",
+          "bytes": 1758729
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-01-OLD-lobby-shoe-front-f6.png",
+          "bytes": 1761835
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 63427,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          0.6,
+          0.02,
+          20.2
+        ],
+        "cam": [
+          0.84,
+          1.62,
+          20.25
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 12,
+        "lum": 0.724,
+        "lumMax": 0.866,
+        "lumMin": 0.439,
+        "budget": {
+          "meshes": 3533,
+          "inst": 170,
+          "lights": 66,
+          "tris": 436062,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1461,
+          "tex": 85,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[0.6,0.02,20.2],\"cam\":[0.84,1.62,20.25],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":12,\"lum\":0.724,\"lumMax\":0.866,\"lumMin\":0.439,\"budget\":{\"meshes\":3533,\"inst\":170,\"lights\":66,\"tris\":436062,\"calls\":1,\"rtris\":1,\"geos\":1461,\"tex\":85,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "DF-03-OLD-lobby-shoe-up",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0.4,1.62,18.6,0.10,0.34&camseq=0.022,0.004,0.0024,0,90&oldcasing=1&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-OLD-lobby-shoe-up.png",
+      "bytes": 1795331,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-OLD-lobby-shoe-up-f2.png",
+          "bytes": 1795147
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-OLD-lobby-shoe-up-f3.png",
+          "bytes": 1796019
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-OLD-lobby-shoe-up-f4.png",
+          "bytes": 1790779
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-OLD-lobby-shoe-up-f5.png",
+          "bytes": 1803950
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-K5qHR4\\DF-03-OLD-lobby-shoe-up-f6.png",
+          "bytes": 1805789
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 60657,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          0.4,
+          0.02,
+          18.6
+        ],
+        "cam": [
+          0.6,
+          1.62,
+          18.64
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 9,
+        "lum": 0.725,
+        "lumMax": 0.825,
+        "lumMin": 0.221,
+        "budget": {
+          "meshes": 3533,
+          "inst": 170,
+          "lights": 66,
+          "tris": 436062,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1450,
+          "tex": 85,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[0.4,0.02,18.6],\"cam\":[0.6,1.62,18.64],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":9,\"lum\":0.725,\"lumMax\":0.825,\"lumMin\":0.221,\"budget\":{\"meshes\":3533,\"inst\":170,\"lights\":66,\"tris\":436062,\"calls\":1,\"rtris\":1,\"geos\":1450,\"tex\":85,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

@@ -464,7 +464,7 @@ import { createLevel4, L4_OX, L4_LEVEL, TUNNEL_LAYER } from './levels/level4-tun
 /* Level 12 v2 平面（房间 / 门洞 / 水体 / 出生点 / 收集物），宿主与 Node 灰盒校验共用 */
 import * as L12P from './levels/l12-plan.js';
 import { createL37Props, L37_PROPS as L12_PROPS_DATA, L37_LAMPS as L12_LAMPS_DATA } from './levels/l12-props.js';
-import { panelCeiling, slatCeiling, beamRibs, linearCove, wainscot, drainGrates, wallBoard, L12_DRAIN_RECTS } from './levels/l12-art.js';
+import { panelCeiling, slatCeiling, beamRibs, linearCove, wainscot, drainGrates, wallBoard, L12_DRAIN_RECTS, makeBoardTexture } from './levels/l12-art.js';
 import { createL0V2 } from './levels/l12-l0.js';
 
 RectAreaLightUniformsLib.init();
@@ -1218,7 +1218,8 @@ function addDeck(x1, z1, x2, z2, holes, set, opts) {
 
 /* ---------------- 泳池建造 ---------------- */
 // 池内马赛克：全场景共享一个材质（原图直用，重复比例由几何 UV 承担）
-const poolMatShared = physicalMat(poolMosaic, 1, 1, { roughness: 0.42, clearcoat: 0.22, clearcoatRoughness: 0.5 });
+const poolMatShared = physicalMat(poolMosaic, 1, 1, { ns: 0.12, roughness: 0.30, metalness: 0, clearcoat: 0.38, clearcoatRoughness: 0.24, env: 0.85, color: 0xf4ffff });
+poolMatShared.roughnessMap = null;
 const poolAreaMat = () => poolMatShared;
 
 /* 水底焦散（AI 原图 + 缓慢滚动） */
@@ -1309,7 +1310,7 @@ const l37ColumnBases = [];      // 结构柱底座（真实 Box3 供测试做相
 const L37_WALL_COV = 1.6;       // 墙砖贴图的米制周期（与重构前一致，仅改为世界坐标 UV）
 
 /* ================= v2 外壳：平面数据 → 地面 / 墙体 / 门洞 / 门楣 / 天花 / 柱 ================= */
-/* 一套材料家族（暖灰米色石砖地、暖白矿物墙、灰绿池内小砖、烟熏浅木、深铜灰五金）：
+/* 一套材料家族（浅灰防滑地砖、白色釉面墙砖、灰绿池内小砖、烟熏浅木、深铜灰五金）：
    同一套材质在整层复用，干湿区靠构造与光色区分，不靠逐房换色。 */
 const L12_TEX = {
   floor: 'assets-v2/l12-v2-spa-floor.png',
@@ -1318,27 +1319,33 @@ const L12_TEX = {
   wood: 'assets-v2/l12-v2-smoked-oak.png',
   wallpaper: 'assets-v2/l12-v2-wallpaper.png',
   carpet: 'assets-v2/l12-v2-carpet.png',
+  ceramicFloor: 'assets-v2/l37-porcelain-floor.png',
+  ceramicWall: 'assets-v2/l37-porcelain-wall.png',
 };
 const L12_COV = { floor: 2.4, plaster: 2.0, mosaic: 0.4, wood: 2.0, wallpaper: 2.0, carpet: 2.0 };
-const l12SpaFloorSet = { diffuse: L12_TEX.floor, normal: null, rough: null, coverageX: L12_COV.floor, coverageY: L12_COV.floor };
-const l12SpaWallSet = { diffuse: L12_TEX.plaster, normal: null, rough: null, coverageX: L12_COV.plaster, coverageY: L12_COV.plaster };
+const l12SpaFloorSet = { diffuse: L12_TEX.ceramicFloor, normal: null, rough: null, coverageX: L12_COV.floor, coverageY: L12_COV.floor };
+const l12SpaWallSet = { diffuse: L12_TEX.ceramicWall, normal: null, rough: null, coverageX: L12_COV.plaster, coverageY: L12_COV.plaster };
 const l12WoodSet = { diffuse: L12_TEX.wood, normal: null, rough: null, coverageX: L12_COV.wood, coverageY: L12_COV.wood };
-// 石材：低反光防滑（metalness 0、无 clearcoat；显式去掉派生粗糙度贴图以免把粗糙度乘低）
-const l12SpaFloorMat = matFor(l12SpaFloorSet, 1 / L12_COV.floor, 1 / L12_COV.floor,
-  { ns: 0.12, roughness: 0.82, metalness: 0.0, env: 0.25, color: 0xd9d2c4 });
+// 瓷砖使用非金属釉面，地砖保留较高粗糙度，墙砖与池内砖反射更清晰。
+const l12SpaFloorMat = physicalMat(l12SpaFloorSet, 1 / L12_COV.floor, 1 / L12_COV.floor,
+  { ns: 0.08, roughness: 0.46, clearcoat: 0.20, clearcoatRoughness: 0.36, metalness: 0.0, env: 0.65, color: 0xffffff });
 l12SpaFloorMat.roughnessMap = null; l12SpaFloorMat.name = 'l12SpaFloor';
-const l12SpaWallMat = matFor(l12SpaWallSet, 1 / L12_COV.plaster, 1 / L12_COV.plaster,
-  { ns: 0.14, roughness: 0.9, metalness: 0.0, env: 0.2, color: 0xe6e0d2 });
+const l12SpaWallMat = physicalMat(l12SpaWallSet, 1 / L12_COV.plaster, 1 / L12_COV.plaster,
+  { ns: 0.08, roughness: 0.24, clearcoat: 0.45, clearcoatRoughness: 0.23, metalness: 0.0, env: 0.9, color: 0xffffff });
 l12SpaWallMat.roughnessMap = null; l12SpaWallMat.name = 'l12SpaWall';
+const l12SpaWainscotMat = l12SpaWallMat.clone();
+l12SpaWainscotMat.color.set(0xc7e4e8);
 const l12WoodMat = matFor(l12WoodSet, 1 / L12_COV.wood, 1 / L12_COV.wood,
   { ns: 0.10, roughness: 0.78, metalness: 0.0, env: 0.2, color: 0xb08a63 });
 l12WoodMat.roughnessMap = null; l12WoodMat.name = 'l12SmokedOak';
 const l12MetalMat = new THREE.MeshStandardMaterial({ color: 0x5d5b55, roughness: 0.42, metalness: 0.72 });
-const l12CopingMat = (() => { const m = matFor({ diffuse: L12_TEX.floor, coverageX: 2.4, coverageY: 2.4 }, 1 / 2.4, 1 / 2.4, { ns: 0.12, roughness: 0.78, metalness: 0.0, env: 0.12, color: 0xd2cbbe }); m.roughnessMap = null; m.name = 'l12Coping'; return m; })();
+const l12CopingMat = physicalMat(l12SpaFloorSet, 1 / L12_COV.floor, 1 / L12_COV.floor,
+  { ns: 0.08, roughness: 0.36, clearcoat: 0.30, clearcoatRoughness: 0.3, metalness: 0, env: 0.75, color: 0xffffff });
+l12CopingMat.roughnessMap = null; l12CopingMat.name = 'l12Coping';
 const l12CeilMat = new THREE.MeshStandardMaterial({ color: 0x22262a, roughness: 0.96, metalness: 0.02 });
 const l12CeilSet = { diffuse: L12_TEX.plaster, coverageX: 2.0, coverageY: 2.0 };
 const l12BoardBarMat = new THREE.MeshStandardMaterial({ color: 0xa9a294, roughness: 0.82, metalness: 0.12 });
-const l12CeilPanelMat = matFor(l12CeilSet, 0.5, 0.5, { ns: 0.10, roughness: 0.95, metalness: 0.0, env: 0.05, color: 0xdcd7cbece2 });
+const l12CeilPanelMat = matFor(l12CeilSet, 0.5, 0.5, { ns: 0.10, roughness: 0.95, metalness: 0.0, env: 0.05, color: 0xe5edf0 });
 l12CeilPanelMat.roughnessMap = null; l12CeilPanelMat.name = 'l12CeilPanel';
 
 const L12_SHELL_LOG = { walls: 0, headers: 0, doorways: 0, ceilings: 0, columns: 0 };
@@ -1369,6 +1376,15 @@ function l12Subtract(segs, gap) {
 }
 if (L12_V2_SHELL) {
   const WT = 0.24, DOOR_H = 2.3;
+  // 门套几何常量（修复门框移动时闪烁：原先立框内侧面与墙洞切面同平面、上沿底面与门楣底面同平面，
+  // 透视变化时两片表面深度相等，光栅化互相争夺 → 门框边缘/门头跳动）。
+  // 现在的做法是外贴式门套：立框整块落在墙体实体一侧、内边缘退让 CASING_GAP（6mm）不再与墙洞切面共面；
+  // 上沿底面正好等于名义门高（洞口净空不变），门楣实体整体抬高 CASING_GAP 让出这层薄片，
+  // 立框顶端伸入上沿实体内部（CASING_JOINT_IN），上沿在墙厚方向比立框前后每侧各凸出 5mm
+  // （总厚度差 10mm：0.28 → 0.29，避免正面同面）、两端各压出 CASING_LAP，
+  // 因此门头两角没有任何重复同面。所有偏移都是 mm 级工艺缝，不是靠 renderOrder 或全局画质掩盖。
+  const CASING_W = 0.07, CASING_PROUD = 0.02, CASING_GAP = 0.006;
+  const CASING_HEAD_EXTRA = 0.05, CASING_LAP = 0.008, CASING_JOINT_IN = 0.03;
   // 1) 地面：整层一块 deck，四个水体开洞（洞与池体同一份坐标）
   addDeck(BOUNDS.x1, BOUNDS.z1, BOUNDS.x2, BOUNDS.z2, L37_FLOOR_HOLES, l12SpaFloorSet, { mat: l12SpaFloorMat });
   // 2) 墙体：由房间矩形并集生成，门洞切成段，门头补真实门楣
@@ -1412,9 +1428,11 @@ if (L12_V2_SHELL) {
     const top = Math.min(H, Math.max(...rooms.map(l12RoomH), doorH));
     const gapW = d.gap[1] - d.gap[0], mid = (d.gap[0] + d.gap[1]) / 2;
     if (top - doorH > 0.02) {
+      // 门楣底面抬高 6mm：让出上门套那一层薄片，避免与门套上沿底面共用同一水平面
+      const lh = top - doorH - CASING_GAP;
       const head = d.axis === 'z'
-        ? addWorldUVBox(gapW, top - doorH, WT, mid, doorH + (top - doorH) / 2, d.coord, l12SpaWallMat, 1.0)
-        : addWorldUVBox(WT, top - doorH, gapW, d.coord, doorH + (top - doorH) / 2, mid, l12SpaWallMat, 1.0);
+        ? addWorldUVBox(gapW, lh, WT, mid, doorH + CASING_GAP + lh / 2, d.coord, l12SpaWallMat, 1.0)
+        : addWorldUVBox(WT, lh, gapW, d.coord, doorH + CASING_GAP + lh / 2, mid, l12SpaWallMat, 1.0);
       head.name = 'l12Lintel';
       l37Headers.push({ axis: d.axis, coord: d.coord, gap: d.gap.slice(), doorH, top, mesh: head });
       COLLIDERS.push(d.axis === 'z'
@@ -1422,14 +1440,41 @@ if (L12_V2_SHELL) {
         : { x1: d.coord - WT / 2, x2: d.coord + WT / 2, z1: d.gap[0], z2: d.gap[1], y1: doorH, y2: top, kind: 'poolHeader' });
       L12_SHELL_LOG.headers++;
     }
-    // 门套：两侧贴脸（0.07 宽）+ 上沿，端部压在立框上，不做成悬空大梁
+    // 门套：两侧外贴立框（0.07 宽，内边缘退让 6mm 离开墙洞切面）+ 上沿（底面=名义门高，
+    // 比立框前后每侧各凸出 5mm（总厚度差 10mm）、两端各压出 8mm，立框顶端伸入上沿实体 30mm，因此门头两角不存在同面重复）
+    const jambH = doorH + CASING_JOINT_IN;
     for (const side of [-1, 1]) {
-      const u = mid + side * (gapW / 2 + 0.035);
-      if (d.axis === 'z') addBox(0.07, doorH, WT + 0.04, u, doorH / 2, d.coord, l12MetalMat);
-      else addBox(WT + 0.04, doorH, 0.07, d.coord, doorH / 2, u, l12MetalMat);
+      const u = mid + side * (gapW / 2 + CASING_GAP + CASING_W / 2);
+      const jamb = d.axis === 'z'
+        ? addBox(CASING_W, jambH, WT + CASING_PROUD * 2, u, jambH / 2, d.coord, l12MetalMat)
+        : addBox(WT + CASING_PROUD * 2, jambH, CASING_W, d.coord, jambH / 2, u, l12MetalMat);
+      if (jamb) jamb.name = 'l12CasingJamb';
     }
-    if (d.axis === 'z') addBox(gapW + 0.14, 0.07, WT + 0.04, mid, doorH + 0.035, d.coord, l12MetalMat);
-    else addBox(WT + 0.04, 0.07, gapW + 0.14, d.coord, doorH + 0.035, mid, l12MetalMat);
+    const headW = gapW + 2 * (CASING_GAP + CASING_W) + 2 * CASING_LAP;
+    const headBar = d.axis === 'z'
+      ? addBox(headW, CASING_W, WT + CASING_HEAD_EXTRA, mid, doorH + CASING_W / 2, d.coord, l12MetalMat)
+      : addBox(WT + CASING_HEAD_EXTRA, CASING_W, headW, d.coord, doorH + CASING_W / 2, mid, l12MetalMat);
+    if (headBar) headBar.name = 'l12CasingHead';
+  }
+  // 诊断专用：`?cam=…&oldcasing=1` 在真实页面里还原修复前的门套（立框内侧面贴墙洞切面、
+  // 上沿底面与门楣底面同高），用于在真实 WebGL 下做"新旧构造同机位相邻帧"的 A/B 录像。
+  // 正常游玩（无 ?cam=）与所有 Node 检查都不会创建这些网格。
+  if (new URLSearchParams(location.search).get('cam') && new URLSearchParams(location.search).get('oldcasing') === '1') {
+    for (const d of L37_DOORS_V2) {
+      const doorH = d.h == null ? DOOR_H : d.h;
+      const gapW = d.gap[1] - d.gap[0], mid = (d.gap[0] + d.gap[1]) / 2;
+      for (const side of [-1, 1]) {
+        const u = mid + side * (gapW / 2 + 0.035);
+        const j = d.axis === 'z'
+          ? addBox(0.07, doorH, WT + 0.04, u, doorH / 2, d.coord, l12MetalMat)
+          : addBox(WT + 0.04, doorH, 0.07, d.coord, doorH / 2, u, l12MetalMat);
+        if (j) j.name = 'l12OldCasingJamb';
+      }
+      const hb = d.axis === 'z'
+        ? addBox(gapW + 0.14, 0.07, WT + 0.04, mid, doorH + 0.035, d.coord, l12MetalMat)
+        : addBox(WT + 0.04, 0.07, gapW + 0.14, d.coord, doorH + 0.035, mid, l12MetalMat);
+      if (hb) hb.name = 'l12OldCasingHead';
+    }
   }
   // 4) 天花：木格栅（接待/更衣/桑拿）+ 矿物板与结构梁（湿区），带灯槽与线性灯
   const artCtx = {
@@ -1455,10 +1500,9 @@ if (L12_V2_SHELL) {
     }
     L12_SHELL_LOG.ceilings++;
   }
-  // 4b) 墙裙：湿区石材、干区木饰面（下部 0.72m + 细压条），避开门洞
+  // 4b) 浅水青瓷砖墙裙（下部 0.72m + 细压条），桑拿使用木饰面，门洞保持净空。
   for (const r of L37_ROOMS_V2) {
-    const stone = HALLS.has(r.id);
-    wainscot(artCtx, r, L37_DOORS_V2, { h: 0.72, mat: stone ? l12SpaWallMat : l12WoodMat });
+    wainscot(artCtx, r, L37_DOORS_V2, { h: 0.72, mat: r.id === 'sauna' ? l12WoodMat : l12SpaWainscotMat });
   }
   // 4c) 高侧磨砂窗：池厅东墙 / 温泉厅西墙（窗台与上沿齐全，只做发光面，不新增点光）
   {
@@ -1555,29 +1599,15 @@ function buildPool(p) {
 
   // 石质池沿压顶（同家族石材、2.4m 米制纹理周期、细收边）；旧青绿塑料条与旧灰格栅停用
   const copW = 0.52, copH = 0.10;
-  addWorldUVBox(W + copW * 2, copH, copW, cx, copH / 2, p.zDeep1 - copW / 2, l12CopingMat, 2.4);
-  addWorldUVBox(W + copW * 2, copH, copW, cx, copH / 2, p.zEnd + copW / 2, l12CopingMat, 2.4);
-  addWorldUVBox(copW, copH, fullLen, p.x1 - copW / 2, copH / 2, zc, l12CopingMat, 2.4);
-  addWorldUVBox(copW, copH, fullLen, p.x2 + copW / 2, copH / 2, zc, l12CopingMat, 2.4);
+  addWorldUVBox(W + copW * 2, copH, copW, cx, copH / 2, p.zDeep1 - copW / 2, l12CopingMat, 1.0);
+  addWorldUVBox(W + copW * 2, copH, copW, cx, copH / 2, p.zEnd + copW / 2, l12CopingMat, 1.0);
+  addWorldUVBox(copW, copH, fullLen, p.x1 - copW / 2, copH / 2, zc, l12CopingMat, 1.0);
+  addWorldUVBox(copW, copH, fullLen, p.x2 + copW / 2, copH / 2, zc, l12CopingMat, 1.0);
   // 排水格栅只由 drainGrates（窄槽 + 实例化格栅）负责
 
-  // 不锈钢扶梯只给游泳主池；汤池/冷池改为靠台阶边的简洁抓扶栏杆（不穿坐台、不挡出池）
+  // 不锈钢扶梯用于主泳池，小池通过原有实体台阶出入。
   const metal = new THREE.MeshStandardMaterial({ color: 0xe4ebee, metalness: 1.0, roughness: 0.22 });
-  if (p.name !== 'pool') {
-    const railX = (p.stairs ? p.stairs.x2 : p.x1 + 0.6) + 0.14;
-    const railZ = p.zEnd - 0.45;
-    for (const dz of [0.32, -0.34]) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 1.02, 12), metal);
-      post.position.set(railX, 0.51, railZ + dz); scene.add(post);
-      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.05, 12), metal);
-      foot.position.set(railX, 0.03, railZ + dz); scene.add(foot);
-    }
-    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.78, 12), metal);
-    bar.rotation.x = Math.PI / 2; bar.position.set(railX, 1.00, railZ); scene.add(bar);
-    const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.5, 10), metal);
-    drop.position.set(railX, 0.62, railZ + 0.30); scene.add(drop);
-    COLLIDERS.push({ x1: railX - 0.06, x2: railX + 0.06, z1: railZ - 0.38, z2: railZ + 0.36, y1: 0, y2: 1.02, kind: 'grabRail' });
-  } else [cx - 1.6, cx + 1.6].forEach(lx => {
+  if (p.name === 'pool') [cx - 1.6, cx + 1.6].forEach(lx => {
     [-0.45, 0.45].forEach(dx => {
       const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.1, 14), metal);
       rail.position.set(lx + dx, 0.1, p.zDeep1 + 0.55); scene.add(rail);
@@ -1671,12 +1701,12 @@ for (const p of POOLS) {
 /* 池深标识（Canvas 贴花） */
 const l37DeckSigns = [];
 function l37DeckSign(text, sub, x, z, ry, w = 1.5, h = 0.9) {
-  const c = makeCanvas(256, 160), g = c.getContext('2d');
-  g.fillStyle = '#1d4a5a'; g.fillRect(0, 0, 256, 160);
-  g.strokeStyle = '#9ff0e6'; g.lineWidth = 5; g.strokeRect(6, 6, 244, 148);
-  g.fillStyle = '#eafcff'; g.font = 'bold 74px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, 128, 62);
-  g.font = 'bold 34px Arial'; g.fillStyle = '#b6e9e2'; g.fillText(sub, 128, 122);
+  const c = makeCanvas(512, 256), g = c.getContext('2d');
+  g.fillStyle = '#e8efed'; g.fillRect(0, 0, 512, 256);
+  g.fillStyle = '#6e9396'; g.fillRect(20, 32, 3, 192);
+  g.fillStyle = '#29474f'; g.font = '500 100px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, 270, 100);
+  g.font = '28px "Microsoft YaHei", sans-serif'; g.fillStyle = '#52696f'; g.fillText(sub, 270, 196, 440);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), decalMat(t));
   mesh.rotation.set(-Math.PI / 2, 0, ry || 0);
@@ -1734,7 +1764,6 @@ if (L12_V2_SHELL) {
     THREE, scene, addBox, addWorldUVBox, matFor,
     L12_TEX, L12_COV, l12WoodMat, l12MetalMat, l12SpaWallMat,
     COLLIDERS, lamp: l37Lamp, sign: l37DeckSign, L12P, roomHeight: l12RoomH,
-    makeSignTexture,
     boardTexture: (title, lines, opts) => makeBoardTexture(THREE, lines, Object.assign({ title }, opts || {})),
     addSteam: (x, y, z, r) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(r * 2, r * 1.2),
@@ -1747,8 +1776,8 @@ if (L12_V2_SHELL) {
   wallBoard({ THREE, scene, addBox, addWorldUVBox, COLLIDERS,
     mats: { trim: l12MetalMat, metal: l12MetalMat } },
     { x: -4.2, y: 1.60, z: 16.145, face: 'z+', w: 1.76, h: 1.02,
-      title: '会所总导览',
-      lines: ['更衣 A/B → 淋浴 A/B → 湿区', '游泳厅 25m · 温泉厅 · 静汤 · 冷池', '桑拿 · 北休息廊 · 设备间(员工)'] });
+      title: '浴场导览', meta: '00 / DIRECTORY',
+      lines: ['更衣 A / B   →   淋浴   →   湿区', '游泳厅 25 m   /   温泉 · 静汤 · 冷池', '北侧休息廊   /   桑拿'] });
 }
 
 function l37LockerTex() {
@@ -2170,7 +2199,7 @@ function updatePoolHorror(dt) {
     if (poolDark.dur <= 0) {
       poolDark.active = false;
       poolDark.timer = 26 + Math.random() * 20;
-      hemi.intensity = 0.5;
+      hemi.intensity = 0.72;
       for (const L of poolLights) { L.light.intensity = L.base; if (L.fxMat) L.fxMat.emissiveIntensity = 4.4; }
       if (inMainPool && distToWatcher < 2.4 && Math.abs(player.y - watcher.position.y) < 2.6
         && watcherCanReachPlayer() && horrorCooldownReady()) poolScare('灯亮时它还在……');
@@ -3678,7 +3707,7 @@ function enterPoolrooms() {
     ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
     scene.fog = new THREE.FogExp2(0xbfc9c4, 0.016);
     scene.background = new THREE.Color(0x0a1014);
-    hemi.intensity = 0.5; hemiL0.intensity = 0;
+    hemi.intensity = 0.72; hemiL0.intensity = 0;
     if (droneNodes) droneNodes.g.gain.value = 0.012;
     poolIntroShown = false; poolDark.active = false; poolDark.timer = 15 + Math.random() * 15;
     applyRoomSound(1); startAmbience(1);
@@ -3686,7 +3715,7 @@ function enterPoolrooms() {
     skyLight.intensity = 1.15; skyLight.castShadow = true;
     flashLight.castShadow = false;
     resetLockerHorror();
-    setPanelDefaults(0.48, 0.36, 0.016);
+    setPanelDefaults(0.68, 0.26, 0.012);
     lurker.visible = false;
     poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
     wake.visible = false;
@@ -3717,14 +3746,14 @@ function enterPoolroomsPreview(x, z) {
   ACTIVE_COLLIDERS = COLLIDERS; ACTIVE_BOUNDS = BOUNDS;
   scene.fog = new THREE.FogExp2(0xbfc9c4, 0.016);
   scene.background = new THREE.Color(0x0a1014);
-  hemi.intensity = 0.5; hemiL0.intensity = 0;
+  hemi.intensity = 0.72; hemiL0.intensity = 0;
   if (droneNodes) droneNodes.g.gain.value = 0.012;
   poolIntroShown = true; poolDark.active = false; poolDark.timer = 25 + Math.random() * 15;
   applyRoomSound(1); startAmbience(1);
   skyLight.intensity = 1.15; skyLight.castShadow = true;
   flashLight.castShadow = false;
   resetLockerHorror();
-  setPanelDefaults(0.48, 0.36, 0.016);
+  setPanelDefaults(0.68, 0.26, 0.012);
   lurker.visible = false;
   poolMonster.swim = false; poolMonster.phase = 'stand'; poolMonster.vx = 0; poolMonster.vz = 0;
   wake.visible = false;
@@ -6721,6 +6750,9 @@ let ftAcc = 0, ftN = 0, qStep = 0, skyShadowTick = 0;
 let renderReady = false, renderPreparation = Promise.resolve(), renderPreparationId = 0;
 // 诊断取样（仅 ?diag=1 生效）：真实绘制帧数 + 屏幕亮度，供无头截图判断"确实画出来了"
 let DIAG_ON = false, diagDrawFrames = 0, diagLum = 0, diagLumMax = 0, diagLumMin = 1;
+// 诊断机位逐帧平移（?camseq=dx,dz,dyaw,dy[,maxFrames]），仅 ?cam= 诊断时非 null；
+// 用于在真实 WebGL 下录制"视角连续移动"的相邻帧，检查门框是否闪烁。
+let camSeq = null;
 const preparedLevels = new Map();
 function getLevelTextureMaterials() {
   if (LEVEL === 0) return l0TextureMaterials;
@@ -6877,6 +6909,16 @@ renderer.setAnimationLoop(() => {
     }
   }
   updateConductorLight();
+  // 诊断：?cam=…&camseq=dx,dz,dyaw,dy[,maxFrames] 让诊断机位每帧平移一点点，
+  // 用来在真实 WebGL 下录"连续的相邻帧"检查门框是否随视角移动闪烁（正常游玩始终为 null）。
+  if (camSeq && renderReady) {
+    camSeq.n++;
+    if (!camSeq.max || camSeq.n <= camSeq.max) {
+      camSeq.x += camSeq.dx; camSeq.z += camSeq.dz; camSeq.y += camSeq.dy; camSeq.yaw += camSeq.dyaw;
+      camera.position.set(camSeq.x, camSeq.y, camSeq.z);
+      camera.rotation.set(camSeq.pitch, camSeq.yaw, 0, 'YXZ');
+    }
+  }
   if (renderReady) composer.render();
   // 诊断取样：每 4 帧读 9 个屏幕点，判断"是真实画面还是黑帧/未出图"
   if (renderReady && DIAG_ON) {
@@ -6939,6 +6981,20 @@ if (camDbg) {
     const _ov = document.getElementById('play-overlay'); if (_ov) _ov.style.display = 'none';
     const _lc = document.getElementById('level-card'); if (_lc) _lc.style.display = 'none';
     document.body.classList.add('hud-hidden');
+    // 诊断：?camseq=dx,dz,dyaw,dy[,maxFrames] 每帧按固定增量平移/转向，模拟玩家连续移动。
+    {
+      const _sq = new URLSearchParams(location.search).get('camseq');
+      if (_sq) {
+        const sv = _sq.split(',').map(Number);
+        if (sv.length >= 2 && sv.every(v => isFinite(v))) {
+          camSeq = {
+            x: cv[0], y: cv[1], z: cv[2], yaw, pitch,
+            dx: sv[0] || 0, dz: sv[1] || 0, dyaw: sv[2] || 0, dy: sv[3] || 0,
+            max: sv[4] > 0 ? Math.floor(sv[4]) : 0, n: 0
+          };
+        }
+      }
+    }
     // 仅诊断机位启用：展示真实预建场景的不同状态，正常游玩仍须自行交互。
     if (LEVEL === L4_LEVEL && l4) {
       const view = new URLSearchParams(location.search).get('l4view') || '';

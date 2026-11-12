@@ -1,0 +1,200 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-12T12:03:15.233Z",
+  "browserPid": 13532,
+  "cdpPort": 1832,
+  "shots": [
+    {
+      "name": "DF-01-lobby-shoe-front",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=0.6,1.62,20.2,0.136,0.0&camseq=0.020,0.004,0.0022,0,90&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-01-lobby-shoe-front.png",
+      "bytes": 1748170,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-01-lobby-shoe-front-f2.png",
+          "bytes": 1750971
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-01-lobby-shoe-front-f3.png",
+          "bytes": 1752996
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-01-lobby-shoe-front-f4.png",
+          "bytes": 1752932
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-01-lobby-shoe-front-f5.png",
+          "bytes": 1757756
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-01-lobby-shoe-front-f6.png",
+          "bytes": 1757550
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 49708,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          0.6,
+          0.02,
+          20.2
+        ],
+        "cam": [
+          0.78,
+          1.62,
+          20.24
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 9,
+        "lum": 0.736,
+        "lumMax": 0.86,
+        "lumMin": 0.454,
+        "budget": {
+          "meshes": 3470,
+          "inst": 170,
+          "lights": 66,
+          "tris": 435306,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1398,
+          "tex": 85,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[0.6,0.02,20.2],\"cam\":[0.78,1.62,20.24],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":9,\"lum\":0.736,\"lumMax\":0.86,\"lumMin\":0.454,\"budget\":{\"meshes\":3470,\"inst\":170,\"lights\":66,\"tris\":435306,\"calls\":1,\"rtris\":1,\"geos\":1398,\"tex\":85,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "DF-06-shower-wetHall-up",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-3.4,1.62,4.0,1.5708,0.34&camseq=0.004,0.022,0.0024,0,90&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-06-shower-wetHall-up.png",
+      "bytes": 1743758,
+      "ok": true,
+      "seq": [
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-06-shower-wetHall-up-f2.png",
+          "bytes": 1744115
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-06-shower-wetHall-up-f3.png",
+          "bytes": 1743260
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-06-shower-wetHall-up-f4.png",
+          "bytes": 1741482
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-06-shower-wetHall-up-f5.png",
+          "bytes": 1740052
+        },
+        {
+          "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-pAttB2\\DF-06-shower-wetHall-up-f6.png",
+          "bytes": 1733308
+        }
+      ],
+      "ready": true,
+      "camBlocked": false,
+      "waited": 40762,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          -3.4,
+          0.02,
+          4
+        ],
+        "cam": [
+          -3.36,
+          1.62,
+          4.24
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.851,
+        "lumMax": 0.887,
+        "lumMin": 0.805,
+        "budget": {
+          "meshes": 3470,
+          "inst": 170,
+          "lights": 66,
+          "tris": 435306,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1893,
+          "tex": 81,
+          "progs": 43
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[-3.4,0.02,4],\"cam\":[-3.36,1.62,4.24],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":11,\"lum\":0.851,\"lumMax\":0.887,\"lumMin\":0.805,\"budget\":{\"meshes\":3470,\"inst\":170,\"lights\":66,\"tris\":435306,\"calls\":1,\"rtris\":1,\"geos\":1893,\"tex\":81,\"progs\":43}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

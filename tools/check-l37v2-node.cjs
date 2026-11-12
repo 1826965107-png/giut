@@ -50,6 +50,7 @@ const ai = src.indexOf(anchor);
 if (ai < 0) throw new Error('找不到 import 段结尾');
 src = src.slice(0, ai) + PREAMBLE + '\n' + src.slice(ai);
 
+src = src + '\n' + fs.readFileSync(path.join(__dirname, 'v2', 'door-coplanar-scan.js'), 'utf8');
 src = src + '\n' + fs.readFileSync(path.join(__dirname, '_l37v2-tests.js'), 'utf8');
 fs.writeFileSync(outPath, src);
 execFileSync(process.execPath, ['--check', outPath], { stdio: 'inherit' });

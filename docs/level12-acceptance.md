@@ -675,3 +675,53 @@ check-l0v2-node.cjs 用真实 vendor THREE + 真实 updatePlayer/l0Path/tryFuse�
 - 当时统一入口为 366 项（L0 84 + L37 217 + 行为 65），与当前一致；`plan-check` 168、`l37-props-check` 1118、L3 101、L4 168、L4R 45 也一致。
 - 黑影眼部当时新增真实 THREE 射线断言（从脸前方射向眼中心，首个命中必须是眼网格；负对照：把眼压回 1cm 后不再首先命中），眼中心按头壳解析曲面外推到 z=0.144；池中人改为灰黑凹陷眼窝。这两项在 V2 节保留。
 - 旧灯复活回归：清理时删掉 `l37Lamp` 的守卫导致旧三池 26 盏调用复活（诊断 lights=93），已删除那 18 行调用并补灯注册不变量；V2.5 有完整说明。
+
+---
+
+# 13. 门框闪烁修复（2026-11-12）
+
+工作目录 `D:\AI\工作文件夹\游戏`；Git HEAD `fc66003b0dd39ac93310284bc783baed2af62cab`，**未提交、未推送、未回滚**。
+
+## 13.1 根因（真实世界面坐标 + 真实 `Box3` 扫描）
+
+| # | 共面冲突 | 证据（修复前） |
+|---|---|---|
+| 1 | 金属立框内侧面 vs 墙洞切面，同平面同法向整片重合 | `COPLANAR x+ plane=-2.0000 area=0.5760 door=z@24[-2,2] A=l12CasingJamb B=l12Wall`，每扇门每侧 0.552–0.578 ㎡ |
+| 2 | 上门套底面 vs 门楣底面，同在名义门高 `doorH` | `COPLANAR y- plane=2.3000 area=0.9600 door=x@-2[-24,-20] A=l12CasingHead B=l12Lintel`（0.384–0.96 ㎡） |
+| 3 | 墙裙压条端面 12.5mm 探入墙体厚度带、与墙洞切面同面（斜视时形成点状虚线） | 全配对扫描 `ALLPAIR_HITS 547`；同机位放大 `logs-doorframe/evidence/DF-06-OLD-jamb-zoom2.png` |
+
+汇总：修复前门洞邻域同向共面 **347 对**（其中 120 对是合法接地底面，可见面冲突 227 对），覆盖全部 21 个门洞。透视变化时两片表面深度相等，光栅化互有胜负 ⇒ 门框边缘与门头跳动。
+
+## 13.2 修复
+
+- 门套改为外贴构造：立框内侧面距洞口 6mm、整块落在墙体一侧、顶端伸入上沿 30mm；上沿底面仍在名义门高，墙厚方向比立框前后每侧各凸出 5mm（总厚度差 10mm：0.28→0.29），两端各压过立框 8mm；门楣实体抬高 6mm，碰撞仍 `y1: doorH, y2: top`。未用 `renderOrder`、未移门洞、未改碰撞/导航。
+- `levels/l12-art.js` `wainscot()` 门洞两侧各留 4mm：断不为 0 是为躲开洞口切面（4mm）与门套立框内表面（2mm），6mm 会与立框重合再生共面。
+- 新增 `tools/v2/door-coplanar-scan.js`：真实世界面判据、只配对暴露面、`y=0` 共同接地合法、跳过 `InstancedMesh` 假阳性；旧构造可复现为负对照（z/x 两轴各检出立框与门头两类）。
+
+## 13.3 命令与退出码（均为实际执行）
+
+| # | 命令 | 退出码 | 结果 | 日志 |
+|---|---|---|---|---|
+| 1 | `node tools/_syntax12.cjs` | 0 | `SYNTAX OK`（346005 字符） | `logs-doorframe/syntax3.log` |
+| 2 | `node tools/check-l37v2-node.cjs` | 0 | **412/412 PASS** | `logs-doorframe/l37-final3.log` |
+| 3 | `node tools/check-level12-node.cjs` | 0 | L0 98/98 + L37 412/412 + 行为 65/65，3 套件全部通过 | `logs-doorframe/l12-unified.log` |
+| 4 | `node tools/v2/door-coplanar.cjs` | 0 | `COPLANAR_PAIRS 0`、`LEGACY_NEGCTRL_PAIRS 2 {"z":2,"x":2}`、`COPLANAR_OK` | `logs-doorframe/coplanar-after7.log` |
+| 5 | `node tools/v2/door-coplanar-all.cjs` | 0 | 全配对 `ALLPAIR_HITS 0`（修复前 547） | `logs-doorframe/allpairs3.log` |
+| 6 | `node tools/v2/plan-check.cjs` | 0 | `pass=168 fail=0` | `logs-doorframe/plan.log` |
+| 7 | `node tools/v2/l37-props-check.cjs` | 0 | `pass=1174 fail=0` | `logs-doorframe/props.log` |
+| 8 | `node tools/check-level3-node.cjs` | 0 | 101/101 | `logs-doorframe/l3.log` |
+| 9 | `node tools/check-level4-node.cjs` | 0 | 168/168，`L4-NODE-TESTS-OK` | `logs-doorframe/l4.log` |
+| 10 | `node tools/check-level4-rework-independent.cjs` | 0 | `checks=45; failures=0` | `logs-doorframe/l4r.log` |
+| 11 | `node tools/shots12.cjs --base=… --only=DF-01-lobby,DF-06-shower` | 0 | `SHOTS-OK 2` | `logs-doorframe/shots-seq3.log` |
+| 12 | `node tools/_mkcdn.cjs` | 0 | `online bytes 370259` | `logs-doorframe/cdn.log` |
+| 13 | `node tools/_mkcdn.cjs --check` | 0 | `CHECK-OK online 与本地版仅 importmap 两行不同` | `logs-doorframe/cdn-check.log` |
+
+## 13.4 真实 WebGL 移动视角证据
+
+无头 Edge + SwiftShader，`tools/shots12.cjs` 内置 `seq=6`（`?camseq=` 逐帧平移，每机位连拍 6 帧），机位 `DF-01`（接待↔脱鞋门，正面+右移）、`DF-06`（淋浴↔湿区门，仰视+侧移），另用 `?oldcasing=1` 在同机位叠回旧构造做 A/B：
+
+- 新构造：`D:\AI\工作文件夹\游戏\shots12\shots12-pAttB2\DF-01-lobby-shoe-front-f2..f6.png`、`DF-06-shower-wetHall-up-f2..f6.png`（`ready=true`、`camBlocked=false`、`seq=6/6 seqBad=0`）。
+- 旧构造对照：`D:\AI\工作文件夹\游戏\shots12\shots12-p60tML\DF-04-OLD-…`、`DF-06-OLD-…`（同机位同帧序）。
+- 放大对比：`logs-doorframe/evidence/DF-06-OLD-jamb-zoom2.png`（洞口侧点状虚线）与 `DF-06-new-jamb-zoom.png`（干净）。
+
+方法与边界：这是**结构扫描 + 同机位 A/B 目视**两类证据；SwiftShader 每帧约 5s（`frames=9~12` 对应 40–60s），420ms 间隔抓到的相邻帧可能重复，因此未用像素指标量化闪烁（试写的高通/翻转指标新旧差异 0.0156 vs 0.0158，被运镜噪声淹没，已删除该脚本）。Node 侧扫描是 GPU 桩下的几何断言，不代表已渲染画面；真实硬件 GPU 帧率未测。

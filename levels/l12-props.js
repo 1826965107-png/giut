@@ -57,10 +57,10 @@ export const L37_LAMPS = [
   { room: 'shwW', zone: 'shower', x: -22.0, z: 4.0, power: 1.9, dist: 7 },
   { room: 'shwE', zone: 'shower', x: 22.0, z: 4.0, power: 1.9, dist: 7 },
   { room: 'wetHall', zone: 'wet', x: 0.0, z: 4.0, power: 2.1, dist: 8 },
-  { room: 'spaA', zone: 'spa', x: -20.0, z: -20.0, power: 2.4, dist: 10, color: 0xffe2bd },
-  { room: 'spaA', zone: 'spa', x: -9.0, z: -19.0, power: 2.2, dist: 9, color: 0xffe2bd },
-  { room: 'spaA', zone: 'spa', x: -24.0, z: -26.0, power: 1.8, dist: 8, color: 0xffe2bd },
-  { room: 'spaB', zone: 'spa', x: -16.0, z: -6.0, power: 2.0, dist: 9, color: 0xffe2bd },
+  { room: 'spaA', zone: 'spa', x: -20.0, z: -20.0, power: 2.4, dist: 10, color: 0xf1faff },
+  { room: 'spaA', zone: 'spa', x: -9.0, z: -19.0, power: 2.2, dist: 9, color: 0xf1faff },
+  { room: 'spaA', zone: 'spa', x: -24.0, z: -26.0, power: 1.8, dist: 8, color: 0xf1faff },
+  { room: 'spaB', zone: 'spa', x: -16.0, z: -6.0, power: 2.0, dist: 9, color: 0xf1faff },
   { room: 'sauna', zone: 'spa', x: -25.0, z: -8.0, power: 1.5, dist: 6, color: 0xffb877 },
   { room: 'wetSpine', zone: 'wet', x: 0.0, z: -12.0, power: 2.0, dist: 9 },
   { room: 'wetSpine', zone: 'wet', x: 0.0, z: -24.0, power: 2.0, dist: 9 },
@@ -88,15 +88,15 @@ export function depthTextOf(pool) {
 
 // 方向牌：真实墙面上（不入池、不压柱脚/门洞），由 createL37Props 用 canvas 文字牌生成
 export const L37_WAYSIGNS = [
-  { id: 'way-shoe', text: '脱鞋储物', sub: '更衣 A 往左 · 更衣 B 往右', room: 'shoe', x: 0, y: 2.30, z: 12.18, ry: 0, w: 2.2, h: 0.6 },
-  { id: 'way-lockW', text: '更衣 A', sub: '淋浴 → 湿区', room: 'lockW', x: -6.18, y: 2.30, z: 11.4, ry: -Math.PI / 2, w: 2.0, h: 0.6 },
-  { id: 'way-lockE', text: '更衣 B', sub: '淋浴 → 湿区', room: 'lockE', x: 6.18, y: 2.30, z: 11.4, ry: Math.PI / 2, w: 2.0, h: 0.6 },
-  { id: 'way-shwW', text: '淋浴 A', sub: '先淋浴再入池', room: 'shwW', x: -15.5, y: 2.30, z: 2.18, ry: 0, w: 2.0, h: 0.6 },
-  { id: 'way-shwE', text: '淋浴 B', sub: '先淋浴再入池', room: 'shwE', x: 15.5, y: 2.30, z: 2.18, ry: 0, w: 2.0, h: 0.6 },
-  { id: 'way-pool', text: '游泳厅', sub: '东侧入口 · 25 m · 5 泳道', room: 'wetHall', x: 2.6, y: 2.30, z: 5.82, ry: Math.PI, w: 2.2, h: 0.6 },
-  { id: 'way-spa', text: '温泉厅', sub: '西侧入口 · 主汤 · 静汤 · 冷池', room: 'wetHall', x: -2.6, y: 2.30, z: 5.82, ry: Math.PI, w: 2.4, h: 0.6 },
-  { id: 'way-rest', text: '北休息廊', sub: '泳池 ↔ 温泉 环路', room: 'restLink', x: 5.0, y: 2.30, z: -28.18, ry: Math.PI, w: 2.2, h: 0.6 },
-  { id: 'way-equip', text: '设备间 · 员工专用', sub: '非游客通行', room: 'poolB', x: 26.65, y: 2.30, z: -19.82, ry: 0, w: 1.5, h: 0.6 }
+  { id: 'way-shoe', text: '脱鞋储物', sub: '← 更衣 A    更衣 B →', meta: '00 / SHOE STORAGE', room: 'shoe', x: 0, y: 1.70, z: 12.18, ry: 0, w: 1.25, h: 0.39 },
+  { id: 'way-lockW', text: '更衣 A', sub: '更衣与储物', meta: 'A1 / CHANGING', room: 'lockW', x: -6.18, y: 1.65, z: 11.4, ry: -Math.PI / 2, w: 0.98, h: 0.31 },
+  { id: 'way-lockE', text: '更衣 B', sub: '更衣与储物', meta: 'B1 / CHANGING', room: 'lockE', x: 6.18, y: 1.65, z: 11.4, ry: Math.PI / 2, w: 0.98, h: 0.31 },
+  { id: 'way-shwW', text: '淋浴 A', sub: '冲洗后前往湿区', meta: 'A2 / SHOWERS', arrow: '→', room: 'shwW', x: -15.5, y: 1.65, z: 2.18, ry: 0, w: 1.02, h: 0.32 },
+  { id: 'way-shwE', text: '淋浴 B', sub: '冲洗后前往湿区', meta: 'B2 / SHOWERS', arrow: '←', room: 'shwE', x: 15.5, y: 1.65, z: 2.18, ry: 0, w: 1.02, h: 0.32 },
+  { id: 'way-pool', text: '游泳厅', sub: '25 m · 5 泳道', meta: '01 / SWIMMING', arrow: '↙', room: 'wetHall', x: 2.6, y: 1.70, z: 5.82, ry: Math.PI, w: 1.30, h: 0.41 },
+  { id: 'way-spa', text: '温泉厅', sub: '主汤 · 静汤 · 冷池', meta: '02 / THERMAL', arrow: '↘', room: 'wetHall', x: -2.6, y: 1.70, z: 5.82, ry: Math.PI, w: 1.30, h: 0.41 },
+  { id: 'way-rest', text: '北休息廊', sub: '游泳厅 · 温泉厅', meta: '03 / RELAXATION', arrow: '↔', room: 'restLink', x: 5.0, y: 1.65, z: -28.18, ry: Math.PI, w: 1.05, h: 0.33 },
+  { id: 'way-equip', text: '设备间', sub: '员工专用', meta: 'S / STAFF', room: 'poolB', x: 26.65, y: 1.65, z: -19.82, ry: 0, w: 0.95, h: 0.30 }
 ];
 
 // 池深标识落位：池西侧步道、与池沿/柱脚/门洞都留净距
@@ -126,9 +126,8 @@ export function createL37Props(ctx) {
   const P = L12P.L37;
   const roomOf = id => P.rooms.find(r => r.id === id);
   const poolOf = n => L12P.L37_POOLS.find(p => p.name === n);
-  const stoneSet = { diffuse: L12_TEX.plaster, normal: null, rough: null, coverageX: L12_COV.plaster, coverageY: L12_COV.plaster };
-  const stoneMat = matFor(stoneSet, 1 / 2.4, 1 / 2.4, { ns: 0.10, roughness: 0.86, metalness: 0.0, env: 0.2, color: 0xb9af9d });
-  const waterStoneMat = matFor(stoneSet, 1 / 1.6, 1 / 1.6, { ns: 0.10, roughness: 0.9, metalness: 0.0, env: 0.18, color: 0xa9a08f });
+  const stoneMat = l12SpaWallMat;
+  const waterStoneMat = l12SpaWallMat;
   const glassMat = new THREE.MeshStandardMaterial({ color: 0x8fa6a6, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.28 });
 
   const box = (w, h, d, x, y, z, m, cov) => addBox(w, h, d, x, y, z, m, cov);
@@ -277,20 +276,20 @@ export function createL37Props(ctx) {
   // 池深标识：文字由 water - bottom 派生（不写死），落位在池西侧步道，避开柱脚与门洞
   for (const s of L37_DECK_SIGNS) {
     const pool = poolOf(s.pool);
-    const pose = signPose(pool, s.side, 1.9);
-    sign(depthTextOf(pool), s.sub, pose.x, pose.z, 0, 1.9, 1.1);
+    const pose = signPose(pool, s.side, 1.05);
+    sign(depthTextOf(pool), s.sub, pose.x, pose.z, 0, 1.05, 0.56);
   }
 
-  // 方向牌：真实墙面上的文字牌（金属背板 + 自发光贴图），不占走道
+  // 方向牌：薄金属背板与瓷白哑光面板，主名称、区域编号和箭头分层排版。
   for (const w of L37_WAYSIGNS) {
-    if (!ctx.makeSignTexture) break;
-    const tex = ctx.makeSignTexture(w.text, w.sub);
+    if (!ctx.boardTexture) break;
+    const tex = ctx.boardTexture(w.text, [w.sub], { px: 1024, py: 320, meta: w.meta, arrow: w.arrow,
+      variant: w.room === 'wetHall' ? 'direction' : 'room' });
     const g = new THREE.Group();
-    const back = new THREE.Mesh(new THREE.BoxGeometry(w.w + 0.08, w.h + 0.08, 0.05), l12MetalMat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(w.w + 0.025, w.h + 0.025, 0.05), l12MetalMat);
     back.position.z = -0.03; g.add(back);
     const face = new THREE.Mesh(new THREE.PlaneGeometry(w.w, w.h),
-      new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex,
-        emissiveIntensity: 0.25, roughness: 0.62, metalness: 0.04 }));
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.94, metalness: 0, envMapIntensity: 0.1 }));
     face.position.z = 0.002; g.add(face);
     g.position.set(w.x, w.y, w.z); g.rotation.y = w.ry;
     scene.add(g);
@@ -300,19 +299,19 @@ export function createL37Props(ctx) {
   // 水温牌：立在池边步道的小立柱牌（真实几何 + 可读数字），只作示意，不做温度伤害
   for (const t of L37_TEMP_SIGNS) {
     const pool = poolOf(t.pool);
-    if (!pool || !ctx.makeSignTexture) continue;
+    if (!pool || !ctx.boardTexture) continue;
     const pose = signPose(pool, t.side, 0.5);
     // 与池深标识错开 1.5m，避免两块牌互相遮挡
     const px = pose.x + (t.side === 'w' ? -0.1 : 0.1), pz = pose.z + (t.off || 0);
     if (L37_PROPS.some(q => Math.abs(q.x - px) < 0.5 + (q.w || 0) / 2 && Math.abs(q.z - pz) < 0.5 + (q.d || 0) / 2)) continue;
     addBox(0.06, 0.92, 0.06, px, 0.46, pz, l12MetalMat, 1.0);
     const plate = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.04), l12MetalMat);
-    plate.position.set(px, 0.92, pz); scene.add(plate);
-    const tex = ctx.makeSignTexture(`${t.c}°C`, t.sub);
+    const ry = t.side === 'east' ? Math.PI / 2 : -Math.PI / 2;
+    plate.position.set(px, 0.92, pz); plate.rotation.y = ry; scene.add(plate);
+    const tex = ctx.boardTexture(`${t.c}°C`, [t.sub], { px: 512, py: 320, meta: 'WATER TEMPERATURE' });
     const face = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.26),
-      new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex,
-        emissiveIntensity: 0.18, roughness: 0.64, metalness: 0.02 }));
-    face.position.set(px, 0.92, pz + 0.021); face.rotation.y = t.ry || 0;
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.94, metalness: 0, envMapIntensity: 0.1 }));
+    face.position.set(px + Math.sin(ry) * 0.023, 0.92, pz + Math.cos(ry) * 0.023); face.rotation.y = ry;
     scene.add(face);
     COLLIDERS.push({ x1: px - 0.05, x2: px + 0.05, z1: pz - 0.05, z2: pz + 0.05, y1: 0, y2: 0.98, kind: 'tempSign' });
     out.tempSigns.push({ pool: t.pool, c: t.c, x: px, z: pz, mesh: face });

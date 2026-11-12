@@ -29,6 +29,12 @@ const BASE = arg('base', 'http://127.0.0.1:8571/backrooms-pool.html');
 const OUT_PARENT = arg('out', path.join(__dirname, '..', 'shots12'));
 
 const SHOTS = [
+  { name: 'wayfinding-reception', q: 'level=37&cam=-3.0,1.62,19.2,0.37,0' },
+  { name: 'wayfinding-locker', q: 'level=37&cam=-8.4,1.62,12.1,-1.25,0' },
+  { name: 'wayfinding-junction', q: 'level=37&cam=0,1.62,2.2,3.14159,0' },
+  { name: 'ceramic-cold-pool', q: 'level=37&cam=-14.8,1.65,-5.8,0.95,-0.4' },
+  { name: 'ceramic-main-pool', q: 'level=37&cam=13,1.62,1.6,0,-0.07' },
+  { name: 'ceramic-lobby', q: 'level=37&cam=0,1.62,22.5,0.62,-0.05' },
   { name: 'fix-shower-light', q: 'level=37&cam=-24,1.62,5.25,-1.01,0.80' },
   { name: 'fix-archive-door', q: 'cam=-125.6,1.62,0,3.14159,-0.04' },
   { name: 'fix-archive-room', q: 'cam=-125.6,1.62,2.8,3.14159,-0.04' },
@@ -106,7 +112,19 @@ const SHOTS = [
   { name: 'L37-27-sauna', q: 'level=37&cam=-21.4,1.55,-8.0,1.5708,-0.03' },
   { name: 'L37-28-rest-link', q: 'level=37&cam=0,1.62,-29.4,1.5708,-0.03' },
   { name: 'L37-29-deck-sign-close', q: 'level=37&cam=6.9,1.42,-9.9,0,-0.62' },
-  { name: 'L37-30-temp-sign-hot', q: 'level=37&cam=-24.2,1.5,-18.6,1.15,-0.12' }
+  { name: 'L37-30-temp-sign-hot', q: 'level=37&cam=-24.2,1.5,-18.6,1.15,-0.12' },
+  // 门框闪烁验证：静态机位 + camseq 逐帧平移，抓"视角连续移动"的相邻帧短序列。
+  // seq=N 表示每张机位额外抓 N-1 帧（共 N 帧）；oldcasing=1 用同一机位还原修复前的门套做 A/B。
+  { name: 'DF-01-lobby-shoe-front', q: 'level=37&cam=0.6,1.62,20.2,0.136,0.0&camseq=0.020,0.004,0.0022,0,90', seq: 6 },
+  { name: 'DF-02-lobby-shoe-oblique', q: 'level=37&cam=-2.2,1.62,19.4,0.30,-0.02&camseq=0.022,0.006,0.0026,0,90', seq: 6 },
+  { name: 'DF-03-lobby-shoe-up', q: 'level=37&cam=0.4,1.62,18.6,0.10,0.34&camseq=0.022,0.004,0.0024,0,90', seq: 6 },
+  { name: 'DF-04-shower-wetHall-front', q: 'level=37&cam=-2.6,1.62,4.0,1.5708,0.0&camseq=0.004,0.020,0.0022,0,90', seq: 6 },
+  { name: 'DF-05-shower-wetHall-oblique', q: 'level=37&cam=-2.0,1.62,6.4,1.15,-0.03&camseq=0.006,0.022,0.0026,0,90', seq: 6 },
+  { name: 'DF-06-shower-wetHall-up', q: 'level=37&cam=-3.4,1.62,4.0,1.5708,0.34&camseq=0.004,0.022,0.0024,0,90', seq: 6 },
+  { name: 'DF-01-OLD-lobby-shoe-front', q: 'level=37&cam=0.6,1.62,20.2,0.136,0.0&camseq=0.020,0.004,0.0022,0,90&oldcasing=1', seq: 6 },
+  { name: 'DF-03-OLD-lobby-shoe-up', q: 'level=37&cam=0.4,1.62,18.6,0.10,0.34&camseq=0.022,0.004,0.0024,0,90&oldcasing=1', seq: 6 },
+  { name: 'DF-04-OLD-shower-wetHall-front', q: 'level=37&cam=-2.6,1.62,4.0,1.5708,0.0&camseq=0.004,0.020,0.0022,0,90&oldcasing=1', seq: 6 },
+  { name: 'DF-06-OLD-shower-wetHall-up', q: 'level=37&cam=-3.4,1.62,4.0,1.5708,0.34&camseq=0.004,0.022,0.0024,0,90&oldcasing=1', seq: 6 }
 ];
 
 // --only=L0-04,drowned 只重拍匹配到的机位（子串匹配，逗号分隔），节省重复编译
@@ -298,16 +316,34 @@ async function main() {
       bytes = buf.length;
     } catch (e) { shotErr = String((e && e.message) || e); }
 
+    // 序列模式：同一机位再抓 seq-1 帧，间隔里 camseq 已经把相机平移了一小段，
+    // 于是得到"视角连续移动"的相邻帧，可直接比较门框边缘是否跳动。
+    const seqFiles = [];
+    if (shot.seq && shot.seq > 1 && readyNow) {
+      for (let i = 2; i <= shot.seq; i++) {
+        await sleep(shot.seqMs || 420);
+        try {
+          const im = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+          const b = Buffer.from(im.data, 'base64');
+          const p2 = path.join(OUT, shot.name + '-f' + i + '.png');
+          fs.writeFileSync(p2, b);
+          seqFiles.push({ png: p2, bytes: b.length });
+        } catch (e) { seqFiles.push({ png: null, bytes: 0, err: String((e && e.message) || e) }); }
+      }
+    }
+
     // 游戏自身 JS 异常、真实资源 4xx 都算失败；仅 favicon.ico 404 豁免（在报告里单列）
-    const failed = !readyNow || !bytes || !!shotErr || (netErrs.length > 0 && !faviconOnly) || gameErrs.length > 0;
+    const seqBad = seqFiles.filter(f => !f.png || !f.bytes).length;
+    const failed = !readyNow || !bytes || !!shotErr || !!seqBad || (netErrs.length > 0 && !faviconOnly) || gameErrs.length > 0;
     if (failed) bad++;
     report.push({
-      name: shot.name, url, png: pngPath, bytes, ok: !failed,
+      name: shot.name, url, png: pngPath, bytes, ok: !failed, seq: seqFiles,
       ready: readyNow, camBlocked: diag ? diag.camBlocked : null,
       waited: rd.waited, diag, probe, errors: errs.slice(0, 8), gameErrors: gameErrs.slice(0, 8),
       netErrors: netErrs.slice(0, 8), faviconOnly, shotErr
     });
     console.log('shot ' + shot.name + ' ' + (failed ? 'FAIL' : 'OK') + ' bytes=' + bytes + ' ready=' + readyNow + ' camBlocked=' + (diag ? diag.camBlocked : '?') + ' waited=' + rd.waited + 'ms'
+      + (shot.seq ? ' seq=' + (1 + seqFiles.length) + '/' + shot.seq + ' seqBad=' + seqBad : '')
       + (diag ? ' frames=' + diag.frames + ' lum=' + diag.lum + '/' + diag.lumMax + ' calls=' + (diag.budget ? diag.budget.calls : '?') : '')
       + (netErrs.length ? ' NET_ERR=' + netErrs.length : '') + (errs.length ? ' JS_ERR=' + errs.length : '') + (shotErr ? ' SHOT_ERR=' + shotErr : ''));
     if (diag) console.log('   diag ' + JSON.stringify({ lv: diag.lv, p: diag.p, cam: diag.cam, ray: diag.ray, budget: diag.budget }));

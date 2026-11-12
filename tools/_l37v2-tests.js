@@ -829,6 +829,136 @@
     ok(Math.abs(lamp.light.position.y - (ceilingY - 0.16)) < 1e-6, `${lamp.zone} 光源高度随房间净高生成`);
   }
 
+  sec('明亮瓷砖材质与小池悬浮栏杆回归');
+  ok(!COLLIDERS.some(c => c.kind === 'grabRail'), '三个小池的无支撑栏杆及碰撞已移除');
+  for (const p of POOLS.filter(p => p.name !== 'pool')) {
+    const stray = [];
+    scene.updateMatrixWorld(true);
+    scene.traverse(m => {
+      if (!m.isMesh || !m.geometry || m.geometry.type !== 'CylinderGeometry') return;
+      const b = new THREE.Box3().setFromObject(m);
+      if (b.min.x > p.x1 && b.max.x < p.x2 && b.min.z > p.zDeep1 && b.max.z < p.zEnd &&
+          b.min.y >= -0.001 && b.max.y < 1.2) stray.push(m);
+    });
+    ok(stray.length === 0, `${p.name} 水面上方无孤立栏杆柱脚`);
+  }
+  ok(l12SpaWallMat.map.userData.asset === 'assets-v2/l37-porcelain-wall.png', '墙面实际消费新白色瓷砖贴图');
+  ok(l12SpaFloorMat.map.userData.asset === 'assets-v2/l37-porcelain-floor.png', '地面实际消费新浅灰地砖贴图');
+  ok(l12SpaWallMat.isMeshPhysicalMaterial && l12SpaWallMat.roughness <= 0.3 && l12SpaWallMat.clearcoat >= 0.3,
+    '墙砖采用有釉面反射的物理材质');
+  ok(l12SpaFloorMat.roughness >= 0.4 && l12SpaFloorMat.roughness < 0.6 && l12SpaFloorMat.metalness === 0,
+    '浅色地砖有柔和反光且无金属感');
+  ok(l12SpaWallMat.color.r > 0.95 && l12SpaFloorMat.color.r > 0.95, '瓷砖未再被棕色材质乘暗');
+  ok(L12_TEX.plaster === 'assets-v2/l12-v2-spa-plaster.png', '第一关共享抹灰资源保持原绑定');
+
+  /* 门框闪烁回归（一）：门套/门楣周边不得存在同向共面重叠面 —— 真实世界面坐标，非字符串 */
+  sec('门洞共面（真实世界面扫描 + 旧构造负对照）');
+  {
+    const CP = globalThis.__L12_COPLANAR;
+    ok(!!CP, '门洞共面扫描库已加载（door-coplanar-scan.js）');
+    if (CP) {
+      const allBoxes = CP.collectBoxes(THREE, scene);
+      const sc = CP.scanPairs(allBoxes, L37_DOORS_V2);
+      ok(sc.length === 0, `门套/门楣周边无同向共面重叠面（${sc.length} 对，共 ${allBoxes.length} 个盒体）`,
+        sc.slice(0, 3).map(h => h.d.axis + '@' + h.d.coord + ' ' + h.ax + h.side + ' ' + h.area.toFixed(3)).join(' | '));
+      const bad = L37_DOORS_V2
+        .map(d => ({ d, n: CP.scanPairs(allBoxes, [d]).length }))
+        .filter(x => x.n > 0);
+      ok(bad.length === 0, `${L37_DOORS_V2.length} 个门洞逐个无共面重叠（异常 ${bad.length} 个）`,
+        bad.map(x => x.d.axis + '@' + x.d.coord + ':' + x.n).join(','));
+      // 负对照：按修复前老构造还原（立框内侧面贴墙洞切面、上沿底面贴门楣底面），z 向与 x 向都必须被检出
+      const byAxis = CP.legacyCheck(THREE, L37_DOORS_V2);
+      ok(byAxis.z >= 2, `负对照（z 向门洞）：旧门套构造被判出共面 ${byAxis.z} 对 ≥ 2`);
+      ok(byAxis.x >= 2, `负对照（x 向门洞）：旧门套构造被判出共面 ${byAxis.x} 对 ≥ 2`);
+      for (const ax of ['z', 'x']) {
+        const ld = L37_DOORS_V2.filter(d => d.axis === ax)[0];
+        const legHits = ld ? CP.scanPairs(CP.legacyPairs(THREE, ld), [ld]) : [];
+        const jambAxis = ax === 'z' ? 'x' : 'z';
+        ok(legHits.some(h => h.ax === jambAxis),
+          `负对照（${ax} 向）覆盖"立框内侧面 vs 墙洞切面"`, legHits.filter(h => h.ax === jambAxis).map(h => h.ax + h.side + ' ' + h.area.toFixed(3)).join(','));
+        ok(legHits.some(h => h.ax === 'y'),
+          `负对照（${ax} 向）覆盖"上门套底面 vs 门楣底面"`, legHits.filter(h => h.ax === 'y').map(h => h.ax + h.side + ' ' + h.area.toFixed(3)).join(','));
+      }
+      // 不限定门套的全配对扫描：门洞邻域内任何两个盒体都不许同向共面
+      // （墙裙/压条端面若贴到洞口切面或门套内表面，同样会在斜视时出现 z-fighting 虚线）
+      const scAll = CP.scanPairs(allBoxes, L37_DOORS_V2, { onlyCasing: false });
+      ok(scAll.length === 0, `门洞邻域全配对无同向共面重叠（${scAll.length} 对，不限门套）`,
+        scAll.slice(0, 4).map(h => h.d.axis + '@' + h.d.coord + ' ' + h.ax + h.side + ' '
+          + (h.A.mesh.name || 'anon') + '/' + (h.B.mesh.name || 'anon') + ' ' + h.area.toFixed(4)).join(' | '));
+      // 负对照（墙裙端面类）：护墙板端面正好压在洞口切面上时，全配对扫描必须报出来
+      {
+        const ld = L37_DOORS_V2[0];
+        // 与护墙同侧的墙段（端面同为 max 面、同朝 +x），才构成"端面贴洞口切面"的共面冲突
+        const wBoxes = CP.legacyPairs(THREE, ld).filter(b => b.mesh.name === 'legacyWall');
+        const wallSameSide = wBoxes[0];
+        wallSameSide.min.x = ld.gap[0] - 3.0; wallSameSide.max.x = ld.gap[0];
+        const g0 = ld.gap[0];
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(
+          ld.axis === 'z' ? 2.0 : 0.065, 0.045, ld.axis === 'z' ? 0.065 : 2.0), new THREE.MeshBasicMaterial());
+        panel.name = 'legacyWainscotRail';
+        if (ld.axis === 'z') panel.position.set(g0 - 1.0, 0.74, ld.coord + 0.1395);
+        else panel.position.set(ld.coord + 0.1395, 0.74, g0 - 1.0);
+        panel.updateMatrixWorld(true);
+        const pb = { mesh: panel, min: new THREE.Box3().setFromObject(panel).min.clone(), max: new THREE.Box3().setFromObject(panel).max.clone() };
+        const legAll = CP.scanPairs(wBoxes.concat([pb]), [ld], { onlyCasing: false });
+        ok(legAll.length > 0, '负对照（墙裙端面）：端面贴洞口切面时全配对扫描能判出', 'hits=' + legAll.length);
+      }
+    }
+  }
+
+  /* 门框闪烁回归（二）：门套构造不变量（外贴、不侵入洞口、上沿底面=名义门高、门楣抬高、角部压接） */
+  sec('门套构造不变量（净空 / 抬高 / 角部压接）');
+  {
+    scene.updateMatrixWorld(true);
+    const boxOf = m => new THREE.Box3().setFromObject(m);
+    const jambMeshes = [], headMeshes = [], lintelMeshes = [];
+    scene.traverse(m => {
+      if (!m.isMesh || !m.geometry || m.geometry.type !== 'BoxGeometry') return;
+      if (m.name === 'l12CasingJamb') jambMeshes.push(m);
+      else if (m.name === 'l12CasingHead') headMeshes.push(m);
+      else if (m.name === 'l12Lintel') lintelMeshes.push(m);
+    });
+    ok(jambMeshes.length === L37_DOORS_V2.length * 2,
+      `每个门洞两个立框（${jambMeshes.length}/${L37_DOORS_V2.length * 2}）`);
+    ok(headMeshes.length === L37_DOORS_V2.length,
+      `每个门洞一个上门套（${headMeshes.length}/${L37_DOORS_V2.length}）`);
+    const jb = jambMeshes.map(boxOf), hb = headMeshes.map(boxOf), lb = lintelMeshes.map(boxOf);
+    const along = b => (b.max.x - b.min.x) > (b.max.z - b.min.z) ? 'x' : 'z';
+    let clearOk = 0, headOk = 0, lapOk = 0, jointOk = 0;
+    const bad = [];
+    for (const d of L37_DOORS_V2) {
+      const ax = d.axis === 'z' ? 'x' : 'z';       // 洞口展开方向
+      const th = d.axis;                            // 墙厚方向
+      const near = b => Math.abs((b.min[th] + b.max[th]) / 2 - d.coord) < 0.03 &&
+        b.max[ax] > d.gap[0] - 0.25 && b.min[ax] < d.gap[1] + 0.25;
+      const doorH = d.h == null ? 2.3 : d.h;
+      const js = jb.filter(b => near(b) && b.max.y < doorH + 0.2).sort((p, q) => p.min[ax] - q.min[ax]);
+      const hd = hb.filter(b => near(b) && Math.abs(b.min.y - doorH) < 0.01)[0];
+      const lt = lb.filter(b => near(b) && b.min.y > doorH - 0.001 && b.max.y <= 4.41)[0];
+      if (js.length !== 2 || !hd || !lt) { bad.push(d.axis + '@' + d.coord + ':缺件'); continue; }
+      // 1) 立框内侧面必须退让到洞口之外（不侵入净空、且不与墙洞切面共面）
+      const leftGap = d.gap[0] - js[0].max[ax], rightGap = js[1].min[ax] - d.gap[1];
+      if (leftGap >= 0.003 && rightGap >= 0.003) clearOk++; else bad.push(d.axis + '@' + d.coord + ':净空' + leftGap.toFixed(3) + '/' + rightGap.toFixed(3));
+      // 2) 上门套底面 = 名义门高；门楣底面被抬高（不与上门套底面共面）
+      if (Math.abs(hd.min.y - doorH) < 0.001 && lt.min.y - hd.max.y > -0.078 && lt.min.y - hd.min.y >= 0.004) headOk++;
+      else bad.push(d.axis + '@' + d.coord + ':门头' + hd.min.y.toFixed(3) + '/' + lt.min.y.toFixed(3));
+      // 3) 上沿两端压过立框外侧面 ≥6mm，且厚度比立框大 ≥4mm（正面不共面）
+      const lapL = hd.min[ax] <= js[0].min[ax] - 0.005, lapR = hd.max[ax] >= js[1].max[ax] + 0.005;
+      const dHead = hd.max[th] - hd.min[th], dJamb = js[0].max[th] - js[0].min[th];
+      if (lapL && lapR && dHead - dJamb >= 0.004) lapOk++; else bad.push(d.axis + '@' + d.coord + ':压接');
+      // 4) 立框顶端藏在上沿实体内部（不是顶在上沿底面上）
+      if (js[0].max.y > hd.min.y + 0.02 && js[0].max.y < hd.max.y - 0.004 &&
+        js[1].max.y > hd.min.y + 0.02 && js[1].max.y < hd.max.y - 0.004) jointOk++;
+      else bad.push(d.axis + '@' + d.coord + ':顶角');
+    }
+    const total = L37_DOORS_V2.length;
+    ok(clearOk === total, `立框退让洞口 6mm 不侵入净空（${clearOk}/${total}）`);
+    ok(headOk === total, `上沿底面=名义门高且门楣抬高 ≥4mm（${headOk}/${total}）`);
+    ok(lapOk === total, `上沿两端压过立框且厚度更大（${lapOk}/${total}）`);
+    ok(jointOk === total, `立框顶端藏在上沿实体内部（${jointOk}/${total}）`);
+    if (bad.length) R.lines.push('    明细 ' + bad.slice(0, 6).join(' | '));
+  }
+
   R.lines.push('\nL37-V2 NODE 回归：' + R.pass + ' / ' + (R.pass + R.fail) + ' PASS');
   console.log(R.lines.join('\n'));
   if (R.fail > 0) process.exitCode = 1;
