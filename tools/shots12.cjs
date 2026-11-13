@@ -74,6 +74,11 @@ const SHOTS = [
     { name: 'L37-31-lobby-spawn', q: 'level=37&cam=0,1.62,22.5,0.62,-0.05' },
     { name: 'L37-34-pool-coping', q: 'level=37&cam=5.7,1.30,-12,-1.5708,-0.70' },
     { name: 'L37-35-drowned-head', q: 'level=37&cam=9.95,0.1,-12,1.5708,0&l12view=drowned-head' },
+    // ---- 近景细件代表图（本任务 4 机位）----
+    { name: 'DT-01-l0-archive-furniture', q: 'cam=-126.6,1.30,7.6,0,-0.10' },
+    { name: 'DT-02-l37-locker-bench', q: 'level=37&cam=-21.4,1.35,11.0,-1.5708,-0.06' },
+    { name: 'DT-03-shower-inside', q: 'level=37&cam=-24.05,1.52,4.15,0,-0.14' },
+    { name: 'DT-04-pool-ladder', q: 'level=37&cam=13.0,1.45,-22.9,0,-0.20' },
   // 第二关（Level 37 泳池层）
   { name: 'L37-01-entry', q: 'level=37&cam=3,1.62,20.5,0,-0.06' },
   { name: 'L37-02-mainpool', q: 'level=37&cam=0,1.62,10.2,0,-0.12' },
@@ -114,7 +119,10 @@ const SHOTS = [
   { name: 'L37-29-deck-sign-close', q: 'level=37&cam=6.9,1.42,-9.9,0,-0.62' },
   { name: 'L37-30-temp-sign-hot', q: 'level=37&cam=-24.2,1.5,-18.6,1.15,-0.12' },
   // 门框闪烁验证：静态机位 + camseq 逐帧平移，抓"视角连续移动"的相邻帧短序列。
-  // seq=N 表示每张机位额外抓 N-1 帧（共 N 帧）；oldcasing=1 用同一机位还原修复前的门套做 A/B。
+  // seq=N 表示每张机位额外抓 N-1 帧（共 N 帧）。
+  // oldcasing=1 只是**叠加负对照**：在新场景上再摆一套修复前的旧门套（立框+上沿），
+  // 不恢复旧门楣与旧墙裙，因此它只能证明"旧门套构造会共面"，不能当作完整旧版本复现。
+  // --framegated=1 时改用逐帧门控：按 ?diag=1 的真实绘制帧号推进后再截图，并记录截图前后帧号与相机位姿。
   { name: 'DF-01-lobby-shoe-front', q: 'level=37&cam=0.6,1.62,20.2,0.136,0.0&camseq=0.020,0.004,0.0022,0,90', seq: 6 },
   { name: 'DF-02-lobby-shoe-oblique', q: 'level=37&cam=-2.2,1.62,19.4,0.30,-0.02&camseq=0.022,0.006,0.0026,0,90', seq: 6 },
   { name: 'DF-03-lobby-shoe-up', q: 'level=37&cam=0.4,1.62,18.6,0.10,0.34&camseq=0.022,0.004,0.0024,0,90', seq: 6 },
@@ -130,6 +138,9 @@ const SHOTS = [
 // --only=L0-04,drowned 只重拍匹配到的机位（子串匹配，逗号分隔），节省重复编译
 const ONLY = (arg('only', '') || '').split(',').map(s => s.trim()).filter(Boolean);
 const RUN = ONLY.length ? SHOTS.filter(s => ONLY.some(o => s.name.includes(o))) : SHOTS;
+// --framegated=1：序列模式改为按真实绘制帧号推进（见文件头说明），--fgap 为每次截图要求推进的帧数
+const FGATED = arg('framegated', '0') === '1';
+const FGAP = Math.max(1, parseInt(arg('fgap', '2'), 10) || 2);
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -251,6 +262,28 @@ async function main() {
     return { ok: false, diag: last, waited: Date.now() - t0 };
   }
 
+  // 读一次 ?diag=1 的标题 JSON（帧号/相机位姿/亮度）
+  async function readDiag() {
+    try {
+      const r = await cdp.send('Runtime.evaluate', { returnByValue: true, expression: 'document.title' }, 8000);
+      const t = String(r.result.value || '');
+      if (t.startsWith('{')) return JSON.parse(t);
+    } catch { }
+    return null;
+  }
+
+  // 等真实绘制帧号推进到 target（渲染很慢时给足超时，超时返回 ok:false 而不是伪造）
+  async function waitFrames(target, deadlineMs) {
+    const t0 = Date.now();
+    let last = null;
+    while (Date.now() - t0 < deadlineMs) {
+      last = await readDiag();
+      if (last && typeof last.frames === 'number' && last.frames >= target) return { ok: true, diag: last, waited: Date.now() - t0 };
+      await sleep(300);
+    }
+    return { ok: false, diag: last, waited: Date.now() - t0 };
+  }
+
   const report = [];
   let bad = 0;
   for (const shot of RUN) {
@@ -318,34 +351,100 @@ async function main() {
 
     // 序列模式：同一机位再抓 seq-1 帧，间隔里 camseq 已经把相机平移了一小段，
     // 于是得到"视角连续移动"的相邻帧，可直接比较门框边缘是否跳动。
+    // --framegated=1：每张截图前先等真实绘制帧号推进 ≥ FGAP，截图后立即读帧号/相机位姿；
+    // 帧号没前进或相机没动的截图算"重复帧"，不计入成功，继续重试（允许跨帧，不允许重复当成功）。
     const seqFiles = [];
+    let gatedWant = 0, gatedOk = 0, gatedFail = 0;
     if (shot.seq && shot.seq > 1 && readyNow) {
-      for (let i = 2; i <= shot.seq; i++) {
-        await sleep(shot.seqMs || 420);
-        try {
-          const im = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
-          const b = Buffer.from(im.data, 'base64');
-          const p2 = path.join(OUT, shot.name + '-f' + i + '.png');
+      if (FGATED) {
+        const want = shot.seq;
+        gatedWant = want;
+        let lastFrames = (diag && typeof diag.frames === 'number') ? diag.frames : 0;
+        let lastCam = null;
+        let attempts = 0;
+        while (seqFiles.filter(f => f.ok).length < want && attempts < want * 6) {
+          attempts++;
+          const w = await waitFrames(lastFrames + FGAP, shot.frameTimeout || 150000);
+          if (!w.ok) {
+            seqFiles.push({ ok: false, err: 'frame-wait-timeout', targetFrame: lastFrames + FGAP, waited: w.waited, cam: w.diag ? w.diag.cam : null });
+            break;
+          }
+          const before = w.diag;
+          let b = null, capErr = null;
+          try {
+            const im = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 60000);
+            b = Buffer.from(im.data, 'base64');
+          } catch (e) { capErr = String((e && e.message) || e); }
+          const after = await readDiag();
+          const fB = before && before.frames, fA = after && after.frames;
+          const advanced = typeof fA === 'number' && fA > lastFrames;
+          const moved = !!(after && after.cam && (!lastCam
+            || Math.hypot(after.cam[0] - lastCam[0], after.cam[2] - lastCam[2]) > 5e-3
+            || Math.abs(after.cam[1] - lastCam[1]) > 5e-3));
+          if (!b || !b.length || capErr || !advanced || !moved) {
+            seqFiles.push({
+              ok: false, err: capErr || (!b ? 'empty-shot' : (!advanced ? 'duplicate-frame' : 'camera-not-moved')),
+              framesBefore: fB, framesAfter: fA, camBefore: before && before.cam, camAfter: after && after.cam
+            });
+            continue;
+          }
+          const p2 = path.join(OUT, shot.name + '-F' + fA + '.png');
           fs.writeFileSync(p2, b);
-          seqFiles.push({ png: p2, bytes: b.length });
-        } catch (e) { seqFiles.push({ png: null, bytes: 0, err: String((e && e.message) || e) }); }
+          seqFiles.push({
+            ok: true, png: p2, bytes: b.length,
+            framesBefore: fB, framesAfter: fA,
+            camBefore: before && before.cam, camAfter: after && after.cam,
+            camRotBefore: before && before.camRot, camRotAfter: after && after.camRot,
+            lumAfter: after && after.lum, camBlockedAfter: after && after.camBlocked,
+            note: '截图落在帧 ' + fB + '..' + fA + ' 之间的某个真实绘制帧'
+          });
+          lastFrames = fA;
+          lastCam = after.cam;
+        }
+      } else {
+        for (let i = 2; i <= shot.seq; i++) {
+          await sleep(shot.seqMs || 420);
+          try {
+            const im = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, 30000);
+            const b = Buffer.from(im.data, 'base64');
+            const p2 = path.join(OUT, shot.name + '-f' + i + '.png');
+            fs.writeFileSync(p2, b);
+            seqFiles.push({ png: p2, bytes: b.length });
+          } catch (e) { seqFiles.push({ png: null, bytes: 0, err: String((e && e.message) || e) }); }
+        }
       }
     }
 
     // 游戏自身 JS 异常、真实资源 4xx 都算失败；仅 favicon.ico 404 豁免（在报告里单列）
-    const seqBad = seqFiles.filter(f => !f.png || !f.bytes).length;
-    const failed = !readyNow || !bytes || !!shotErr || !!seqBad || (netErrs.length > 0 && !faviconOnly) || gameErrs.length > 0;
+    const seqBad = seqFiles.filter(f => f.ok === false || !f.png || !f.bytes).length;
+    gatedOk = seqFiles.filter(f => f.ok === true).length;
+    gatedFail = seqFiles.filter(f => f.ok === false).length;
+    // 逐帧门控模式下必须凑够要求数量的"真实新帧 + 相机确有移动"截图（默认至少 3 张），
+    // 静态首张不计入这个数量；帧号没前进的重复帧已经在上面的循环里被判为失败。
+    const gatedEnough = !FGATED || !shot.seq || gatedOk >= (shot.fmin || 3);
+    const failed = !readyNow || !bytes || !!shotErr || !!seqBad || !gatedEnough
+      || (netErrs.length > 0 && !faviconOnly) || gameErrs.length > 0;
     if (failed) bad++;
     report.push({
       name: shot.name, url, png: pngPath, bytes, ok: !failed, seq: seqFiles,
+      staticShot: pngPath, gatedWant, gatedOk, gatedFail, gatedEnough,
       ready: readyNow, camBlocked: diag ? diag.camBlocked : null,
       waited: rd.waited, diag, probe, errors: errs.slice(0, 8), gameErrors: gameErrs.slice(0, 8),
       netErrors: netErrs.slice(0, 8), faviconOnly, shotErr
     });
     console.log('shot ' + shot.name + ' ' + (failed ? 'FAIL' : 'OK') + ' bytes=' + bytes + ' ready=' + readyNow + ' camBlocked=' + (diag ? diag.camBlocked : '?') + ' waited=' + rd.waited + 'ms'
-      + (shot.seq ? ' seq=' + (1 + seqFiles.length) + '/' + shot.seq + ' seqBad=' + seqBad : '')
+      + (shot.seq
+        ? (FGATED
+          ? ' static=1 gatedOk=' + gatedOk + '/' + gatedWant + ' gatedFail=' + gatedFail + ' gatedEnough=' + gatedEnough
+          : ' seq=' + (1 + seqFiles.length) + '/' + shot.seq + ' seqBad=' + seqBad)
+        : '')
       + (diag ? ' frames=' + diag.frames + ' lum=' + diag.lum + '/' + diag.lumMax + ' calls=' + (diag.budget ? diag.budget.calls : '?') : '')
       + (netErrs.length ? ' NET_ERR=' + netErrs.length : '') + (errs.length ? ' JS_ERR=' + errs.length : '') + (shotErr ? ' SHOT_ERR=' + shotErr : ''));
+    for (const f of seqFiles) {
+      if (f.ok === false) console.log('   SEQ-FAIL ' + (f.err || '?') + ' frames ' + f.framesBefore + '->' + f.framesAfter + ' cam ' + JSON.stringify(f.camAfter || f.cam));
+      else if (f.ok) console.log('   SEQ-OK ' + path.basename(f.png) + ' bytes=' + f.bytes + ' frames ' + f.framesBefore + '->' + f.framesAfter
+        + ' cam ' + JSON.stringify(f.camBefore) + ' -> ' + JSON.stringify(f.camAfter) + ' rot ' + JSON.stringify(f.camRotAfter));
+    }
     if (diag) console.log('   diag ' + JSON.stringify({ lv: diag.lv, p: diag.p, cam: diag.cam, ray: diag.ray, budget: diag.budget }));
     for (const e of netErrs.slice(0, 4)) console.log('   NET ' + e.slice(0, 260));
     for (const e of errs.slice(0, 4)) console.log('   ERR ' + e.slice(0, 260));

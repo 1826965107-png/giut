@@ -680,7 +680,7 @@ check-l0v2-node.cjs 用真实 vendor THREE + 真实 updatePlayer/l0Path/tryFuse�
 
 # 13. 门框闪烁修复（2026-11-12）
 
-工作目录 `D:\AI\工作文件夹\游戏`；Git HEAD `fc66003b0dd39ac93310284bc783baed2af62cab`，**未提交、未推送、未回滚**。
+工作目录 `D:\AI\工作文件夹\游戏`。本节操作与证据的代码基线是 `fc66003b0dd39ac93310284bc783baed2af62cab`（修复前）；修复本身已随提交 `6f1ab0b034aa9c37cae6e3fccfd8c843a227a0a8`（2026-11-12）提交并推送，因此"未提交"只适用于当日基线。2026-11-13 的逐帧证据与文档校正见 13.5。
 
 ## 13.1 根因（真实世界面坐标 + 真实 `Box3` 扫描）
 
@@ -721,7 +721,98 @@ check-l0v2-node.cjs 用真实 vendor THREE + 真实 updatePlayer/l0Path/tryFuse�
 无头 Edge + SwiftShader，`tools/shots12.cjs` 内置 `seq=6`（`?camseq=` 逐帧平移，每机位连拍 6 帧），机位 `DF-01`（接待↔脱鞋门，正面+右移）、`DF-06`（淋浴↔湿区门，仰视+侧移），另用 `?oldcasing=1` 在同机位叠回旧构造做 A/B：
 
 - 新构造：`D:\AI\工作文件夹\游戏\shots12\shots12-pAttB2\DF-01-lobby-shoe-front-f2..f6.png`、`DF-06-shower-wetHall-up-f2..f6.png`（`ready=true`、`camBlocked=false`、`seq=6/6 seqBad=0`）。
-- 旧构造对照：`D:\AI\工作文件夹\游戏\shots12\shots12-p60tML\DF-04-OLD-…`、`DF-06-OLD-…`（同机位同帧序）。
+- 旧门套叠加负对照：`D:\AI\工作文件夹\游戏\shots12\shots12-p60tML\DF-04-OLD-…`、`DF-06-OLD-…`（同机位同帧序）。`?oldcasing=1` **只把修复前的旧立框与旧上沿重新摆到新场景上**，没有恢复旧门楣与旧墙裙，属"旧门套构造会共面"的叠加负对照，**不是完整旧版本复现**。
 - 放大对比：`logs-doorframe/evidence/DF-06-OLD-jamb-zoom2.png`（洞口侧点状虚线）与 `DF-06-new-jamb-zoom.png`（干净）。
 
 方法与边界：这是**结构扫描 + 同机位 A/B 目视**两类证据；SwiftShader 每帧约 5s（`frames=9~12` 对应 40–60s），420ms 间隔抓到的相邻帧可能重复，因此未用像素指标量化闪烁（试写的高通/翻转指标新旧差异 0.0156 vs 0.0158，被运镜噪声淹没，已删除该脚本）。Node 侧扫描是 GPU 桩下的几何断言，不代表已渲染画面；真实硬件 GPU 帧率未测。
+
+## 13.5 逐帧门控证据（2026-11-13 收尾）
+
+旧连拍是固定 420ms 间隔、不记帧号；SwiftShader 每帧约 4–6 秒，短间隔可能抓到同一帧，因此无法逐帧对账。已改为按 `?diag=1` 的 `frames`（每次 `composer.render()` 后自增）门控：
+
+- `tools/shots12.cjs`：`--framegated=1`（配 `--fgap=2`）时，每张截图前等 `frames` 推进 ≥ gap，截图后立即复读 `frames`/`cam`/`camRot`；帧号未前进或相机未移动判 `duplicate-frame` / `camera-not-moved`，不计入成功并重试（允许跨帧，不允许重复帧当成功）。成功判定要求 `gatedOk ≥ 3`，日志把静态首张与门控张数分开（`static=1 gatedOk=6/6 gatedEnough=true`），不再混算成 `7/6`。
+- 宿主 `?diag=1` 标题 JSON 增加 `camRot: [pitch, yaw]`（纯诊断字段）。
+
+| 命令 | 退出码 | 结果 | 日志 |
+|---|---|---|---|
+| `node --check tools/shots12.cjs` | 0 | 脚本语法通过 | — |
+| `node tools/shots12.cjs --base=… --framegated=1 --fgap=2 --only=DF-01-lobby-shoe-front,DF-06-shower-wetHall-up` | 0 | 两机位各 6 张门控帧，全 `SEQ-OK`，`SHOTS-OK 2` | `logs-doorframe/shots-framegated.log` |
+| `node tools/shots12.cjs … --only=DF-01-lobby-shoe-front` | 0 | 校正计数器后复验 `static=1 gatedOk=6/6 gatedFailed=0 gatedEnough=true` | `logs-doorframe/shots-framegated2.log` |
+| `node tools/_syntax12.cjs` | 0 | `SYNTAX OK`（346114 字符） | `logs-doorframe/syntax4.log` |
+| `node tools/_mkcdn.cjs` / `--check` | 0 / 0 | `online bytes 370368`；`CHECK-OK …（370368 字节）` | `logs-doorframe/cdn2.log`、`cdn-check2.log` |
+| `node tools/check-level12-node.cjs` | 0 | L0 98/98 + L37 412/412 + 行为 65/65 | `logs-doorframe/l12-unified2.log` |
+
+逐帧数据（`shots-report.json` 的 `framesBefore/framesAfter/camBefore/camAfter/camRotAfter`）：
+
+- `DF-01-lobby-shoe-front`：`shots12\shots12-jgYCQb\DF-01-lobby-shoe-front-F21.png`（帧 17→21，cam `[0.94,1.62,20.27]→[1.02,1.62,20.28]`）、`-F28.png`（24→28）、`-F36.png`（32→36）、`-F42.png`（38→42）、`-F48.png`（44→48）、`-F54.png`（50→54）；yaw 0.182→0.255 rad 连续增大。
+- `DF-06-shower-wetHall-up`：同目录 `-F23.png`（16→23，cam `[-3.34,1.62,4.35]→[-3.31,1.62,4.51]`）、`-F31/F39/F47/F55/F63.png`；yaw 1.626→1.722 rad。
+- 复验：`shots12\shots12-wxuMAl\DF-01-lobby-shoe-front-F21/F28/F34/F40/F46/F52.png`。
+
+口径：`frames A→B` 表示截图前读到 A、截图后读到 B，真实截图落在 A..B 窗口内的某个真实绘制帧（无头浏览器每次截图还会推进若干帧），因此只声明"落在该窗口内"，不声称精确对应单一帧号；相邻两张至少相差 5 帧、相机位移约 8cm，可确认不是同一帧。SwiftShader 单帧 4–6 秒，单机位 6 张约 4 分钟；硬件 GPU 帧率与主观观感未测，未做像素级量化。
+
+口径补充：`shots12\shots12-jgYCQb\shots-report.json` 由修正计数之前的脚本生成，逐帧 `framesBefore/framesAfter/camBefore/camAfter/camRot` 齐全但没有 `gatedOk/gatedEnough` 字段；计数字段以同一机位用修正后脚本复验的 `shots12\shots12-wxuMAl` 为准（`gatedOk=6/6 gatedFail=0 gatedEnough=true`）。DF-06 未重复拍摄，只沿用 jgYCQb 的 6 张逐帧证据。
+
+
+## 14. 前两关近景建模精细化（倒角 / 门板 / 五金 / 扶梯 / 踏步）
+
+本轮只细化近景实体，不改房间、门洞、泳池平面、动线、收集物、怪物与玩法；门框 6mm 与墙裙 4mm 退让保持不变。
+
+### 14.1 主要变化
+
+- 新增 `levels/l12-detail.js`：`slab`（圆角截面 + `ExtrudeGeometry` 真实斜边 + 米制 UV + 几何缓存）、`rod`（按半径/材质合批的实例化圆杆）、`tube`（连续弯管）、`disc`/`flange`（法兰圆环 + 薄盘，三轴同轴）、`grate`（槽体 + 承托轨道 + 实例化格栅条，条底落在轨顶）。无 three 形状 API 时按包围尺寸退化为 `addBox` 且保留零件标记，数据级检查仍有效。
+- L37：前台（倒角台面 + 裙板 + 端板 + 3 樘门板 + 杆状把手 + 铰链 + 踢脚）、长凳（3 条倒角座板 + 2 块端腿 + 横撑 + 座下纵梁）、更衣柜（内收踢脚 + 倒角顶盖 + 两长面各 4 樘门板 + 竖向拉手 + 铰链筒）、淋浴间（排水改槽 + 轨道 + 格栅条；花洒改圆管立管 + 弯头 + 横臂 + 圆盘喷头 + 混水阀 + 阀盘 + 旋钮 + 手柄 + 两处墙面法兰 + 两处管夹）、桑拿凳（4 条倒角座板 + 3 处支撑）、躺椅（3 条座板 + 2 块腿板 + 3 条倾斜靠背 + 扶手杆）。
+- L0：值班台、访客长椅、员工更衣柜、员工长凳、休息桌、档案柜、出票台、票据箱、布草车、层架、折叠台、配电柜（3 樘独立柜门）、工作台、布草库层架、打包台、鞋架全部改为倒角板 + 3–5mm 门缝 + 立体把手/铰链 + 踢脚或裙板；仪表托架改为真实台面几何。碰撞体种类与坐标、`supports` 三处承载高度、管道/吊杆、墙面小件与玩法未改。
+- 主池扶梯：两根连续弯管自成**落地 U 形梯架**——起点在池岸法兰底面（`y = 0.105`），经岸上直段升到 `y = 0.95`、弯头下压、入水直段到 `y = -1.30`（`x = lx ± 0.39`）；四级踏步（宽 0.78）两端直接落在两根管上，池岸法兰与水下端盖随管定位。原先与梯架不连接的内侧短杆（`ladderStringer`/`ladderPost`）已删除，四块法兰都由同一根连续管穿过。
+- 小池踏步：每级加倒角包边（顶面严格等于 `groundAt` 踏步高度，不影响行走），梯井底部加排水格栅。
+
+### 14.2 命令与退出码（实际执行，日志 `logs-detail/`）
+
+| # | 命令 | 退出码 | 结果 | 日志 |
+| --- | --- | --- | --- | --- |
+| 1 | `node tools/_syntax12.cjs` | 0 | `SYNTAX OK`（346777 字符） | `syntax.log` |
+| 2 | `node tools/check-level12-node.cjs` | 0 | L0 115/115 + L37 445/445 + 行为 65/65，三套件全部通过 | `l12-unified.log` |
+| 3 | `node tools/v2/plan-check.cjs` | 0 | `pass=168 fail=0` | `plan.log` |
+| 4 | `node tools/v2/l37-props-check.cjs` | 0 | `pass=1177 fail=0` | `props.log` |
+| 5 | `node tools/v2/door-coplanar.cjs` | 0 | `COPLANAR_OK`（门套 6mm / 墙裙 4mm 未被破坏） | `door.log` |
+| 6 | `node tools/check-level3-node.cjs` | 0 | 101/101 | `l3.log` |
+| 7 | `node tools/check-level4-node.cjs` | 0 | 168/168 | `l4.log` |
+| 8 | `node tools/check-level4-rework-independent.cjs` | 0 | `checks=45; failures=0` | `l4r.log` |
+| 9 | `node tools/level12-budget.cjs` | 0 | 场景统计见 14.4 | `budget.log` |
+| 10 | `node tools/_mkcdn.cjs` | 0 | `online bytes 371153` | `cdn.log` |
+| 11 | `node tools/_mkcdn.cjs --check` | 0 | `CHECK-OK …（371153 字节）` | `cdn-check.log` |
+
+### 14.3 新增回归要点
+
+- 真实倒角轮廓：板材顶点数 > 48（普通 `BoxGeometry` 为 24）、非轴对齐法线 ≥ 8、坐标与包围盒全有限、UV 跨度与世界尺寸同量级、倒角不吞噬板厚；负对照用 `new THREE.BoxGeometry(3.6, 0.06, 0.8)` 必须被判不合格。
+- 门板与五金：同排门板相邻间隙 ∈ [2.5, 6] mm；把手/铰链/立管/管夹/喷头/旋钮/混水阀按 `detail.parts` 计数（避免混入另一关的构件）。
+- 长凳：12 组全部 `min.y = 0` 且腿顶 `max.y` 与座板底面严格相等（真实接地与承接）。
+- 扶梯：梯架 4 根、踏步 8 块，每级踏步两端分别落在某根梯架实体的 Box3 内（x/y/z 三项接触），且不存在旧的内侧短杆；**四块池岸法兰上方各有真实管体**——在法兰顶面以上 0.15/0.35/0.55m 三个高度沿 −X→+X 发射真实 `Raycaster` 命中梯架（4/4），并在法兰正上方 φ0.06m×0.6m 的局部圆柱内统计真实顶点数 ≥ 8（只看整条弯管总 AABB 覆盖不算证据）；格栅条底面落在承托轨道顶面（±1mm）。
+- 支承连接复查（用户复审后补齐）：布草车推手下方补两根 `cartBracket` 竖杆（顶圈面 → 推手中心 0.255m）；访客长凳补座下连续托梁（顶面贴座板底面，穿过两端腿板），员工长凳托梁同步抬到贴座板；躺椅扶手立柱加长到扶手轴线（原差 52mm），并新增座下两条侧梁 + 前腿横梁，接住伸出座板 20cm 的前腿；靠背与座板真实相交。回归新增 9 条（L0 4 条、L37 5 条），含"托梁抬高 6cm""立柱缩 52mm"两条负对照；`levels/l12-detail.js` 的 `flush()` 额外导出每根实例圆杆的真实世界包围盒供断言使用。
+- L0：三处保险丝承载面（0.72 / 1.02 / 1.66）都能对应到顶面高度一致（±0.006）的真实倒角台面。
+
+### 14.4 几何 / 绘制开销（与 `6f1ab0b` 同脚本对比）
+
+| 指标 | 基线 `6f1ab0b` | 本轮 | 变化 |
+| --- | --- | --- | --- |
+| L0 网格 | 853 | 809 | −44 |
+| L0 三角面 | 10,486 | 21,600 | +11,114 |
+| L37 网格 | 1,503 | 1,659 | +156 |
+| L37 实例批次 / 实例 | 47 / 2,434 | 78 / 3,011 | +31 / +577 |
+| 全场网格 | 3,474 | 3,584 | +110 |
+| 全场三角面（可见） | 488,582（405,482） | 542,528（459,428） | +53,946 |
+| 灯光数 | 66 | 66 | 0 |
+
+口径：`tools/level12-budget.cjs` 与无头浏览器诊断都只统计场景图/材质/几何，渲染器为桩或软件光栅（SwiftShader）；`renderer.info.calls=1` 是最后一次 `composer.render` 的调用数，不是整帧 draw call，也不代表硬件帧率。圆杆、铰链、格栅条走实例化；四台扶梯的连续弯管共用缓存几何。
+
+### 14.5 代表图（真实 WebGL，无头 Edge + 独立临时 profile）
+
+- L0 档案家具近景：`D:\AI\工作文件夹\游戏\shots12\shots12-KZTIi0\DT-01-l0-archive-furniture.png`
+- L37 更衣柜 / 长凳近景：`D:\AI\工作文件夹\游戏\shots12\shots12-KZTIi0\DT-02-l37-locker-bench.png`
+- 淋浴设施内侧：`D:\AI\工作文件夹\游戏\shots12\shots12-V98jqg\DT-03-shower-inside.png`
+- 主池扶梯：`D:\AI\工作文件夹\游戏\shots12\shots12-6OklnX\DT-04-pool-ladder.png`
+
+### 14.6 未做 / 限制
+
+- 未在硬件 GPU 上测帧率、GPU 时间或主观观感；无头浏览器每帧 4–6 秒，只用于取证。
+- 未新增灯光、未做全场盲细分；渲染批次增加来自家具零件细分与倒角板，后续如需可进一步合并同材质静态板。
+- 本地未提交（HEAD `6f1ab0b`），按要求不提交、不推送。

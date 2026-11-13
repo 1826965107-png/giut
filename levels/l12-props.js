@@ -1,3 +1,5 @@
+import { createDetailKit } from './l12-detail.js';
+
 export const L37_PROPS = [
   // —— 接待：值班前台 + 候客长椅 + 旧导览牌（形成视线转折）——
   { id: 'desk-lobby', kind: 'desk', room: 'lobby', x: -4.2, z: 21.4, w: 3.6, d: 0.8, h: 1.02, rot: 0 },
@@ -131,41 +133,140 @@ export function createL37Props(ctx) {
   const glassMat = new THREE.MeshStandardMaterial({ color: 0x8fa6a6, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.28 });
 
   const box = (w, h, d, x, y, z, m, cov) => addBox(w, h, d, x, y, z, m, cov);
+  // 近景细件：真实小倒角板材 / 圆杆 / 曲管 / 圆盘 / 法兰 / 格栅（几何缓存 + 实例化合批）
+  const kit = createDetailKit({ THREE, scene, addBox });
   for (const p of L37_PROPS) {
     const r = roomOf(p.room);
     if (!r) continue;
     const baseY = 0;
     switch (p.kind) {
       case 'desk': {
-        // 台身顶面 = p.h - 0.06；台面厚 0.06，中心取 p.h - 0.03，底面正好压在台身顶面上
-        box(p.w, p.h - 0.06, p.d, p.x, baseY + (p.h - 0.06) / 2, p.z, l12WoodMat, 1.0);
-        box(p.w + 0.1, 0.06, p.d + 0.1, p.x, baseY + p.h - 0.03, p.z, stoneMat, 1.0);
+        // 台身顶面 = p.h - 0.06；台面厚 0.06、中心取 p.h - 0.03，底面正好压在台身顶面上
+        // 台身前后各让 3cm，露出内收踢脚；台面为真实倒角板，台面下有前裙板与两端封板
+        const topT = 0.06, carcH = p.h - topT, bodyD = p.d - 0.06;
+        box(p.w - 0.04, carcH, bodyD, p.x, baseY + carcH / 2, p.z, l12WoodMat, 1.0);
+        kit.slab({
+          w: p.w + 0.10, h: topT, d: p.d + 0.10, x: p.x, y: baseY + p.h - topT / 2, z: p.z,
+          mat: stoneMat, axis: 'y', r: 0.012, bevel: 0.005, name: 'l12DeskTop',
+          userData: { deskId: p.id, detailPart: 'top' }
+        });
+        kit.slab({
+          w: p.w - 0.18, h: 0.11, d: 0.024, x: p.x, y: baseY + carcH - 0.055, z: p.z + bodyD / 2 + 0.012,
+          mat: l12WoodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron'
+        });
+        for (const sg of [-1, 1]) {
+          kit.slab({
+            w: 0.028, h: carcH - 0.02, d: bodyD + 0.006, x: p.x + sg * (p.w / 2 - 0.014),
+            y: baseY + (carcH - 0.02) / 2, z: p.z,
+            mat: l12WoodMat, axis: 'x', r: 0.004, bevel: 0.002, part: 'endPanel'
+          });
+        }
+        // 三樘独立柜门：3.5mm 可见门缝、竖向杆状把手、门板内侧铰链
+        const nd = 3, dGap = 0.0035, doorH = carcH - 0.24;
+        const doorZ = p.z + bodyD / 2 + 0.011;
+        const fw = (p.w - 0.20 - dGap * (nd - 1)) / nd;
+        for (let i = 0; i < nd; i++) {
+          const cx = p.x - (p.w - 0.20) / 2 + i * (fw + dGap) + fw / 2;
+          const dy = baseY + 0.14 + doorH / 2;
+          kit.slab({
+            w: fw, h: doorH, d: 0.02, x: cx, y: dy, z: doorZ, mat: l12WoodMat, axis: 'z',
+            r: 0.005, bevel: 0.002, part: 'door', userData: { deskId: p.id }
+          });
+          const hx = cx - fw / 2 + 0.05;
+          kit.rod({ r: 0.011, len: 0.16, x: hx, y: dy, z: doorZ + 0.026, mat: l12MetalMat, axis: 'y', part: 'handle' });
+          for (const hy of [dy + doorH / 2 - 0.09, dy - doorH / 2 + 0.09]) {
+            kit.rod({ r: 0.013, len: 0.018, x: hx - 0.02, y: hy, z: doorZ + 0.014, mat: l12MetalMat, axis: 'z', part: 'hinge' });
+          }
+        }
+        kit.slab({
+          w: p.w - 0.12, h: 0.09, d: 0.02, x: p.x, y: baseY + 0.045, z: p.z + bodyD / 2 - 0.03,
+          mat: l12MetalMat, axis: 'z', r: 0.003, bevel: 0.001, part: 'toeKick'
+        });
         COLLIDERS.push({ x1: p.x - p.w / 2, x2: p.x + p.w / 2, z1: p.z - p.d / 2, z2: p.z + p.d / 2, y1: 0, y2: p.h, kind: 'desk' });
         break;
       }
       case 'bench': {
-        const seat = box(p.w, 0.08, p.d, p.x, baseY + p.h, p.z, l12WoodMat, 1.0);
-        seat.userData.benchId = p.id;
-        seat.userData.benchPart = 'seat';
+        // 座板分三条真实倒角板（条缝 4mm），两端支腿接地且顶面严格顶住座板底面，
+        // 腿间有端部横撑、座板下有一道纵向托梁，沿 X / Z 两种朝向都成立。
         const alongX = p.w >= p.d;
         const span = alongX ? p.w : p.d;
-        const legHeight = p.h - 0.04;
+        const seatT = 0.08, sGap = 0.004;
+        const seatY = baseY + p.h;
+        const seat = new THREE.Group();
+        seat.position.set(0, 0, 0);
+        seat.name = 'l12BenchSeat';
+        seat.userData.benchId = p.id;
+        seat.userData.benchPart = 'seat';
+        scene.add(seat);
+        const cross = alongX ? p.d : p.w;
+        const slatW = (cross - sGap * 2) / 3;
+        for (let i = 0; i < 3; i++) {
+          const off = -cross / 2 + i * (slatW + sGap) + slatW / 2;
+          kit.slab({
+            w: alongX ? p.w : slatW, h: seatT, d: alongX ? slatW : p.d,
+            x: p.x + (alongX ? 0 : off), y: seatY, z: p.z + (alongX ? off : 0),
+            mat: l12WoodMat, axis: 'y', r: 0.006, bevel: 0.003, parent: seat, part: 'seatSlat'
+          });
+        }
+        const legHeight = p.h - seatT / 2;
         for (const end of [-1, 1]) {
           const offset = end * (span / 2 - 0.18);
-          const leg = box(alongX ? 0.10 : p.w * 0.8, legHeight, alongX ? p.d * 0.8 : 0.10,
-            p.x + (alongX ? offset : 0), baseY + legHeight / 2,
-            p.z + (alongX ? 0 : offset), l12MetalMat);
-          leg.userData.benchId = p.id;
-          leg.userData.benchPart = 'leg';
+          kit.slab({
+            w: alongX ? 0.10 : p.w * 0.8, h: legHeight, d: alongX ? p.d * 0.8 : 0.10,
+            x: p.x + (alongX ? offset : 0), y: baseY + legHeight / 2,
+            z: p.z + (alongX ? 0 : offset), mat: l12MetalMat,
+            axis: alongX ? 'x' : 'z', r: 0.004, bevel: 0.002,
+            part: 'leg', userData: { benchId: p.id, benchPart: 'leg' }
+          });
         }
+        // 横撑只用于沿 X 的长凳（两条短横撑压在两块端腿之间）；
+        // 沿 Z 的长凳座面只有 p.w 宽，横撑会从座板两侧伸出，故不设横撑，只保留
+        // 两端板腿与座下纵向托梁（下方 'rail'）。
+        if (alongX) {
+          for (const end of [-1, 1]) {
+            kit.rod({
+              r: 0.016, len: p.d * 0.72, x: p.x + end * (span / 2 - 0.18),
+              y: baseY + 0.13, z: p.z, mat: l12MetalMat, axis: 'z', part: 'stretcher'
+            });
+          }
+        }
+        kit.rod({
+          r: 0.018, len: span - 0.30, x: p.x, y: baseY + p.h - seatT - 0.018, z: p.z,
+          mat: l12MetalMat, axis: alongX ? 'x' : 'z', part: 'rail'
+        });
         COLLIDERS.push({ x1: p.x - p.w / 2, x2: p.x + p.w / 2, z1: p.z - p.d / 2, z2: p.z + p.d / 2, y1: 0, y2: p.h + 0.04, kind: 'bench' });
         break;
       }
       case 'locker': {
-        box(p.w, p.h, p.d, p.x, baseY + p.h / 2, p.z, l12WoodMat, 1.0);
-        for (let i = 0; i < 4; i++) {
-          const dz = p.z - p.d / 2 + (i + 0.5) * (p.d / 4);
-          box(0.03, 0.06, 0.12, p.x + p.w / 2 + 0.015, baseY + 1.1, dz, l12MetalMat);
+        // 柜岛：整柜体（碰撞/顶面沿用） + 内收踢脚 + 倒角顶盖 + 两长面各 4 樘独立门板
+        // 门板 3.5mm 门缝、竖向杆状拉手、每门两枚铰链筒，全部为真实零件
+        const capT = 0.03, pGap = 0.0035, nDoor = 4;
+        box(p.w, p.h - capT, p.d, p.x, baseY + (p.h - capT) / 2, p.z, l12WoodMat, 1.0);
+        // 内收踢脚（倒角板）：柜体靠它接地，柜身与地面留出真实阴影缝
+        kit.slab({
+          w: p.w - 0.05, h: 0.06, d: p.d - 0.05, x: p.x, y: baseY + 0.03, z: p.z,
+          mat: l12MetalMat, axis: 'y', r: 0.004, bevel: 0.002, part: 'toeKick'
+        });
+        kit.slab({
+          w: p.w + 0.04, h: capT, d: p.d + 0.04, x: p.x, y: baseY + p.h - capT / 2, z: p.z,
+          mat: l12WoodMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'top'
+        });
+        const doorH = p.h - 0.24, yDoor = baseY + 0.16 + doorH / 2;
+        const dw = (p.d - 0.16 - pGap * (nDoor - 1)) / nDoor;
+        for (const sg of [-1, 1]) {
+          const fx = p.x + sg * (p.w / 2 + 0.011);
+          for (let i = 0; i < nDoor; i++) {
+            const cz = p.z - (p.d - 0.16) / 2 + i * (dw + pGap) + dw / 2;
+            kit.slab({
+              w: 0.02, h: doorH, d: dw, x: fx, y: yDoor, z: cz, mat: l12WoodMat, axis: 'x',
+              r: 0.004, bevel: 0.002, part: 'door', userData: { lockerId: p.id }
+            });
+            const hz = cz + (i % 2 === 0 ? dw / 2 - 0.05 : -dw / 2 + 0.05);
+            kit.rod({ r: 0.010, len: 0.16, x: fx + sg * 0.024, y: yDoor, z: hz, mat: l12MetalMat, axis: 'y', part: 'handle' });
+            for (const hy of [yDoor + doorH / 2 - 0.12, yDoor - doorH / 2 + 0.12]) {
+              kit.rod({ r: 0.013, len: 0.018, x: fx + sg * 0.016, y: hy, z: hz, mat: l12MetalMat, axis: 'x', part: 'hinge' });
+            }
+          }
         }
         COLLIDERS.push({ x1: p.x - p.w / 2, x2: p.x + p.w / 2, z1: p.z - p.d / 2, z2: p.z + p.d / 2, y1: 0, y2: p.h, kind: 'locker' });
         break;
@@ -196,22 +297,60 @@ export function createL37Props(ctx) {
         const rd = 0.95;
         box(t, H, rd, gx, baseY + H / 2, zF - rd / 2, stoneMat, 1.0);
         COLLIDERS.push({ x1: gx - t / 2, x2: gx + t / 2, z1: zF - rd, z2: zF, y1: 0, y2: H, kind: 'stall' });
-        // (5) 地面连续（不抬高浅盘），只在前沿做一条窄排水槽
-        box(p.w - 2 * t, 0.02, 0.12, p.x, baseY + 0.01, zF - 0.22, l12MetalMat, 1.0);
-        // (6) 花洒贴后墙，位于回墙遮住的内侧；立管落地、横臂朝 +z、末端花洒头 + 阀门
+        // (5) 地面连续（不抬高浅盘）：前沿一条带实体栅格的窄排水槽
+        kit.grate({
+          id: p.id, w: p.w - 2 * t, d: 0.12, x: p.x, y: baseY + 0.01, z: zF - 0.22,
+          slotH: 0.02, step: 0.11, slotKey: 'stallDrainSlot', slotMat: l12MetalMat, barMat: l12MetalMat
+        });
+        // (6) 花洒：圆管立管 + 弯头 + 横臂 + 圆盘喷头 + 混水阀与旋钮，位置仍在回墙遮住的内侧
         const shX = p.x - e * 0.45;
         const rz = zB + t + 0.06;
-        box(0.07, 2.09, 0.07, shX, baseY + 2.09 / 2, rz, l12MetalMat);
-        box(0.06, 0.06, 0.34, shX, baseY + 2.10, rz + 0.17, l12MetalMat);
-        box(0.20, 0.05, 0.20, shX, baseY + 2.07, rz + 0.34, l12MetalMat);
-        box(0.10, 0.08, 0.10, shX, baseY + 1.15, rz + 0.05, l12MetalMat);
-        // (7) 壁装花洒的两处管夹：从后墙内表面接到立管，确保不是悬空立管
-        for (const cy of [1.05, 1.92]) box(0.05, 0.05, t + 0.06, shX, baseY + cy, zB + t + 0.03, l12MetalMat);
+        kit.rod({ r: 0.035, len: 2.09, x: shX, y: baseY + 2.09 / 2, z: rz, mat: l12MetalMat, axis: 'y', part: 'riser' });
+        kit.tube({
+          points: [[shX, 2.09, rz], [shX, 2.125, rz + 0.035], [shX, 2.13, rz + 0.09]],
+          r: 0.032, seg: 12, mat: l12MetalMat, part: 'elbow'
+        });
+        kit.rod({ r: 0.030, len: 0.26, x: shX, y: 2.13, z: rz + 0.22, mat: l12MetalMat, axis: 'z', part: 'arm' });
+        kit.disc({ r: 0.105, t: 0.022, x: shX, y: 2.086, z: rz + 0.34, mat: l12MetalMat, axis: 'y', part: 'head' });
+        kit.tube({
+          points: [[shX, 1.15, rz], [shX, 1.15, rz + 0.09], [shX + 0.035, 1.15, rz + 0.13]],
+          r: 0.030, seg: 10, mat: l12MetalMat, part: 'mixer'
+        });
+        kit.disc({ r: 0.055, t: 0.012, x: shX, y: 1.15, z: rz + 0.005, mat: l12MetalMat, axis: 'z', part: 'escutcheon' });
+        kit.disc({ r: 0.048, t: 0.032, x: shX + 0.035, y: 1.15, z: rz + 0.19, mat: l12MetalMat, axis: 'z', part: 'knob' });
+        kit.rod({ r: 0.013, len: 0.11, x: shX + 0.035, y: 1.15, z: rz + 0.21, mat: l12MetalMat, axis: 'x', part: 'lever' });
+        kit.flange({ r: 0.062, x: shX, y: 1.96, z: zB + t + 0.012, mat: l12MetalMat, axis: 'z', part: 'flange' });
+        kit.flange({ r: 0.066, x: shX, y: 0.13, z: zB + t + 0.012, mat: l12MetalMat, axis: 'z', part: 'flange' });
+        // (7) 壁装花洒的两处真实管夹：从后墙内表面接到立管，确保不是悬空立管
+        for (const cy of [1.05, 1.92]) {
+          kit.rod({ r: 0.025, len: t + 0.06, x: shX, y: baseY + cy, z: zB + t + 0.03, mat: l12MetalMat, axis: 'z', part: 'clamp' });
+        }
         break;
       }
       case 'saunaBench': {
-        box(p.w, 0.10, p.d, p.x, baseY + p.h, p.z, l12WoodMat, 1.0);
-        for (const dz of [-p.d / 2 + 0.2, p.d / 2 - 0.2]) box(p.w, p.h, 0.10, p.x, baseY + p.h / 2, p.z + dz, l12WoodMat, 1.0);
+        // 桑拿坐台：四条真实倒角座板条（条缝 5mm）+ 两端与中部落地支撑，座面顶 = p.h
+        const alongX = p.w >= p.d;
+        const span = alongX ? p.w : p.d;
+        const cross = alongX ? p.d : p.w;
+        const seatT = 0.09, sGap = 0.005;
+        const seatY = baseY + p.h - seatT / 2;
+        const slatW = (cross - sGap * 3) / 4;
+        for (let i = 0; i < 4; i++) {
+          const off = -cross / 2 + i * (slatW + sGap) + slatW / 2;
+          kit.slab({
+            w: alongX ? p.w : slatW, h: seatT, d: alongX ? slatW : p.d,
+            x: p.x + (alongX ? 0 : off), y: seatY, z: p.z + (alongX ? off : 0),
+            mat: l12WoodMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'saunaSlat'
+          });
+        }
+        const supH = p.h - seatT;
+        for (const off of [-span / 2 + 0.20, 0, span / 2 - 0.20]) {
+          kit.slab({
+            w: alongX ? 0.10 : p.w - 0.10, h: supH, d: alongX ? p.d - 0.10 : 0.10,
+            x: p.x + (alongX ? off : 0), y: baseY + supH / 2, z: p.z + (alongX ? 0 : off),
+            mat: l12WoodMat, axis: alongX ? 'x' : 'z', r: 0.004, bevel: 0.002, part: 'saunaSupport'
+          });
+        }
         COLLIDERS.push({ x1: p.x - p.w / 2, x2: p.x + p.w / 2, z1: p.z - p.d / 2, z2: p.z + p.d / 2, y1: 0, y2: p.h, kind: 'bench' });
         break;
       }
@@ -236,14 +375,56 @@ export function createL37Props(ctx) {
         break;
       }
       case 'lounger': {
-        // 座面 top = p.h；靠背底面压在座面上（中心 p.h+0.17、高 0.40 → 底面 p.h-0.03），两侧框与座面同高接触
-        box(p.w, 0.08, p.d, p.x, baseY + p.h - 0.04, p.z, l12WoodMat, 1.0);
-        box(p.w, 0.40, 0.07, p.x, baseY + p.h + 0.17, p.z - p.d / 2 + 0.10, l12WoodMat, 1.0);
-        for (let i = 1; i <= 2; i++) {
-          box(p.w, 0.07, 0.30, p.x, baseY + p.h + 0.06 + i * 0.13, p.z - p.d / 2 + 0.10 + i * 0.10, l12WoodMat, 1.0);
+        // 躺椅：三条倒角座板条（座面顶 = p.h）+ 三块靠背条（倾斜、底面压在座面上）
+        // 两块接地腿板（顶面接座板底面）+ 两侧金属扶手杆
+        const seatT = 0.08, sGap = 0.004;
+        const seatY = baseY + p.h - seatT / 2;
+        const seatD = p.d - 0.46;
+        const slatD = (seatD - sGap * 2) / 3;
+        for (let i = 0; i < 3; i++) {
+          const off = -p.d / 2 + 0.08 + i * (slatD + sGap) + slatD / 2;
+          kit.slab({
+            w: p.w, h: seatT, d: slatD, x: p.x, y: seatY, z: p.z + off,
+            mat: l12WoodMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'loungeSeat'
+          });
         }
-        for (const sx of [-1, 1]) box(0.07, 0.40, 0.40, p.x + sx * (p.w / 2 - 0.05), baseY + p.h + 0.14, p.z - p.d / 2 + 0.24, l12MetalMat);
-        for (const dz of [-p.d / 2 + 0.15, p.d / 2 - 0.15]) box(p.w - 0.1, p.h, 0.08, p.x, baseY + p.h / 2, p.z + dz, l12MetalMat);
+        const legH = p.h - seatT;
+        for (const dz of [-p.d / 2 + 0.18, p.d / 2 - 0.18]) {
+          kit.slab({
+            w: p.w - 0.10, h: legH, d: 0.08, x: p.x, y: baseY + legH / 2, z: p.z + dz,
+            mat: l12MetalMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'loungeLeg'
+          });
+        }
+        const backZ = p.z - p.d / 2 + 0.14;
+        for (let i = 0; i < 3; i++) {
+          kit.slab({
+            w: p.w - 0.04, h: 0.34, d: 0.055, x: p.x, y: baseY + p.h + 0.16,
+            z: backZ - i * 0.062, mat: l12WoodMat, axis: 'z',
+            rx: -0.42, r: 0.005, bevel: 0.002, part: 'loungeBack'
+          });
+        }
+        // 座下框架：两条侧梁顶面贴住座板底面（p.h - seatT），从前腿延伸到后腿，
+        // 接住座板末端之外的前腿；前腿处再加一道横梁闭合
+        for (const sx of [-1, 1]) {
+          kit.rod({
+            r: 0.012, len: p.d - 0.36, x: p.x + sx * (p.w / 2 - 0.09), y: baseY + p.h - seatT - 0.012,
+            z: p.z, mat: l12MetalMat, axis: 'z', part: 'seatRail'
+          });
+        }
+        kit.rod({
+          r: 0.012, len: p.w - 0.18, x: p.x, y: baseY + p.h - seatT - 0.012,
+          z: p.z + p.d / 2 - 0.18, mat: l12MetalMat, axis: 'x', part: 'seatCross'
+        });
+        for (const sx of [-1, 1]) {
+          kit.rod({
+            r: 0.018, len: p.d - 0.34, x: p.x + sx * (p.w / 2 - 0.03), y: baseY + p.h + 0.13,
+            z: p.z - 0.04, mat: l12MetalMat, axis: 'z', part: 'armrest'
+          });
+          kit.rod({
+            r: 0.014, len: p.h + 0.13, x: p.x + sx * (p.w / 2 - 0.03), y: baseY + (p.h + 0.13) / 2,
+            z: p.z - p.d / 2 + 0.30, mat: l12MetalMat, axis: 'y', part: 'armPost'
+          });
+        }
         COLLIDERS.push({ x1: p.x - p.w / 2, x2: p.x + p.w / 2, z1: p.z - p.d / 2, z2: p.z + p.d / 2, y1: 0, y2: p.h, kind: 'lounger' });
         break;
       }
@@ -374,5 +555,8 @@ export function createL37Props(ctx) {
       ctx.addSteam(sx, hotW + 0.05, sz, sr);
     }
   }
+  kit.flush();
+  out.detail = kit.stats();
+  out.detailKit = kit;
   return out;
 }

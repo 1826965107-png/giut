@@ -113,7 +113,7 @@ const section = n => { out.push(''); out.push('== ' + n + ' =='); };
       THREE: {
         MeshStandardMaterial: class { constructor(o) { Object.assign(this, o); } },
         Mesh: class { constructor(g, m) { this.geometry = g; this.material = m; this.position = { set(){} }; this.rotation = { set(){} }; this.userData = {}; } },
-        Group: class { constructor() { this.children = []; this.position = { set(){} }; this.rotation = { set(){} }; } add(){} },
+        Group: class { constructor() { this.children = []; this.position = { set() { } }; this.rotation = { set() { } }; this.scale = { set() { } }; this.userData = {}; this.name = ''; } add(o) { this.children.push(o); } },
         BoxGeometry: class { constructor(w, h, d) { this.w = w; this.h = h; this.d = d; } },
         PlaneGeometry: class { constructor(w, h) { this.w = w; this.h = h; } },
         CylinderGeometry: class { constructor() {} },
@@ -153,10 +153,18 @@ const section = n => { out.push(''); out.push('== ' + n + ' =='); };
     }
     for (const p of L37_PROPS.filter(p => p.kind === 'lounger')) {
       const bs = near(p);
-      const seat = bs.filter(b => Math.abs(b.h - 0.08) < 1e-6)[0];
-      const back = bs.filter(b => Math.abs(b.h - 0.40) < 1e-6)[0];
-      ok(!!seat && !!back, `${p.id} 有座面与靠背`);
-      if (seat && back) ok(back.bot <= seat.top + 1e-6 && back.bot >= seat.top - 0.12, `${p.id} 靠背底面与座面接触`, `${back.bot.toFixed(3)} / ${seat.top.toFixed(3)}`);
+      // 细化后：座面为三条倒角座板（每条厚 0.08）、靠背为两块以上倾斜靠背条、两块接地腿板
+      const seats = bs.filter(b => Math.abs(b.h - 0.08) < 1e-6 && Math.abs(b.w - p.w) < 0.06);
+      const back = bs.filter(b => b.h >= 0.30 && b.h <= 0.38 && Math.abs(b.w - (p.w - 0.04)) < 0.03);
+      ok(seats.length >= 3 && back.length >= 2, `${p.id} 座板分条且靠背不少于两条`, `seats=${seats.length} back=${back.length}`);
+      if (seats.length && back.length) {
+        const seatTop = Math.max(...seats.map(b => b.top));
+        ok(Math.abs(seatTop - p.h) < 0.01 && back.every(b => b.bot >= p.h - 0.02 && b.bot <= p.h + 0.30),
+          `${p.id} 靠背底面压在座面之上`, `${back[0].bot.toFixed(3)} / seatTop ${seatTop.toFixed(3)}`);
+      }
+      const legs = bs.filter(b => Math.abs(b.bot) < 1e-6 && Math.abs(b.h - (p.h - 0.08)) < 0.02);
+      ok(legs.length === 2 && legs.every(b => Math.abs(b.top - (p.h - 0.08)) < 0.02),
+        `${p.id} 两块腿板接地且顶面接住座板底面`, 'legs=' + legs.length);
     }
     for (const p of L37_PROPS.filter(p => p.kind === 'stall')) {
       const bs = near(p, 0.45);

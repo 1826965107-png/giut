@@ -241,6 +241,143 @@
   ok(Math.abs(oldPeriod - 4.0) < 0.01, `负对照：cov=2 的旧写法会得到 ${oldPeriod.toFixed(2)}m 周期（被判不合格）`);
   ok(wallRepeat < 1 && L0V2.materials.floorMat.map.repeat.x === wallRepeat, '墙/木与地面都用 repeat=0.5（米制 UV 只缩一次）');
 
+  sec('近景细件：真实倒角轮廓 / 米制 UV / 有限值 / 接地 / 支撑面（不是只加标签）');
+  {
+    const bof = m => { const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); return g.boundingBox.clone().applyMatrix4(m.matrixWorld); };
+    scene.updateMatrixWorld(true);
+    const detail = [];
+    scene.traverse(o => { if (o.isMesh && o.userData && o.userData.l12detail) detail.push(o); });
+    const slabs = detail.filter(o => o.userData.detailKind === 'slab');
+    const made = (L0V2.detail && L0V2.detail.parts) || {};
+    const boxVerts = new THREE.BoxGeometry(1, 1, 1).attributes.position.count;
+    ok(slabs.length >= 30, 'L0 家具倒角板材数量与覆盖达到规格', 'slabs=' + slabs.length);
+    ok((made.door || 0) >= 12, '值班台/更衣柜/出票台有独立门板', 'doors=' + (made.door || 0));
+    ok((made.toeKick || 0) >= 1, '柜体有内收踢脚', 'toeKick=' + (made.toeKick || 0));
+    ok((made.handle || 0) >= 12, '门板配立体把手', 'handle=' + (made.handle || 0));
+    ok((made.hinge || 0) >= 8, '门板配铰链', 'hinge=' + (made.hinge || 0));
+    let thin = 0, axisOnly = 0, nonFinite = 0, uvBad = 0, uvChecked = 0;
+    for (const m of slabs) {
+      const g = m.geometry, pos = g.attributes.position, nrm = g.attributes.normal, uv = g.attributes.uv;
+      if (!pos || !nrm || pos.count <= boxVerts * 2) { thin++; continue; }
+      let skew = 0;
+      for (let i = 0; i < nrm.count; i++) {
+        if (Math.max(Math.abs(nrm.getX(i)), Math.abs(nrm.getY(i)), Math.abs(nrm.getZ(i))) < 0.995) skew++;
+      }
+      if (skew < 8) axisOnly++;
+      if (!g.boundingBox) g.computeBoundingBox();
+      const bb = g.boundingBox;
+      const dims = [bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z];
+      if (!dims.every(v => Number.isFinite(v) && v > 0)) nonFinite++;
+      for (let i = 0; i < pos.count; i++) {
+        if (!Number.isFinite(pos.getX(i)) || !Number.isFinite(pos.getY(i)) || !Number.isFinite(pos.getZ(i))) { nonFinite++; break; }
+      }
+      if (uv) {
+        let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+        for (let i = 0; i < uv.count; i++) {
+          const u = uv.getX(i), v = uv.getY(i);
+          if (u < u0) u0 = u; if (u > u1) u1 = u;
+          if (v < v0) v0 = v; if (v > v1) v1 = v;
+        }
+        const su = u1 - u0, sv = v1 - v0, dmax = Math.max(...dims), dmin = Math.min(...dims);
+        uvChecked++;
+        if (!(su > dmin * 0.4 && su < dmax * 1.6 && sv > dmin * 0.4 && sv < dmax * 1.6)) uvBad++;
+      }
+    }
+    ok(thin === 0, 'L0 每块板都是细分几何（顶点数远大于盒体 ' + boxVerts + '）', 'thin=' + thin);
+    ok(axisOnly === 0, 'L0 每块板都有真实斜切面（非轴对齐法线 ≥8 个）', 'axisOnly=' + axisOnly);
+    ok(nonFinite === 0, 'L0 细件几何坐标与包围盒全部有限', 'bad=' + nonFinite);
+    ok(uvBad === 0, 'L0 细件 UV 为米制尺度', (uvChecked - uvBad) + '/' + uvChecked);
+    const refBox = new THREE.BoxGeometry(3.6, 0.06, 0.8);
+    let refSkew = 0; const rn = refBox.attributes.normal;
+    for (let i = 0; i < rn.count; i++) {
+      if (Math.max(Math.abs(rn.getX(i)), Math.abs(rn.getY(i)), Math.abs(rn.getZ(i))) < 0.995) refSkew++;
+    }
+    ok(refBox.attributes.position.count <= boxVerts * 2 && refSkew === 0,
+      '负对照：等尺寸盒体的顶点数/斜切法线判据判不合格',
+      'verts=' + refBox.attributes.position.count + ' skew=' + refSkew);
+
+    // 支撑面（保险丝承载面）必须由真实台面几何提供，且高度与 supports 声明一致
+    let supOk = 0;
+    for (const s of L0V2.supports) {
+      const tops = detail.filter(o => o.userData.detailKind === 'slab' &&
+        /Top|top/.test(o.userData.detailPart || ''))
+        .map(m => bof(m))
+        .filter(b => Math.abs(b.max.x - (s.x + s.w / 2)) < 0.25 && Math.abs(b.min.x - (s.x - s.w / 2)) < 0.25 &&
+          Math.abs(b.max.y - s.top) < 0.006);
+      if (tops.length) supOk++;
+    }
+    ok(supOk === L0V2.supports.length, '每个保险丝承载面都由真实倒角台面提供且高度一致',
+      supOk + '/' + L0V2.supports.length);
+
+    // 桌腿接地且顶面与台面下沿相接（圆形支腿为实例化，按生成计数 + 台面容差校验）
+    ok((made.leg || 0) >= 8, '桌子/柜体支腿（含圆腿）已生成', 'leg=' + (made.leg || 0));
+  }
+
+  // 本轮新增构件的支承连接：布草车推手支架、访客/员工长凳座下托梁
+  sec('近景细件支承：布草车推手 / 长凳座下托梁（真实几何接触）');
+  {
+    const bb = o => { scene.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); };
+    const rods = (L0V2.detailKit && L0V2.detailKit.rodInstances()) || [];
+    const slabs = [];
+    scene.traverse(o => {
+      if (o.isMesh && o.userData && o.userData.detailKind === 'slab') slabs.push({ part: o.userData.detailPart || '', box: bb(o) });
+    });
+    const byPart = (arr, p) => arr.filter(x => x.part === p);
+    const handles = byPart(rods, 'cartHandle'), brackets = byPart(rods, 'cartBracket');
+    const rims = byPart(slabs, 'cartRim');
+    ok(handles.length === 3 && brackets.length === 6, '三辆布草车的推手各有两根支架',
+      'handle=' + handles.length + ' bracket=' + brackets.length);
+    let bOk = 0, bBad = [];
+    for (const h of handles) {
+      const hc = h.box.getCenter(new THREE.Vector3());
+      const mine = brackets.filter(b => {
+        const bc = b.box.getCenter(new THREE.Vector3());
+        return bc.x > h.box.min.x - 0.01 && bc.x < h.box.max.x + 0.01 &&
+          Math.abs(bc.z - hc.z) < 0.03 && Math.abs(b.box.max.y - hc.y) < 0.006;
+      });
+      if (mine.length >= 2) bOk++; else bBad.push('x=' + hc.x.toFixed(2) + ' n=' + mine.length);
+    }
+    ok(bOk === handles.length, '推手往下都有两根竖向支架接到推手中心高度', bOk + '/' + handles.length + (bBad.length ? ' ' + bBad.join(',') : ''));
+    let rOk = 0, rBad = [];
+    for (const b of brackets) {
+      const bc = b.box.getCenter(new THREE.Vector3());
+      const rim = rims.find(r => bc.x > r.box.min.x - 0.05 && bc.x < r.box.max.x + 0.05 &&
+        bc.z > r.box.min.z - 0.05 && bc.z < r.box.max.z + 0.05);
+      if (rim && b.box.min.y <= rim.box.max.y + 0.006) rOk++;
+      else rBad.push('y=' + b.box.min.y.toFixed(3) + ' rim=' + (rim ? rim.box.max.y.toFixed(3) : 'none'));
+    }
+    ok(rOk === brackets.length, '支架下端坐在顶圈面上（不留空档）', rOk + '/' + brackets.length + (rBad.length ? ' ' + rBad.join(',') : ''));
+
+    // 三段座板每段都要有真实支承（连续托梁或腿顶）
+    // 场景里同时存在 L37 的分条座板：只统计第一关范围内、并按坐标去重（多次 enter 会重复建箱）
+    const inL0 = x => x.box.min.x > BOUNDS_L0.x1 - 1 && x.box.max.x < BOUNDS_L0.x2 + 1 &&
+      x.box.min.z > BOUNDS_L0.z1 - 1 && x.box.max.z < BOUNDS_L0.z2 + 1;
+    const seen = new Set();
+    const seatSlats = byPart(slabs, 'seatSlat').filter(inL0).filter(x => {
+      const k = [x.box.min.x, x.box.min.y, x.box.min.z].map(v => v.toFixed(3)).join(',');
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
+    const under = byPart(rods, 'rail').concat(byPart(slabs, 'leg'), byPart(rods, 'stretcher'));
+    let sOk = 0, sBad = [];
+    for (const s of seatSlats) {
+      const sb = s.box;
+      const hit = under.some(u => {
+        const top = u.box.max.y;
+        const zOverlap = Math.min(u.box.max.z, sb.max.z) - Math.max(u.box.min.z, sb.min.z);
+        const xOverlap = Math.min(u.box.max.x, sb.max.x) - Math.max(u.box.min.x, sb.min.x);
+        return Math.abs(top - sb.min.y) < 0.004 && zOverlap > 0.4 * (sb.max.z - sb.min.z) && xOverlap > 0.02;
+      });
+      if (hit) sOk++; else sBad.push('x=' + ((sb.min.x + sb.max.x) / 2).toFixed(2) + ' z=' + ((sb.min.z + sb.max.z) / 2).toFixed(2) + ' y=' + sb.min.y.toFixed(3));
+    }
+    ok(sOk === seatSlats.length, '每段分条座板底面都贴着真实托梁/腿顶',
+      sOk + '/' + seatSlats.length + (sBad.length ? ' ' + sBad.slice(0, 3).join(' ') : ''));
+    // 负对照：把托梁抬高 6cm 后同一判据必须不通过
+    const railPart = byPart(rods, 'rail')[0];
+    const lifted = railPart && new THREE.Box3(railPart.box.min.clone().add(new THREE.Vector3(0, 0.06, 0)), railPart.box.max.clone().add(new THREE.Vector3(0, 0.06, 0)));
+    const negFail = lifted ? seatSlats.every(s => Math.abs(lifted.max.y - s.box.min.y) > 0.004) : false;
+    ok(negFail, '负对照：托梁抬高 6cm 时接触判据必须失败');
+  }
+
   R.lines.push('\nL0-V2 NODE 回归：' + R.pass + ' / ' + (R.pass + R.fail) + ' PASS');
   console.log(R.lines.join('\n'));
   if (R.fail > 0) process.exitCode = 1;

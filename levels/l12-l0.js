@@ -4,6 +4,7 @@
    L12_TEX / COLLIDERS_L0 / l0Lights / hemiL0 / makeCanvas / makeSignTexture。 */
 
 import { panelCeiling, wainscot } from './l12-art.js';
+import { createDetailKit } from './l12-detail.js';
 
 const WALL_T = 0.24;
 const L0_DOOR_H = 2.15;
@@ -182,104 +183,224 @@ export function createL0V2(ctx) {
   /* ---------------- 房屋陈设（按用途组合，全部落在真实房间内） ---------------- */
   const boxC = (w, h, d, x, y, z, m, cov) => addWorldUVBox(w, h, d, x, y, z, m, cov);
   const collide = (x, z, w, d, y2, kind) => COLLIDERS_L0.push({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2, y1: 0, y2, kind });
+  // 近景细件库：真实小倒角板材 / 圆杆 / 圆盘（与 L37 共用同一份实现）
+  const kit = createDetailKit({ THREE, scene, addBox });
 
-  // 接待：值班台 + 三张访客长椅 + 失电配电图
-  boxC(3.6, 1.04, 0.8, -145.4, 0.52, -4.6, woodMat, 1);
-  addBox(3.75, 0.07, 0.92, -145.4, 1.075, -4.6, trimMat);
-  collide(-145.4, -4.6, 3.75, 0.92, 1.12, 'desk');
+  // 接待：值班台 + 三张访客长椅（原"STAFF WING · 供电示意"总览牌已按需求移除）
+  {
+    // 值班台：台身内收 + 倒角台面 + 前裙板 + 两端封板 + 三樘独立柜门 + 竖向拉手 + 内收踢脚
+    const dx = -145.4, dz = -4.6, W = 3.6, D = 0.8, Hh = 1.04, topT = 0.07, bodyH = Hh - topT;
+    const bodyD = D - 0.06, frontZ = dz + bodyD / 2;
+    boxC(W - 0.06, bodyH, bodyD, dx, bodyH / 2, dz, woodMat, 1);
+    kit.slab({ w: W, h: topT, d: D, x: dx, y: Hh - topT / 2, z: dz, mat: trimMat, axis: 'y', r: 0.012, bevel: 0.004, part: 'deskTop' });
+    kit.slab({ w: W - 0.22, h: 0.10, d: 0.022, x: dx, y: bodyH - 0.06, z: frontZ + 0.011, mat: woodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron' });
+    for (const sg of [-1, 1]) {
+      kit.slab({ w: 0.026, h: bodyH - 0.03, d: bodyD + 0.004, x: dx + sg * (W / 2 - 0.013), y: (bodyH - 0.03) / 2, z: dz, mat: woodMat, axis: 'x', r: 0.004, bevel: 0.002, part: 'endPanel' });
+    }
+    const nDoor = 3, gap = 0.004, doorH = bodyH - 0.26;
+    const fw = (W - 0.22 - gap * (nDoor - 1)) / nDoor;
+    for (let i = 0; i < nDoor; i++) {
+      const cx = dx - (W - 0.22) / 2 + i * (fw + gap) + fw / 2;
+      const cy = 0.16 + doorH / 2;
+      kit.slab({ w: fw, h: doorH, d: 0.02, x: cx, y: cy, z: frontZ + 0.011, mat: woodMat, axis: 'z', r: 0.005, bevel: 0.002, part: 'door' });
+      const hx = cx - fw / 2 + 0.05;
+      kit.rod({ r: 0.011, len: 0.15, x: hx, y: cy, z: frontZ + 0.036, mat: trimMat, axis: 'y', part: 'handle' });
+      for (const hy of [cy + doorH / 2 - 0.09, cy - doorH / 2 + 0.09]) {
+        kit.rod({ r: 0.012, len: 0.016, x: hx - 0.018, y: hy, z: frontZ + 0.024, mat: trimMat, axis: 'z', part: 'hinge' });
+      }
+    }
+    kit.slab({ w: W - 0.14, h: 0.09, d: 0.02, x: dx, y: 0.045, z: frontZ - 0.028, mat: trimMat, axis: 'z', r: 0.003, bevel: 0.001, part: 'toeKick' });
+    collide(-145.4, -4.6, 3.75, 0.92, 1.12, 'desk');
+  }
   for (const z of [-1.6, 0.6, 2.8]) {
-    boxC(0.6, 0.10, 1.9, -148.4, 0.44, z, woodMat, 1);
-    for (const dz of [-0.75, 0.75]) addBox(0.06, 0.4, 0.06, -148.4, 0.2, z + dz, trimMat);
+    // 访客长椅：三条倒角座板 + 两端支腿 + 端部横撑，接地且顶住座板
+    const cx = -148.4, seatT = 0.08, seatY = 0.44;
+    const seatLen = 1.9, sGap = 0.004, sd = (seatLen - sGap * 2) / 3;
+    for (let i = 0; i < 3; i++) {
+      const off = -seatLen / 2 + i * (sd + sGap) + sd / 2;
+      kit.slab({ w: 0.6, h: seatT, d: sd, x: cx, y: seatY, z: z + off, mat: woodMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'seatSlat' });
+    }
+    const legH = seatY - seatT / 2;
+    for (const dz of [-0.75, 0.75]) {
+      kit.slab({ w: 0.5, h: legH, d: 0.07, x: cx, y: legH / 2, z: z + dz, mat: trimMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'leg' });
+    }
+    kit.rod({ r: 0.014, len: 1.3, x: cx, y: 0.12, z: z, mat: trimMat, axis: 'z', part: 'stretcher' });
+    // 座下连续托梁：顶面贴住座板底面（0.40），跨过三段座板与两端腿板
+    kit.rod({ r: 0.014, len: seatLen - 0.30, x: cx, y: seatY - seatT / 2 - 0.014, z: z, mat: trimMat, axis: 'z', part: 'rail' });
     collide(-148.4, z, 0.7, 1.9, 0.5, 'chair');
   }
-  {
-    const c = makeCanvas(420, 300), g = c.getContext('2d');
-    g.fillStyle = '#d8cfae'; g.fillRect(0, 0, 420, 300);
-    g.strokeStyle = '#6b5a3a'; g.lineWidth = 4; g.strokeRect(8, 8, 404, 284);
-    g.fillStyle = '#4a3d28'; g.font = 'bold 26px system-ui, sans-serif';
-    g.fillText('STAFF WING · 供电示意', 28, 44);
-    g.strokeStyle = '#7a6642'; g.lineWidth = 3;
-    g.strokeRect(30, 70, 120, 80); g.strokeRect(170, 70, 120, 80); g.strokeRect(300, 70, 90, 80);
-    g.strokeRect(30, 175, 170, 70); g.strokeRect(220, 175, 170, 70);
-    g.fillStyle = '#8a2f1e';
-    for (const [x, y] of [[90, 110], [230, 110], [345, 110]]) g.fillRect(x - 5, y - 5, 10, 10);
-    g.fillStyle = '#4a3d28'; g.font = '16px system-ui, sans-serif';
-    g.fillText('更衣', 60, 168); g.fillText('档案', 205, 168); g.fillText('配电', 322, 168);
-    g.fillText('布草库', 60, 265); g.fillText('服务前室 → 浴场', 245, 265);
-    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.07), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }));
-    board.position.set(-149.86, 1.62, -3.2); board.rotation.y = Math.PI / 2; scene.add(board);
-    addBox(1.6, 0.06, 0.06, -149.86, 2.17, -3.2, trimMat);
-  }
+  // 原"STAFF WING · 供电示意"接待总览牌（画布 + 上边条）已按需求移除
 
   // 员工更衣与休息：更衣柜一列 + 长凳 + 打卡机 + 休息桌
   for (const z of [2.6, 4.4, 6.2, 8.0]) {
-    boxC(0.5, 1.9, 1.5, -139.4, 0.95, z, woodMat, 0.6);
+    // 员工更衣柜：柜体 + 内收踢脚 + 倒角顶盖 + 三樘独立柜门（4mm 门缝）+ 竖向拉手 + 铰链筒 + 标签
+    const lx = -139.4, lw = 0.5, ld = 1.5, lh = 1.9, capT = 0.03;
+    const faceX = lx + lw / 2, doorH = lh - 0.26, yDoor = 0.18 + doorH / 2;
+    boxC(lw, lh - capT, ld, lx, (lh - capT) / 2, z, woodMat, 0.6);
+    boxC(lw - 0.06, 0.07, ld - 0.06, lx, 0.035, z, trimMat, 1);
+    kit.slab({ w: lw + 0.03, h: capT, d: ld + 0.03, x: lx, y: lh - capT / 2, z, mat: trimMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'lockerTop' });
+    const nD = 3, g = 0.004, dw = (ld - 0.10 - g * (nD - 1)) / nD;
+    for (let i = 0; i < nD; i++) {
+      const cz = z - (ld - 0.10) / 2 + i * (dw + g) + dw / 2;
+      kit.slab({ w: 0.02, h: doorH, d: dw, x: faceX + 0.011, y: yDoor, z: cz, mat: woodMat, axis: 'x', r: 0.004, bevel: 0.002, part: 'door' });
+      const hz = cz + (i % 2 === 0 ? dw / 2 - 0.045 : -dw / 2 + 0.045);
+      kit.rod({ r: 0.010, len: 0.15, x: faceX + 0.034, y: yDoor, z: hz, mat: trimMat, axis: 'y', part: 'handle' });
+      for (const hy of [yDoor + doorH / 2 - 0.11, yDoor - doorH / 2 + 0.11]) {
+        kit.rod({ r: 0.012, len: 0.016, x: faceX + 0.026, y: hy, z: hz, mat: trimMat, axis: 'x', part: 'hinge' });
+      }
+      kit.slab({ w: 0.005, h: 0.05, d: 0.10, x: faceX + 0.024, y: yDoor + 0.28, z: cz, mat: trimMat, axis: 'x', r: 0.002, bevel: 0.001, part: 'label' });
+    }
     collide(-139.4, z, 0.52, 1.5, 1.95, 'locker');
-    // 柜门分缝（两道竖缝）+ 标签槽 + 细把手 + 踢脚底座
-    for (const dz of [-0.25, 0.25]) addBox(0.02, 1.78, 0.02, -139.14, 0.98, z + dz, trimMat);
-    addBox(0.02, 0.10, 0.30, -139.13, 1.62, z, trimMat);
-    addBox(0.03, 0.03, 0.14, -139.11, 1.18, z, trimMat);
-    addBox(0.54, 0.08, 1.54, -139.4, 0.04, z, trimMat);
   }
-  addBox(0.54, 0.06, 6.3, -139.4, 1.94, 5.3, trimMat);
-  boxC(0.5, 0.09, 4.4, -137.2, 0.45, 5.2, woodMat, 1);
-  for (const z of [3.4, 7.0]) addBox(0.06, 0.4, 0.06, -137.2, 0.2, z, trimMat);
-  collide(-137.2, 5.2, 0.5, 4.4, 0.5, 'bench');
+  kit.slab({ w: 0.54, h: 0.06, d: 6.3, x: -139.4, y: 1.94, z: 5.3, mat: trimMat, axis: 'y', r: 0.008, bevel: 0.003, part: 'lockerRowCap' });
+  {
+    // 员工长凳（沿 z 4.4m）：三条倒角座板 + 两端支腿 + 两道端部横撑 + 座下托梁
+    const bx = -137.2, bz = 5.2, len = 4.4, seatT = 0.09, seatY = 0.45 + seatT / 2;
+    const sGap = 0.004, sd = (len - sGap * 2) / 3;
+    for (let i = 0; i < 3; i++) {
+      const off = -len / 2 + i * (sd + sGap) + sd / 2;
+      kit.slab({ w: 0.5, h: seatT, d: sd, x: bx, y: seatY, z: bz + off, mat: woodMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'seatSlat' });
+    }
+    const legH = seatY - seatT / 2;
+    for (const dz of [-1.9, 1.9]) {
+      kit.slab({ w: 0.44, h: legH, d: 0.08, x: bx, y: legH / 2, z: bz + dz, mat: trimMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'leg' });
+    }
+    for (const dz of [-1.9, 1.9]) {
+      kit.rod({ r: 0.014, len: 0.40, x: bx, y: 0.13, z: bz + dz, mat: trimMat, axis: 'x', part: 'stretcher' });
+    }
+    kit.rod({ r: 0.016, len: len - 0.4, x: bx, y: seatY - seatT / 2 - 0.016, z: bz, mat: trimMat, axis: 'z', part: 'rail' });
+    collide(-137.2, 5.2, 0.5, 4.4, 0.5, 'bench');
+  }
   addBox(0.34, 0.42, 0.16, -139.6, 1.34, 9.4, trimMat);
   addBox(0.06, 1.34, 0.06, -139.6, 0.67, 9.4, trimMat);
-  boxC(1.5, 0.72, 0.9, -134.4, 0.36, 4.2, woodMat, 1);
-  for (const dz of [-0.55, 0.55]) addBox(0.5, 0.06, 0.44, -134.4, 0.44, 4.2 + dz, woodMat, 1);
-  collide(-134.4, 4.2, 1.5, 0.9, 0.74, 'table');
-  supports.push({ x: -134.4, z: 4.2, top: 0.72, w: 1.5, d: 0.9, kind: 'table' });
-  out.props.push({ kind: 'table', x: -134.4, z: 4.2, top: 0.72 });
+  {
+    // 休息桌：倒角台面 + 前裙板 + 四腿 + 两块坐垫（首枚保险丝落在 0.72 台面上）
+    const tx = -134.4, tz = 4.2, W = 1.5, D = 0.9, topY = 0.72, topT = 0.06;
+    kit.slab({ w: W, h: topT, d: D, x: tx, y: topY - topT / 2, z: tz, mat: woodMat, axis: 'y', r: 0.010, bevel: 0.004, part: 'tableTop' });
+    for (const sg of [-1, 1]) {
+      kit.slab({ w: W - 0.22, h: 0.09, d: 0.02, x: tx, y: topY - topT - 0.05, z: tz + sg * (D / 2 - 0.06), mat: woodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron' });
+    }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      kit.rod({ r: 0.026, len: topY - topT, x: tx + sx * (W / 2 - 0.09), y: (topY - topT) / 2, z: tz + sz * (D / 2 - 0.09), mat: trimMat, axis: 'y', part: 'leg' });
+    }
+    for (const dz of [-0.55, 0.55]) {
+      kit.slab({ w: 0.5, h: 0.06, d: 0.44, x: tx, y: 0.44, z: tz + dz, mat: woodMat, axis: 'y', r: 0.008, bevel: 0.003, part: 'cushion' });
+    }
+    collide(-134.4, 4.2, 1.5, 0.9, 0.74, 'table');
+    supports.push({ x: -134.4, z: 4.2, top: 0.72, w: 1.5, d: 0.9, kind: 'table' });
+    out.props.push({ kind: 'table', x: -134.4, z: 4.2, top: 0.72 });
+  }
 
   // 票务档案：票柜阵 + 出票台 + 票据箱
   // 两侧柜列之间留出对准南门的主通道，门内先有完整的转身空间。
   for (const x of [-129.6, -128.0, -123.2]) {
     for (const z of [3.6, 5.2]) {
-      boxC(1.2, 1.35, 0.66, x, 0.675, z, woodMat, 1);
-      collide(x, z, 1.2, 0.66, 1.42, 'cabinet');
-      for (let k = 0; k < 3; k++) {
-        const rx = x - 0.34 + k * 0.34;
-        addBox(0.30, 0.30, 0.02, rx, 0.42, z + 0.345, woodMat);     // 抽屉面板
-        addBox(0.30, 0.30, 0.02, rx, 0.78, z + 0.345, woodMat);
-        addBox(0.30, 0.30, 0.02, rx, 1.14, z + 0.345, woodMat);
-        addBox(0.24, 0.025, 0.02, rx, 0.24, z + 0.352, trimMat);     // 分缝
-        addBox(0.24, 0.025, 0.02, rx, 0.60, z + 0.352, trimMat);
-        addBox(0.24, 0.025, 0.02, rx, 0.96, z + 0.352, trimMat);
-        addBox(0.10, 0.03, 0.03, rx, 0.50, z + 0.372, trimMat);      // 拉手
-        addBox(0.10, 0.03, 0.03, rx, 0.86, z + 0.372, trimMat);
+      // 档案票柜：柜体 + 内收踢脚 + 倒角顶盖 + 三层独立抽屉面板（3.5mm 分缝）+ 立体横拉手 + 卡片座
+      const cw = 1.2, ch = 1.35, cd = 0.66, capT = 0.03;
+      const frontZ = z + cd / 2;
+      const nR = 3, g = 0.0035, ph = (ch - 0.16 - capT - g * (nR - 1)) / nR;
+      boxC(cw, ch - capT, cd, x, (ch - capT) / 2, z, woodMat, 1);
+      boxC(cw - 0.06, 0.07, cd - 0.06, x, 0.035, z, trimMat, 1);
+      kit.slab({ w: cw + 0.02, h: capT, d: cd + 0.02, x, y: ch - capT / 2, z, mat: trimMat, axis: 'y', r: 0.008, bevel: 0.003, part: 'cabinetTop' });
+      for (let k = 0; k < nR; k++) {
+        const py = 0.15 + k * (ph + g) + ph / 2;
+        kit.slab({ w: cw - 0.12, h: ph, d: 0.02, x, y: py, z: frontZ + 0.011, mat: woodMat, axis: 'z', r: 0.005, bevel: 0.002, part: 'drawerFront' });
+        kit.rod({ r: 0.009, len: 0.30, x, y: py, z: frontZ + 0.034, mat: trimMat, axis: 'x', part: 'pull' });
+        for (const sx of [-1, 1]) {
+          kit.rod({ r: 0.010, len: 0.016, x: x + sx * (cw / 2 - 0.05), y: py, z: frontZ + 0.022, mat: trimMat, axis: 'x', part: 'pullMount' });
+        }
+        kit.slab({ w: 0.11, h: 0.05, d: 0.006, x, y: py + ph / 2 - 0.03, z: frontZ + 0.026, mat: trimMat, axis: 'z', r: 0.002, bevel: 0.001, part: 'cardHolder' });
       }
+      collide(x, z, 1.2, 0.66, 1.42, 'cabinet');
     }
   }
-  boxC(3.2, 0.96, 0.8, -124.6, 0.48, 7.2, woodMat, 1);
-  addBox(3.36, 0.06, 0.92, -124.6, 1.0, 7.2, trimMat);
-  collide(-124.6, 7.2, 3.36, 0.92, 1.02, 'counter');
-  supports.push({ x: -124.6, z: 7.2, top: 1.02, w: 3.36, d: 0.92, kind: 'counter' });
-  for (let i = 0; i < 3; i++) boxC(0.7, 0.5, 0.5, -122.4, 0.25 + i * 0.52, 9.2, woodMat, 0.8);
+  {
+    // 出票台：台身内收 + 倒角台面（票据面 1.02）+ 前裙板 + 两端封板 + 两樘门板 + 内收踢脚
+    const cx = -124.6, cz = 7.2, W = 3.2, D = 0.8, Hh = 0.96, topT = 0.06;
+    const bodyD = D - 0.05, frontZ = cz + bodyD / 2;
+    boxC(W - 0.06, Hh, bodyD, cx, Hh / 2, cz, woodMat, 1);
+    boxC(W - 0.14, 0.07, bodyD - 0.06, cx, 0.035, cz, trimMat, 1);
+    kit.slab({ w: W + 0.16, h: topT, d: D + 0.12, x: cx, y: 1.02 - topT / 2, z: cz, mat: trimMat, axis: 'y', r: 0.012, bevel: 0.004, part: 'counterTop' });
+    kit.slab({ w: W - 0.24, h: 0.10, d: 0.022, x: cx, y: Hh - 0.06, z: frontZ + 0.011, mat: woodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron' });
+    const nd = 3, g = 0.004, dw = (W - 0.26 - g * (nd - 1)) / nd, doorH = Hh - 0.26;
+    for (let i = 0; i < nd; i++) {
+      const dx2 = cx - (W - 0.26) / 2 + i * (dw + g) + dw / 2;
+      kit.slab({ w: dw, h: doorH, d: 0.02, x: dx2, y: 0.16 + doorH / 2, z: frontZ + 0.011, mat: woodMat, axis: 'z', r: 0.005, bevel: 0.002, part: 'door' });
+      kit.rod({ r: 0.010, len: 0.14, x: dx2 - dw / 2 + 0.05, y: 0.16 + doorH / 2, z: frontZ + 0.034, mat: trimMat, axis: 'y', part: 'handle' });
+    }
+    collide(-124.6, 7.2, 3.36, 0.92, 1.02, 'counter');
+    supports.push({ x: -124.6, z: 7.2, top: 1.02, w: 3.36, d: 0.92, kind: 'counter' });
+  }
+  for (let i = 0; i < 3; i++) {
+    kit.slab({ w: 0.7, h: 0.5, d: 0.5, x: -122.4, y: 0.25 + i * 0.52, z: 9.2, mat: woodMat, axis: 'y', r: 0.012, bevel: 0.005, part: 'bin' });
+  }
   collide(-122.4, 9.2, 0.7, 0.5, 1.6, 'boxes');
 
   // 布草整理 / 洗衣：布草车 + 层架 + 折叠台
   for (const [x, z] of [[-116.6, 3.4], [-113.4, 3.4], [-116.6, 6.2]]) {
-    boxC(1.1, 0.62, 0.72, x, 0.31, z, woodMat, 1);
-    addBox(1.16, 0.04, 0.78, x, 0.66, z, trimMat);
+    // 布草车：内凹帆布箱体 + 倒角顶圈 + 四角立柱 + 四个脚轮 + 推手
+    const cw = 1.1, cH = 0.62, cd = 0.72;
+    boxC(cw - 0.08, cH, cd - 0.08, x, cH / 2, z, trimMat, 1);
+    kit.slab({ w: cw, h: 0.045, d: cd, x, y: cH + 0.0225, z, mat: trimMat, axis: 'y', r: 0.010, bevel: 0.004, part: 'cartRim' });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      kit.rod({ r: 0.014, len: cH, x: x + sx * (cw / 2 - 0.03), y: cH / 2, z: z + sz * (cd / 2 - 0.03), mat: trimMat, axis: 'y', part: 'cartPost' });
+    }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      kit.disc({ r: 0.035, t: 0.030, x: x + sx * (cw / 2 - 0.09), y: 0.035, z: z + sz * (cd / 2 - 0.09), mat: trimMat, axis: 'x', part: 'caster', seg: 12 });
+    }
+    kit.rod({ r: 0.013, len: 0.58, x: x, y: cH + 0.30, z: z + cd / 2 - 0.02, mat: trimMat, axis: 'x', part: 'cartHandle' });
+    // 推手支架：从顶圈面（cH + 0.045）接到推手中心高度（cH + 0.30），两端各一根
+    for (const sx of [-1, 1]) {
+      kit.rod({
+        r: 0.012, len: 0.255, x: x + sx * 0.26, y: cH + 0.1725, z: z + cd / 2 - 0.02,
+        mat: trimMat, axis: 'y', part: 'cartBracket'
+      });
+    }
     collide(x, z, 1.16, 0.78, 0.68, 'cart');
   }
-  for (let i = 0; i < 2; i++) {
-    boxC(3.4, 0.06, 0.6, -114.2, 1.2 + i * 0.55, 9.0, woodMat, 1);
-    addBox(0.06, 1.2 + i * 0.55, 0.6, -116.0, (1.2 + i * 0.55) / 2, 9.0, trimMat);
-    addBox(0.06, 1.2 + i * 0.55, 0.6, -112.4, (1.2 + i * 0.55) / 2, 9.0, trimMat);
+  {
+    // 布草层架：两层倒角层板 + 四根立柱 + 层板托
+    const sx = -114.2, sz = 9.0, sLen = 3.4, sD = 0.6;
+    for (let i = 0; i < 2; i++) {
+      const y = 1.2 + i * 0.55;
+      kit.slab({ w: sLen, h: 0.06, d: sD, x: sx, y, z: sz, mat: woodMat, axis: 'y', r: 0.008, bevel: 0.003, part: 'shelfBoard' });
+    }
+    for (const dx of [-1, 1]) {
+      kit.slab({ w: 0.055, h: 1.75, d: sD, x: sx + dx * (sLen / 2 - 0.03), y: 0.875, z: sz, mat: trimMat, axis: 'x', r: 0.004, bevel: 0.002, part: 'shelfPost' });
+    }
+    for (const dz of [-1, 1]) {
+      kit.rod({ r: 0.012, len: sLen - 0.12, x: sx, y: 1.16, z: sz + dz * (sD / 2 - 0.04), mat: trimMat, axis: 'x', part: 'shelfBrace' });
+    }
+    collide(-114.2, 9.0, 3.6, 0.62, 1.8, 'shelf');
   }
-  collide(-114.2, 9.0, 3.6, 0.62, 1.8, 'shelf');
-  boxC(2.4, 0.9, 0.8, -112.6, 0.45, 5.6, woodMat, 1);
-  collide(-112.6, 5.6, 2.4, 0.8, 0.92, 'folding');
+  {
+    // 折叠台：倒角台面 + 前裙板 + 四腿
+    const fx = -112.6, fz = 5.6, W = 2.4, D = 0.8, Hh = 0.9, topT = 0.06;
+    kit.slab({ w: W, h: topT, d: D, x: fx, y: Hh - topT / 2, z: fz, mat: woodMat, axis: 'y', r: 0.010, bevel: 0.004, part: 'foldingTop' });
+    kit.slab({ w: W - 0.24, h: 0.09, d: 0.02, x: fx, y: Hh - topT - 0.05, z: fz + D / 2 - 0.01, mat: woodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron' });
+    for (const sx2 of [-1, 1]) for (const sz2 of [-1, 1]) {
+      kit.rod({ r: 0.024, len: Hh - topT, x: fx + sx2 * (W / 2 - 0.10), y: (Hh - topT) / 2, z: fz + sz2 * (D / 2 - 0.10), mat: trimMat, axis: 'y', part: 'leg' });
+    }
+    collide(-112.6, 5.6, 2.4, 0.8, 0.92, 'folding');
+  }
 
   // 维修配电：配电柜 + 桥架 + 工作台 + 工作灯
   boxC(3.2, 1.9, 0.7, -125.0, 0.95, -9.6, trimMat, 0.6);
   collide(-125.0, -9.6, 3.2, 0.7, 1.92, 'switchgear');
-  for (let i = 0; i < 3; i++) addBox(0.5, 0.18, 0.03, -126.0 + i * 0.9, 1.5, -9.24, trimMat);
-  addBox(1.6, 0.08, 0.5, -124.0, 1.62, -9.0, trimMat);
+  kit.slab({ w: 3.26, h: 0.04, d: 0.76, x: -125.0, y: 1.92, z: -9.6, mat: trimMat, axis: 'y', r: 0.008, bevel: 0.003, part: 'switchgearCap' });
+  boxC(3.1, 0.06, 0.64, -125.0, 0.04, -9.6, trimMat, 1);
+  // 三樘配电柜门：门板 + 4mm 门缝 + 竖向把手 + 仪表窗与指示灯
+  for (let i = 0; i < 3; i++) {
+    const dx = -126.05 + i * 1.05;
+    kit.slab({ w: 0.99, h: 1.60, d: 0.02, x: dx, y: 1.02, z: -9.24, mat: trimMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'switchDoor' });
+    kit.rod({ r: 0.011, len: 0.18, x: dx + 0.42, y: 0.95, z: -9.21, mat: trimMat, axis: 'y', part: 'handle' });
+    addBox(0.30, 0.16, 0.02, dx - 0.10, 1.50, -9.225, trimMat);
+    kit.rod({ r: 0.012, len: 0.014, x: dx + 0.24, y: 1.50, z: -9.22, mat: trimMat, axis: 'z', part: 'pilotLamp' });
+  }
+  kit.slab({
+    w: 1.6, h: 0.08, d: 0.5, x: -124.0, y: 1.62, z: -9.0,
+    mat: trimMat, axis: 'y', r: 0.004, bevel: 0.002, part: 'bracketTop'
+  });
   supports.push({ x: -124.0, z: -9.0, top: 1.66, w: 1.6, d: 0.5, kind: 'bracket' });
   {
     const cableMat = new THREE.MeshStandardMaterial({ color: 0x1d1c1a, roughness: 0.85 });
@@ -295,9 +416,19 @@ export function createL0V2(ctx) {
       }
     }
   }
-  addBox(1.8, 0.06, 0.9, -120.6, 0.86, -3.4, woodMat, 1);
-  for (const dx of [-0.8, 0.8]) addBox(0.07, 0.86, 0.07, -120.6 + dx, 0.43, -3.8, trimMat);
-  collide(-120.6, -3.4, 1.8, 0.9, 0.9, 'workbench');
+  {
+    // 维修工作台：倒角台面 + 四周裙板 + 四腿 + 下层置物板
+    const wx = -120.6, wz = -3.4, W = 1.8, D = 0.9, Hh = 0.86, topT = 0.06;
+    kit.slab({ w: W, h: topT, d: D, x: wx, y: Hh - topT / 2, z: wz, mat: woodMat, axis: 'y', r: 0.010, bevel: 0.004, part: 'workTop' });
+    for (const sz of [-1, 1]) {
+      kit.slab({ w: W - 0.16, h: 0.08, d: 0.02, x: wx, y: Hh - topT - 0.05, z: wz + sz * (D / 2 - 0.02), mat: woodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron' });
+    }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      kit.rod({ r: 0.022, len: Hh - topT, x: wx + sx * (W / 2 - 0.07), y: (Hh - topT) / 2, z: wz + sz * (D / 2 - 0.07), mat: trimMat, axis: 'y', part: 'leg' });
+    }
+    kit.slab({ w: W - 0.20, h: 0.03, d: D - 0.16, x: wx, y: 0.22, z: wz, mat: trimMat, axis: 'y', r: 0.006, bevel: 0.002, part: 'lowerShelf' });
+    collide(-120.6, -3.4, 1.8, 0.9, 0.9, 'workbench');
+  }
   {
     const shade = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.24, 14, 1, true),
       new THREE.MeshStandardMaterial({ color: 0x8a8271, roughness: 0.6, side: THREE.DoubleSide }));
@@ -314,10 +445,24 @@ export function createL0V2(ctx) {
     boxC(0.6, 2.1, 0.6, -139.2, 1.05, z, woodMat, 0.8);
     collide(-139.2, z, 0.62, 0.62, 2.12, 'post');
   }
-  for (let i = 0; i < 3; i++) boxC(6.4, 0.06, 0.6, -135.0, 0.7 + i * 0.62, -9.2, woodMat, 1);
+  for (let i = 0; i < 3; i++) {
+    kit.slab({ w: 6.4, h: 0.06, d: 0.6, x: -135.0, y: 0.7 + i * 0.62, z: -9.2, mat: woodMat, axis: 'y', r: 0.008, bevel: 0.003, part: 'stockBoard' });
+  }
+  for (const dx of [-1, 1]) {
+    kit.slab({ w: 0.06, h: 1.92, d: 0.6, x: -135.0 + dx * 3.16, y: 0.96, z: -9.2, mat: trimMat, axis: 'x', r: 0.004, bevel: 0.002, part: 'stockPost' });
+  }
+  kit.rod({ r: 0.013, len: 6.2, x: -135.0, y: 1.28, z: -8.94, mat: trimMat, axis: 'x', part: 'stockBrace' });
   collide(-135.0, -9.2, 6.4, 0.62, 1.9, 'shelf');
-  boxC(2.0, 0.9, 1.0, -133.4, 0.45, -3.4, woodMat, 1);
-  collide(-133.4, -3.4, 2.0, 1.0, 0.92, 'packTable');
+  {
+    // 打包台：倒角台面 + 前裙板 + 四腿
+    const px = -133.4, pz = -3.4, W = 2.0, D = 1.0, Hh = 0.9, topT = 0.06;
+    kit.slab({ w: W, h: topT, d: D, x: px, y: Hh - topT / 2, z: pz, mat: woodMat, axis: 'y', r: 0.010, bevel: 0.004, part: 'packTop' });
+    kit.slab({ w: W - 0.22, h: 0.09, d: 0.02, x: px, y: Hh - topT - 0.05, z: pz + D / 2 - 0.02, mat: woodMat, axis: 'z', r: 0.004, bevel: 0.002, part: 'apron' });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      kit.rod({ r: 0.024, len: Hh - topT, x: px + sx * (W / 2 - 0.10), y: (Hh - topT) / 2, z: pz + sz * (D / 2 - 0.10), mat: trimMat, axis: 'y', part: 'leg' });
+    }
+    collide(-133.4, -3.4, 2.0, 1.0, 0.92, 'packTable');
+  }
 
   // 服务前室：出口卷帘 + 指示 + 鞋架 + 水渍
   const exitPanel = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.35, 2.95), trimMat);
@@ -327,7 +472,12 @@ export function createL0V2(ctx) {
   sign.position.set(-107.9, 2.66, -5.0); sign.rotation.y = -Math.PI / 2; scene.add(sign);
   const exitLight = new THREE.PointLight(0xff2a2a, 0.9, 4.5, 2);
   exitLight.position.set(-107.55, 2.5, -5.0); scene.add(exitLight);
-  for (let i = 0; i < 3; i++) boxC(1.6, 0.42, 0.5, -111.2, 0.21 + i * 0.46, -8.4, woodMat, 0.8);
+  for (let i = 0; i < 3; i++) {
+    kit.slab({ w: 1.6, h: 0.42, d: 0.5, x: -111.2, y: 0.21 + i * 0.46, z: -8.4, mat: woodMat, axis: 'y', r: 0.010, bevel: 0.004, part: 'shoeBoard' });
+  }
+  for (const dx of [-1, 1]) {
+    kit.rod({ r: 0.016, len: 1.4, x: -111.2 + dx * 0.74, y: 0.7, z: -8.4, mat: trimMat, axis: 'y', part: 'shoePost' });
+  }
   collide(-111.2, -8.4, 1.6, 0.5, 1.4, 'rack');
   addBox(0.72, 0.06, 2.4, -109.0, 0.02, -5.0, trimMat);
   {
@@ -387,6 +537,9 @@ export function createL0V2(ctx) {
     out.papers.push({ x, z, obj: sheet }); i++;
   }
 
+  kit.flush();
+  out.detail = kit.stats();
+  out.detailKit = kit;
   out.supports = supports.slice();
   out.exitPanel = exitPanel;
   out.exitSignMat = exitSignMat;

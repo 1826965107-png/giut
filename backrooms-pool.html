@@ -464,8 +464,9 @@ import { createLevel4, L4_OX, L4_LEVEL, TUNNEL_LAYER } from './levels/level4-tun
 /* Level 12 v2 平面（房间 / 门洞 / 水体 / 出生点 / 收集物），宿主与 Node 灰盒校验共用 */
 import * as L12P from './levels/l12-plan.js';
 import { createL37Props, L37_PROPS as L12_PROPS_DATA, L37_LAMPS as L12_LAMPS_DATA } from './levels/l12-props.js';
-import { panelCeiling, slatCeiling, beamRibs, linearCove, wainscot, drainGrates, wallBoard, L12_DRAIN_RECTS, makeBoardTexture } from './levels/l12-art.js';
+import { panelCeiling, slatCeiling, beamRibs, linearCove, wainscot, drainGrates, L12_DRAIN_RECTS, makeBoardTexture } from './levels/l12-art.js';
 import { createL0V2 } from './levels/l12-l0.js';
+import { createDetailKit } from './levels/l12-detail.js';
 
 RectAreaLightUniformsLib.init();
 
@@ -1342,6 +1343,10 @@ const l12MetalMat = new THREE.MeshStandardMaterial({ color: 0x5d5b55, roughness:
 const l12CopingMat = physicalMat(l12SpaFloorSet, 1 / L12_COV.floor, 1 / L12_COV.floor,
   { ns: 0.08, roughness: 0.36, clearcoat: 0.30, clearcoatRoughness: 0.3, metalness: 0, env: 0.75, color: 0xffffff });
 l12CopingMat.roughnessMap = null; l12CopingMat.name = 'l12Coping';
+// 踏步包边与池沿压顶同属石材家族，但它是独立构件：用同参数的另一份材质实例，
+// 既保持视觉一致，也让"每池四边各一块压顶"的结构断言只统计真正的池沿压顶。
+const l12StairNoseMat = l12CopingMat.clone();
+l12StairNoseMat.name = 'l12StairNose';
 const l12CeilMat = new THREE.MeshStandardMaterial({ color: 0x22262a, roughness: 0.96, metalness: 0.02 });
 const l12CeilSet = { diffuse: L12_TEX.plaster, coverageX: 2.0, coverageY: 2.0 };
 const l12BoardBarMat = new THREE.MeshStandardMaterial({ color: 0xa9a294, roughness: 0.82, metalness: 0.12 });
@@ -1536,6 +1541,9 @@ if (L12_V2_SHELL) {
 }
 
 /* ---------------- 池体 ---------------- */
+// 近景细件库（曲面扶手、圆杆、倒角踏步、法兰、格栅）；几何缓存与实例化合批在库内部完成
+let L12_KIT = null;
+const l12Kit = () => (L12_KIT || (L12_KIT = createDetailKit({ THREE, scene, addBox })));
 function buildPool(p) {
   const W = p.x2 - p.x1, cx = (p.x1 + p.x2) / 2;
   const depth = 0 - p.bottom;
@@ -1605,18 +1613,58 @@ function buildPool(p) {
   addWorldUVBox(copW, copH, fullLen, p.x2 + copW / 2, copH / 2, zc, l12CopingMat, 1.0);
   // 排水格栅只由 drainGrates（窄槽 + 实例化格栅）负责
 
-  // 不锈钢扶梯用于主泳池，小池通过原有实体台阶出入。
+  // 不锈钢扶梯只用于主泳池：落地 U 形连续管（池岸底座法兰 → 岸上直段 → 弯头 → 入水直段）+ 防滑踏步
   const metal = new THREE.MeshStandardMaterial({ color: 0xe4ebee, metalness: 1.0, roughness: 0.22 });
-  if (p.name === 'pool') [cx - 1.6, cx + 1.6].forEach(lx => {
-    [-0.45, 0.45].forEach(dx => {
-      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.1, 14), metal);
-      rail.position.set(lx + dx, 0.1, p.zDeep1 + 0.55); scene.add(rail);
+  if (p.name === 'pool') {
+    const kit = l12Kit();
+    const zIn = p.zDeep1 + 0.55;
+    const DECK_Y = 0.105;                  // 池岸法兰底面高度（管由此起）
+    [cx - 1.6, cx + 1.6].forEach(lx => {
+      // 一副真实不锈钢梯：两根连续弯管自成梯架，从池岸法兰起经岸上直段、弯头落到水下端，
+      // 四级踏步两端直接落在两根管上；不再有与梯架不连接的短杆。
+      const TREAD_W = 0.78, RAIL_DX = TREAD_W / 2;   // 踏步端部落在管中心线上（焊接接触）
+      const TREAD_Y = [-1.15, -0.80, -0.45, -0.10];
+      const railBottom = -1.30;
+      for (const dx of [-RAIL_DX, RAIL_DX]) {
+        const x = lx + dx;
+        kit.tube({
+          points: [[x, DECK_Y, zIn - 0.55], [x, 0.52, zIn - 0.55], [x, 0.95, zIn - 0.55],
+            [x, 0.955, zIn - 0.34], [x, 0.86, zIn - 0.14],
+            [x, 0.60, zIn - 0.02], [x, 0.25, zIn], [x, -0.30, zIn], [x, railBottom, zIn]],
+          r: 0.035, seg: 36, mat: metal, part: 'ladderFrame'
+        });
+        // 池岸安装法兰（管穿过压顶处）+ 水下端盖（管端封口）
+        kit.flange({ r: 0.058, x, y: 0.105, z: zIn - 0.55, mat: metal, axis: 'y', part: 'ladderFlange' });
+        kit.disc({ r: 0.042, t: 0.018, x, y: railBottom, z: zIn, mat: metal, axis: 'y', part: 'ladderCap' });
+      }
+      // 四级防滑踏步：倒角板（两端搭在梯架管上）+ 三道防滑凸条
+      for (const ty of TREAD_Y) {
+        kit.slab({ w: TREAD_W, h: 0.045, d: 0.22, x: lx, y: ty, z: zIn, mat: metal, axis: 'y', r: 0.012, bevel: 0.004, part: 'ladderTread' });
+        for (const tx of [-0.18, 0, 0.18]) {
+          kit.rod({ r: 0.008, len: 0.18, x: lx + tx, y: ty + 0.030, z: zIn, mat: metal, axis: 'z', part: 'treadGrip' });
+        }
+      }
     });
-    [0.75, 0.45, 0.15, -0.25, -0.6].forEach(y => {
-      const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.9, 10), metal);
-      rung.position.set(lx, y, p.zDeep1 + 0.55); rung.rotation.z = Math.PI / 2; scene.add(rung);
+    kit.flush();
+  } else {
+    // 小池：踏步边缘做倒角收边（顶面严格等于 groundAt 的踏步高度）+ 梯井底部排水收口
+    const kit = l12Kit();
+    const sw = stair.x2 - stair.x1, scx = (stair.x1 + stair.x2) / 2;
+    for (const s of stair.steps) {
+      kit.slab({
+        w: sw - 0.04, h: 0.022, d: 0.11, x: scx, y: s.top - 0.011, z: s.z2 - 0.055,
+        mat: l12StairNoseMat, axis: 'y', r: 0.006, bevel: 0.003, part: 'stairNosing'
+      });
+    }
+    const deepest = stair.steps.reduce((a, b) => (a.z1 < b.z1 ? a : b));
+    kit.grate({
+      id: p.name + '-stairDrain', w: sw - 0.34, d: 0.10, x: scx, y: p.bottom + 0.008,
+      z: deepest.z1 - 0.10, slotH: 0.016, step: 0.10, slotKey: 'stairDrainSlot',
+      slotMat: new THREE.MeshStandardMaterial({ color: 0x2b2f2e, roughness: 0.8, metalness: 0.3 }),
+      barMat: metal
     });
-  });
+    kit.flush();
+  }
 
   // 出发台（仅主池北端池岸 4 座）
   if (lanes && p.name === 'main') {
@@ -1772,12 +1820,7 @@ if (L12_V2_SHELL) {
       steamPlanes.push({ mesh: m, y0: y, ph: steamPlanes.length * 1.7 });
     }
   });
-  // 接待背墙总导览：真实墙段 z=16.145、x=-4.2，朝入口 +z，避开中部门洞与门楣
-  wallBoard({ THREE, scene, addBox, addWorldUVBox, COLLIDERS,
-    mats: { trim: l12MetalMat, metal: l12MetalMat } },
-    { x: -4.2, y: 1.60, z: 16.145, face: 'z+', w: 1.76, h: 1.02,
-      title: '浴场导览', meta: '00 / DIRECTORY',
-      lines: ['更衣 A / B   →   淋浴   →   湿区', '游泳厅 25 m   /   温泉 · 静汤 · 冷池', '北侧休息廊   /   桑拿'] });
+  // 原"浴场导览"总览牌（wallBoard）已按需求移除；局部方向牌见 levels/l12-props.js 的 L37_WAYSIGNS
 }
 
 function l37LockerTex() {
@@ -5132,27 +5175,7 @@ document.getElementById('tunnel-settings').addEventListener('click', () => {
     addPlane(3.26, 0.76, 0, 7.45, 18.11, 0, 0, gateSign);
     for (const hx of [-1.3, 1.3]) addBox(0.05, .75, 0.05, hx, 8.20, 18, metalMat);
   }
-  // 线网图灯箱（西墙）
-  {
-    const mc = makeCanvas(512, 320), mg = mc.getContext('2d');
-    mg.fillStyle = '#eef2ef'; mg.fillRect(0, 0, 512, 320);
-    mg.strokeStyle = '#c9d2cf'; mg.lineWidth = 2;
-    for (let k = 0; k < 8; k++) { mg.beginPath(); mg.moveTo(0, 40 * k); mg.lineTo(512, 40 * k); mg.stroke(); }
-    const lines = [['#d94f4f', 70, 0.35], ['#3f86d9', 150, 0.2], ['#d9a13f', 230, 0.5]];
-    for (const [c, y, o] of lines) {
-      mg.strokeStyle = c; mg.lineWidth = 9; mg.beginPath();
-      mg.moveTo(24, y); mg.bezierCurveTo(150, y + 40, 340, y - 50, 488, y + (o - 0.35) * 90); mg.stroke();
-      for (let st = 0; st < 7; st++) {
-        mg.fillStyle = '#ffffff'; mg.strokeStyle = '#333'; mg.lineWidth = 2;
-        mg.beginPath(); mg.arc(40 + st * 68, y + Math.sin(st) * 16, 6, 0, 6.3); mg.fill(); mg.stroke();
-      }
-    }
-    mg.fillStyle = '#1c2327'; mg.font = 'bold 22px "Microsoft YaHei", sans-serif';
-    mg.fillText('线 网 图 · NETWORK', 24, 30);
-    const mt = new THREE.CanvasTexture(mc); mt.colorSpace = THREE.SRGBColorSpace;
-    addBox(0.12, 2.1, 3.3, -8.94, 6.5, 12, panelMat, 1.2);
-    addPlane(3.1, 1.9, -8.82, 6.5, 12, 0, Math.PI / 2, decalMat(mt));
-  }
+  // 原西墙"线网图 · NETWORK"灯箱已按需求移除
   // 商铺（东墙卷帘 + 招牌 + 售货机 + 长凳）
   for (const [sz, nm] of [[10, '便利店 · 已打烊'], [14.5, '站内药房 · 已打烊']]) {
     addBox(0.1, 2.2, 3.0, 8.97, 6.1, sz, rustMat, 1.2);
@@ -7149,6 +7172,7 @@ if (new URLSearchParams(location.search).get('diag') === '1') {
         camBlocked,
         p: [player.x, player.y, player.z].map(v => Math.round(v * 100) / 100),
         cam: [camera.position.x, camera.position.y, camera.position.z].map(v => Math.round(v * 100) / 100),
+        camRot: [Math.round(camera.rotation.x * 1000) / 1000, Math.round(camera.rotation.y * 1000) / 1000],
         tk: l3TicketCount, brk: l3State.breakerOn, lvr: l3State.leverOn, ray,
         ready: !!(renderReady && diagDrawFrames > 8 && diagLumMax > 0.03),
         frames: diagDrawFrames,

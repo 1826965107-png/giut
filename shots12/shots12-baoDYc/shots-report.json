@@ -1,0 +1,94 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-13T15:27:35.810Z",
+  "browserPid": 17908,
+  "cdpPort": 3654,
+  "shots": [
+    {
+      "name": "DT-04-pool-ladder",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=13.0,1.45,-22.9,0,-0.20&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-baoDYc\\DT-04-pool-ladder.png",
+      "bytes": 1712433,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-baoDYc\\DT-04-pool-ladder.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 25564,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": false,
+        "p": [
+          13,
+          -0.15,
+          -22.9
+        ],
+        "cam": [
+          13,
+          1.45,
+          -22.9
+        ],
+        "camRot": [
+          -0.2,
+          0
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          -0.28,
+          "ShaderMaterial",
+          "-",
+          "nomap",
+          "-",
+          "-",
+          "PlaneGeometry",
+          [
+            13,
+            -0.28,
+            -12.7
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 11,
+        "lum": 0.723,
+        "lumMax": 0.904,
+        "lumMin": 0.594,
+        "budget": {
+          "meshes": 3580,
+          "inst": 201,
+          "lights": 66,
+          "tris": 459336,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 943,
+          "tex": 77,
+          "progs": 40
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":false,\"p\":[13,-0.15,-22.9],\"cam\":[13,1.45,-22.9],\"camRot\":[-0.2,0],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[-0.28,\"ShaderMaterial\",\"-\",\"nomap\",\"-\",\"-\",\"PlaneGeometry\",[13,-0.28,-12.7],0,0],\"ready\":true,\"frames\":11,\"lum\":0.723,\"lumMax\":0.904,\"lumMin\":0.594,\"budget\":{\"meshes\":3580,\"inst\":201,\"lights\":66,\"tris\":459336,\"calls\":1,\"rtris\":1,\"geos\":943,\"tex\":77,\"progs\":40}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}

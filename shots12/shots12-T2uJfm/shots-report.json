@@ -1,0 +1,94 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-13T15:21:35.847Z",
+  "browserPid": 53844,
+  "cdpPort": 6654,
+  "shots": [
+    {
+      "name": "DT-03-shower-inside",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=37&cam=-24.7,1.55,4.42,-0.42,-0.28&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-T2uJfm\\DT-03-shower-inside-NOTREADY.png",
+      "bytes": 1793712,
+      "ok": false,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-T2uJfm\\DT-03-shower-inside-NOTREADY.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": false,
+      "camBlocked": true,
+      "waited": 76136,
+      "diag": {
+        "lv": 1,
+        "cols": 157,
+        "camBlocked": true,
+        "p": [
+          -24.7,
+          -0.05,
+          4.42
+        ],
+        "cam": [
+          -24.7,
+          1.55,
+          4.42
+        ],
+        "camRot": [
+          -0.28,
+          -0.42
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "PhysicalMaterial",
+          "ffffff",
+          "img",
+          "nm",
+          0.46,
+          "ShapeGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "ready": true,
+        "frames": 17,
+        "lum": 0.792,
+        "lumMax": 0.806,
+        "lumMin": 0.78,
+        "budget": {
+          "meshes": 3582,
+          "inst": 203,
+          "lights": 66,
+          "tris": 459336,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 1311,
+          "tex": 83,
+          "progs": 46
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":1,\"cols\":157,\"camBlocked\":true,\"p\":[-24.7,-0.05,4.42],\"cam\":[-24.7,1.55,4.42],\"camRot\":[-0.28,-0.42],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"PhysicalMaterial\",\"ffffff\",\"img\",\"nm\",0.46,\"ShapeGeometry\",[0,0,0],0,0],\"ready\":true,\"frames\":17,\"lum\":0.792,\"lumMax\":0.806,\"lumMin\":0.78,\"budget\":{\"meshes\":3582,\"inst\":203,\"lights\":66,\"tris\":459336,\"calls\":1,\"rtris\":1,\"geos\":1311,\"tex\":83,\"progs\":46}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}
