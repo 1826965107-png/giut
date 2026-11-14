@@ -59,6 +59,16 @@ const SHOTS = [
   // 用户截图 2 最可能的现场：走廊北墙 x≈-128.5 的门洞（旧通风口盲布 x=-128 正好落在这个 gap 里）。
   // 方柱在 (-128,-3.2)，正拍会被它挡住，所以从西侧斜看，让完整门楣与门旁墙段一起入画。
   { name: 'L0-13-north-door-x128', q: 'cam=-132,1.5,-1.2,-0.79,0.06' },
+  // 第四关剧情代表图（2026-11-14 第二次回返：整车形态）：维修间门/电闸、车外数窗+车门、车内车头、车内车尾
+  { name: 'L4-01-maint-door-breaker', q: 'level=4&cam=355.00,1.58,-4.85,1.02,-0.06&l4view=maint' },
+  { name: 'L4-04-car-exterior', q: 'level=4&cam=356.40,1.70,5.60,-0.620,0.02&l4view=carout' },
+  // 本轮小修取证：车头外斜视（含完整车门）、车尾外斜视、车内看门内侧
+  { name: 'L4-07-car-front-out', q: 'level=4&cam=357.20,1.65,-12.20,-2.239,-0.098&l4view=carout' },
+  { name: 'L4-08-car-rear-out', q: 'level=4&cam=357.20,1.65,12.20,-0.899,-0.098&l4view=carout' },
+  { name: 'L4-09-car-door-inner', q: 'level=4&cam=361.10,1.35,1.70,0.980,0.00&l4view=carback' },
+  { name: 'L4-05-car-inside-front', q: 'level=4&cam=360.05,1.55,0.55,0,0.02&l4view=carin' },
+  { name: 'L4-06-car-inside-back', q: 'level=4&cam=360.05,1.55,-0.55,3.14159,0.02&l4view=carback' },
+  { name: 'L4-90-audio-probe', q: 'level=4&cam=356.45,1.56,17.15,2.05,-0.10&l4view=maint&l4echo=1' },
   // ---- L0 v2（42×24 紧凑后勤层）新坐标：出生 / 档案 / 配电 / 俯视 ----
   { name: 'L0-20-spawn-v2', q: 'cam=-147,1.62,0,0,0' },
   { name: 'L0-21-archive-v2', q: 'cam=-120.6,1.55,5.4,1.5708,-0.06' },
@@ -195,7 +205,7 @@ async function main() {
   console.log('PROFILE_DIR ' + PROFILE);
 
   const child = spawn(EDGE, [
-    '--headless=new', '--hide-scrollbars', '--mute-audio',
+    '--headless=new', '--hide-scrollbars', '--mute-audio', '--autoplay-policy=no-user-gesture-required',
     '--use-angle=swiftshader', '--enable-unsafe-swiftshader',   // 无 GPU 时的软件 WebGL 回退，与安全隔离无关
     '--no-first-run', '--no-default-browser-check', '--disable-extensions',
     '--user-data-dir=' + PROFILE,
@@ -445,7 +455,7 @@ async function main() {
       else if (f.ok) console.log('   SEQ-OK ' + path.basename(f.png) + ' bytes=' + f.bytes + ' frames ' + f.framesBefore + '->' + f.framesAfter
         + ' cam ' + JSON.stringify(f.camBefore) + ' -> ' + JSON.stringify(f.camAfter) + ' rot ' + JSON.stringify(f.camRotAfter));
     }
-    if (diag) console.log('   diag ' + JSON.stringify({ lv: diag.lv, p: diag.p, cam: diag.cam, ray: diag.ray, budget: diag.budget }));
+    if (diag) console.log('   diag ' + JSON.stringify({ lv: diag.lv, p: diag.p, cam: diag.cam, ray: diag.ray, budget: diag.budget, audio: diag.audio, l4: diag.l4 }));
     for (const e of netErrs.slice(0, 4)) console.log('   NET ' + e.slice(0, 260));
     for (const e of errs.slice(0, 4)) console.log('   ERR ' + e.slice(0, 260));
   }

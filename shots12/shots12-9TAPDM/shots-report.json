@@ -1,0 +1,130 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-14T09:21:37.090Z",
+  "browserPid": 41268,
+  "cdpPort": 5212,
+  "shots": [
+    {
+      "name": "L4-08-car-rear-out",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=356.10,1.65,12.20,-0.332,0.02&l4view=carout&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-9TAPDM\\L4-08-car-rear-out.png",
+      "bytes": 1065438,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-9TAPDM\\L4-08-car-rear-out.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 15627,
+      "diag": {
+        "lv": 3,
+        "cols": 46,
+        "camBlocked": false,
+        "p": [
+          356.1,
+          0.05,
+          12.2
+        ],
+        "cam": [
+          356.1,
+          1.65,
+          12.2
+        ],
+        "camRot": [
+          0.02,
+          -0.332
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "676f6c",
+          "img",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": true,
+          "torchOwned": true,
+          "torchOn": true,
+          "charge": 1,
+          "spare": 0,
+          "key": true,
+          "door": 1,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 12.2,
+          "x": 356.1,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": true,
+            "carInspected": false
+          },
+          "steps": {
+            "active": true,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 13,
+        "lum": 0.02,
+        "lumMax": 0.102,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 3782,
+          "inst": 207,
+          "lights": 74,
+          "tris": 475210,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 78,
+          "tex": 23,
+          "progs": 29
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":46,\"camBlocked\":false,\"p\":[356.1,0.05,12.2],\"cam\":[356.1,1.65,12.2],\"camRot\":[0.02,-0.332],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"676f6c\",\"img\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":true,\"torchOwned\":true,\"torchOn\":true,\"charge\":1,\"spare\":0,\"key\":true,\"door\":1,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":12.2,\"x\":356.1,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":true,\"carInspected\":false},\"steps\":{\"active\":true,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":13,\"lum\":0.02,\"lumMax\":0.102,\"lumMin\":0,\"budget\":{\"meshes\":3782,\"inst\":207,\"lights\":74,\"tris\":475210,\"calls\":1,\"rtris\":1,\"geos\":78,\"tex\":23,\"progs\":29}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}

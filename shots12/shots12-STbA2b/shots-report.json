@@ -1,0 +1,146 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-14T02:35:58.092Z",
+  "browserPid": 39408,
+  "cdpPort": 3486,
+  "shots": [
+    {
+      "name": "L4-90-audio-probe",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=356.45,1.56,17.15,2.05,-0.10&l4view=maint&l4echo=1&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-STbA2b\\L4-90-audio-probe.png",
+      "bytes": 1178970,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-STbA2b\\L4-90-audio-probe.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 15046,
+      "diag": {
+        "lv": 3,
+        "cols": 41,
+        "camBlocked": false,
+        "p": [
+          356.45,
+          -0.04,
+          17.15
+        ],
+        "cam": [
+          356.45,
+          1.56,
+          17.15
+        ],
+        "camRot": [
+          -0.1,
+          2.05
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "676f6c",
+          "img",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "running",
+          "echoSources": 0,
+          "echoCancels": 3,
+          "echoHook": {
+            "steps": [
+              "scheduled=8",
+              "cancel0=2",
+              "afterCancel=0",
+              "cancels=3",
+              "afterReschedule=2"
+            ],
+            "stateAtStart": "running",
+            "scheduled": 8,
+            "afterCancel": 0,
+            "cancels": 3,
+            "afterReschedule": 2,
+            "ok": true
+          }
+        },
+        "l4": {
+          "aged": false,
+          "torchOwned": false,
+          "torchOn": false,
+          "charge": 1,
+          "spare": 0,
+          "key": false,
+          "door": 0,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 17.15,
+          "x": 356.45,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": false,
+            "windowSeen": false
+          },
+          "steps": {
+            "active": false,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 12,
+        "lum": 0.014,
+        "lumMax": 0.076,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 3757,
+          "inst": 207,
+          "lights": 73,
+          "tris": 474906,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 27,
+          "tex": 23,
+          "progs": 26
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":41,\"camBlocked\":false,\"p\":[356.45,-0.04,17.15],\"cam\":[356.45,1.56,17.15],\"camRot\":[-0.1,2.05],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"676f6c\",\"img\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"running\",\"echoSources\":0,\"echoCancels\":3,\"echoHook\":{\"steps\":[\"scheduled=8\",\"cancel0=2\",\"afterCancel=0\",\"cancels=3\",\"afterReschedule=2\"],\"stateAtStart\":\"running\",\"scheduled\":8,\"afterCancel\":0,\"cancels\":3,\"afterReschedule\":2,\"ok\":true}},\"l4\":{\"aged\":false,\"torchOwned\":false,\"torchOn\":false,\"charge\":1,\"spare\":0,\"key\":false,\"door\":0,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":17.15,\"x\":356.45,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":false,\"windowSeen\":false},\"steps\":{\"active\":false,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":12,\"lum\":0.014,\"lumMax\":0.076,\"lumMin\":0,\"budget\":{\"meshes\":3757,\"inst\":207,\"lights\":73,\"tris\":474906,\"calls\":1,\"rtris\":1,\"geos\":27,\"tex\":23,\"progs\":26}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico",
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    }
+  ]
+}

@@ -15,7 +15,7 @@
 | Level 0 | 外包 42×24m；8 个房间、矩形面积合计 **760 m²**（未扣墙/家具，净可走更小）；接待 120 m²；3 保险丝在**员工休息桌 / 档案柜 / 配电柜**实体台面上；`档案 ↔ 布草` 有绕行门，两条短回环；出口在服务前室东墙 `x=-108` |
 | Level 37 | 接待 → 脱鞋 → 东/西更衣 → 淋浴 → 湿区分配厅 → 主池（25×10m、5 条 2m 泳道）+ 主汤 + 静汤 + 冷水池 + 桑拿 + 北休息廊；设备间只走员工支线，不是游客必经路；6 个目标为**鸭 3 + 圈 3**，主池/主汤/静汤各 2 |
 | 材质 | 使用原有六张材质与新增L37白色墙砖、浅灰地砖，合计八张。墙砖整张2m、10×10块，地砖整张2.4m、8×8块，池内马赛克整张0.4m。新增材质、提示词及验证见 [记录](logs-ceramic-refresh/RUN.md) |
-| 测试 | `node tools/check-level12-node.cjs` **575 项**（L0 98 + L37 412 + 行为 65，三段独立进程）；`tools/v2/plan-check.cjs` 168；`tools/v2/l37-props-check.cjs` 1174；第三关 101；第四关 168 + 独立验收 45。本轮瓷砖与浮物返修见 [验证记录](logs-ceramic-refresh/RUN.md)，此前吸顶灯返修见 [验证记录](logs-ceiling-lights/RUN.md)，此前门口、墙牌和长凳返修见 [验证记录](logs-door-sign-bench/RUN.md)，此前淋浴返修见 [`logs-shower/RUN.md`](logs-shower/RUN.md)；后两关既有回归见 [`logs-final-v2/MANIFEST.md`](logs-final-v2/MANIFEST.md) |
+| 测试 | `node tools/check-level12-node.cjs` **625 项**（L0 115 + L37 445 + 行为 65，三段独立进程）；`tools/v2/plan-check.cjs` 168；`tools/v2/l37-props-check.cjs` 1177；第三关 101；第四关 357 + 独立验收 45。第四关本轮把第二次回返做成整车（`buildSecondCar`：全长地板/压低顶棚/整排吊环/真实窗洞，真实 E+WASD 进车到两端），见 [改动记录](代码改动记录.md)。本轮瓷砖与浮物返修见 [验证记录](logs-ceramic-refresh/RUN.md)，此前吸顶灯返修见 [验证记录](logs-ceiling-lights/RUN.md)，此前门口、墙牌和长凳返修见 [验证记录](logs-door-sign-bench/RUN.md)，此前淋浴返修见 [`logs-shower/RUN.md`](logs-shower/RUN.md)；后两关既有回归见 [`logs-final-v2/MANIFEST.md`](logs-final-v2/MANIFEST.md) |
 | 画面 | 真实 WebGL（本机 Edge 无头 + SwiftShader），正式代表图见 `shots12/shots12-3lgY5v/`、`shots12/shots12-QJ5wkG/`、`shots12/shots12-tGCwvb/`；两张怪物头脸是**含 `l12diagLight` 的诊断近景**，不冒充正式灯光图 |
 | 未测 | 硬件 GPU 帧率/GPU 时间、真实硬件 Bloom 观感、音频听感；截图里 `renderer.info.render.calls=1` 是最后一次 `composer.render` 后的值，不是整帧性能口径 |
 
@@ -156,7 +156,7 @@ node tools/v2/l37-props-check.cjs     # 1174
 
 # 第三/四关回归
 node tools/check-level3-node.cjs      # 101
-node tools/check-level4-node.cjs      # 168
+node tools/check-level4-node.cjs      # 357
 node tools/check-level4-rework-independent.cjs   # 45
 
 # 语法（把内联 module 交给 node --check）
@@ -176,8 +176,8 @@ node tools/shots12.cjs --base=http://127.0.0.1:8571/backrooms-pool.html --only=L
 - 交互性能：`node tools/check-interaction-performance.cjs` + `test-performance.html?level=3`（灯光数量与新增着色程序；第三关动态提灯留在固定灯池）。
 - 检票员检查：`node tools/check-conductor.cjs` + `test-conductor.html?level=3`（35 项出生坐标、可见性、巡逻、查票与追逐）。
 - 第三关纯 Node 回归：`node tools/check-level3-node.cjs`（101 项，含 111 个位置的车体扫掠、真实 `updatePlayer` 进维修间、查票线/死区/让行冷却、真实高度视线遮挡、固定 26 灯）。`tools/check-{metro,conductor,station}.cjs` 只生成浏览器检查页并做注入语法自检，不能当行为断言。
-- 第四关：`node tools/check-level4-node.cjs`（168）+ `node tools/check-level4-rework-independent.cjs`（45，含连续 WASD、正逆接缝、真实净空、隔墙不可拾取、两条乘车衔接与零写档）。Node 侧 GPU/DOM/音频/图片解码为桩，真实画面另用浏览器检查。
-- 第一/二关回归是同一范式：从宿主抽出真实 module + 真实 `vendor/three`，只桩渲染器/画布/音频/图片/DOM。2026-11-12 的一键数字：**575 项统一入口** + `plan-check` 168 + `l37-props-check` 1174 + 第三关 101 + 第四关 168/45。**测试是 Node 桩，不是浏览器实测**；浏览器证据在 `shots12/`，两者不能互相替代。
+- 第四关：`node tools/check-level4-node.cjs`（357）+ `node tools/check-level4-rework-independent.cjs`（45，含连续 WASD、正逆接缝、真实净空、隔墙不可拾取、两条乘车衔接与零写档）。Node 侧 GPU/DOM/音频/图片解码为桩，真实画面另用浏览器检查。
+- 第一/二关回归是同一范式：从宿主抽出真实 module + 真实 `vendor/three`，只桩渲染器/画布/音频/图片/DOM。2026-11-12 的一键数字：**575 项统一入口** + `plan-check` 168 + `l37-props-check` 1174 + 第三关 101 + 第四关 357/45。**测试是 Node 桩，不是浏览器实测**；浏览器证据在 `shots12/`，两者不能互相替代。
 
 ---
 
@@ -190,7 +190,7 @@ node tools/shots12.cjs --base=http://127.0.0.1:8571/backrooms-pool.html --only=L
 - 怪物头脸两张（`shots12/shots12-WkJDsg/L0-32-entity-head.png`、`shots12/shots12-Fyaxy2/L37-35-drowned-head.png`）使用**诊断补光 `l12diagLight`**，只用于检查骨架/材质，不代表正式场景亮度。
 - L37 站立近景 `L37-06` 的头脸被泳道绳部分遮挡；水下 `L37-08/09` 的头脸亦受泳道绳或高光影响，面部近景证据有限（躯干/腕部/发盖已复核）。
 - 第三关本轮改动（维修间净空、检票员 AI/模型/贴图）由纯 Node 回归覆盖几何与参数；布料 PBR、死皮裂纹、提灯体积感未在浏览器实测，需要人工看一眼。
-- 第四关通过 168 项模块测试、45 项独立验收、第三关 101 项回归与真实 WebGL 代表画面检查；范围止于首次异变后拾电池和钥匙，长期帧率与音效听感尚未专项评测。
+- 第四关通过 357 项模块测试、45 项独立验收、第三关 101 项回归与真实 WebGL 代表画面检查；范围止于第二次回返（整车替换）与操作痕迹/延迟脚步，第三次回返与破局未做，长期帧率与音效听感尚未专项评测。
 - 修改本地版后必须重跑 `node tools/_mkcdn.cjs` 与 `--check`；`node tools/check-entry.cjs` 检查启动、服务复用和第四关模块访问。
 - Windows 下 git 若报 `schannel SEC_E_NO_CREDENTIALS`：`git config --local http.sslBackend openssl`
 

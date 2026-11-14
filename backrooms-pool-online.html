@@ -324,6 +324,8 @@
   body.tunnel #play-overlay { border-color: #91a79955; }
   body.tunnel #play-overlay .sub { color: #bec8b9; letter-spacing: 2px; }
   body.l4-view-check #flash-text, body.l4-view-check #pickup-hint, body.l4-view-check #hint, body.l4-view-check #level-tag { display: none !important; }
+  /* ?l4view= 剧情取证图：只压掉交互提示，保留关卡标签 */
+  body.l4-view-shot #pickup-hint, body.l4-view-shot #flash-text { display: none !important; }
   @media (max-width: 700px) {
     .station-heading { top: 22px; left: 20px; }
     .station-heading h2 { font-size: 19px; }
@@ -2519,6 +2521,8 @@ function burst(o) {
   const send = audioCtx.createGain(); send.gain.value = o.wet == null ? 1 : o.wet;
   tail.connect(send); send.connect(audioCtx._conv);
   src.start(t); src.stop(t + dur + 0.06);
+  // 可取消通道：登记后能在暂停/离关时立刻停掉已经排进未来的声源
+  if (o.tag) { o.tag.add(src); src.onended = () => { o.tag.delete(src); }; }
 }
 /* 脚步：左右脚交替声像 + 每次随机音高；瓷砖=陶瓷硬亮三层 */
 function synthStep(surface) {
@@ -6096,6 +6100,8 @@ const L4_SFX = {
   'l4-pa': (o) => l4Broadcast(o),                                  // 广播：混响里偏一侧的闷声
   // 错位脚步：第二层起从背后/侧面来 —— 延迟 0.16s + 重湿 + 反相声像
   'l4-steps-behind': (o) => l4StepBehind(o),
+  // L4 延迟脚步：每个队列事件一组同步足音（延时由游戏队列掌握，可取消）
+  'l4-step-echo': (o) => l4StepBehind(o),
   'l4-paper': () => synthKnock(),                                  // 翻纸/记录卡
   'l4-wind': () => synthCreak(),                                   // 门缝风
   // 风道气流强度：不新建节点，直接调第四关环境里的风增益
@@ -6112,12 +6118,24 @@ function l4AirGust(o = {}) {
   burst({ dur: 0.85, freq: 300, q: 0.55, gain: 0.085 * g, sweep: 190, pan, wet: 1.6, attack: 0.22, rand: true });
   burst({ dur: 0.6, freq: 780, q: 0.5, gain: 0.045 * g, sweep: 520, pan: pan * 0.7, wet: 1.2, attack: 0.16, delay: 0.12, rand: true });
 }
-/* 错位脚步：你听见的这一步不是自己的。延迟 + 反向声像 + 更湿更远 */
+const l4EchoSources = new Set();
+let l4EchoCancelCount = 0;   // 诊断/回归可读：真的取消过几次
+/* 错位脚步：你听见的这一步不是自己的。延迟 + 反向声像 + 更湿更远。
+   ★ 每次调用只发**一组同步**足音：延时完全由 L4 的游戏队列掌握，
+     所以暂停/离关/复位时能真的取消掉（旧版在 WebAudio 里自己再排 0.16/0.62s
+     两拨，队列里两个事件会变成四拨，而且清不掉已经排进未来的声源）。 */
 function l4StepBehind(o = {}) {
   const pan = o.pan == null ? (Math.random() * 1.2 - 0.6) : o.pan;
-  burst({ dur: 0.07, freq: 480, q: 0.8, gain: 0.20, pan: -pan * 0.9, wet: 2.0, delay: 0.16, rand: true });
-  burst({ type: 'sine', f0: 92, f1: 48, dur: 0.10, gain: 0.20, filter: 'lowpass', pan: -pan * 0.9, wet: 1.8, delay: 0.16, rand: true });
-  burst({ dur: 0.06, freq: 430, q: 0.8, gain: 0.10, pan: pan * 0.5, wet: 2.4, delay: 0.62, rand: true });
+  const g = o.gain == null ? 1 : o.gain;   // 距离衰减由 L4 侧算好传进来
+  const tag = l4EchoSources;               // 登记到可取消通道
+  burst({ dur: 0.07, freq: 480, q: 0.8, gain: 0.20 * g, pan: -pan * 0.9, wet: 2.0, rand: true, tag });
+  burst({ type: 'sine', f0: 92, f1: 48, dur: 0.10, gain: 0.20 * g, filter: 'lowpass', pan: -pan * 0.9, wet: 1.8, rand: true, tag });
+}
+/* 取消 L4 已排出的回声（暂停 / 离关 / 复位） */
+function l4EchoCancel() {
+  l4EchoCancelCount++;
+  for (const s of l4EchoSources) { try { s.stop(); } catch (e) {} }
+  l4EchoSources.clear();
 }
 /* 远处的脚步（不是金属敲击）：低通 + 重湿 + 极小声 */
 function l4StepAway(o = {}) {
@@ -6144,6 +6162,8 @@ function ensureLevel4() {
     setView: (y, p) => { yaw = y; pitch = p; },
     syncCamera: () => syncCameraToPlayer(),
     onFlash: (msg) => showFlashText(msg),
+    // 暂停/离关/复位时取消已排出的错位脚步
+    onEchoCancel: () => l4EchoCancel(),
     // 目标栏文案由模块按阶段推进（拾手电 → 沿隧道前进 → 检查返回的列车）
     onTask: (text) => { const el = document.getElementById('v-task'); if (el) el.textContent = text; updateL4Presentation(); },
     sfx: (name, opts) => { const fn = L4_SFX[name]; if (fn) fn(opts); },
@@ -6453,6 +6473,10 @@ function updatePlayer(dt) {
       // 西侧更衣淋浴区（x < -14）是水泥地，其余池厅是瓷砖
       const surface = LEVEL === 0 ? 'carpet' : (LEVEL === L4_LEVEL ? 'concrete' : (submerged ? 'water' : (player.x < -14 ? 'concrete' : 'tile')));
       if (crouching) synthStepSoft(surface); else synthStep(surface);
+      // 第四关：把这一次真实落脚告诉 L4（延迟错位脚步只从这里派生，不用计时器凭空响）
+      if (LEVEL === L4_LEVEL && l4) {
+        l4.onFootstep({ x: player.x, y: player.y, z: player.z, grounded: player.grounded, running, crouching, surface });
+      }
       stepTimer = (crouching ? 0.62 : (running ? 0.30 : 0.44)) + (Math.random() - 0.5) * 0.10;
     }
     cameraBob += dt * (running ? 13 : 9);
@@ -7121,7 +7145,59 @@ if (camDbg) {
       dbgL2.position.set(hpH.x + fwdH.x * 0.55, camY + 0.10, hpH.z + fwdH.z * 0.55 + 0.08);
       dbgL2.userData.l12diagLight = true; scene.add(dbgL2);
     }
-    // 调试信息浮层（?dbg=1）
+    // 诊断：真实浏览器里验证 L4 回声的可排程与可取消（?l4echo=1 才跑，正常游玩不触发）
+    if (new URLSearchParams(location.search).get('l4echo') === '1') {
+      window.__l4echoReport = { steps: [] };
+      const rep = window.__l4echoReport;
+      const push = (k, v) => rep.steps.push(k + '=' + v);
+      setTimeout(() => {
+        try {
+          // 真实浏览器取证：显式初始化并恢复 AudioContext（无头环境默认可能停在 suspended）
+          try { initAudio(); } catch (e) {}
+          if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+          rep.stateAtStart = audioCtx ? audioCtx.state : 'none';
+          for (let i = 0; i < 4; i++) L4_SFX['l4-step-echo']({ pan: 0.15 * i - 0.2, gain: 0.5 });
+          rep.scheduled = l4EchoSources.size;
+          push('scheduled', rep.scheduled);
+          push('cancel0', l4EchoCancelCount);
+          l4EchoCancel();
+          rep.afterCancel = l4EchoSources.size;
+          rep.cancels = l4EchoCancelCount;
+          push('afterCancel', rep.afterCancel);
+          push('cancels', rep.cancels);
+          // 再排一次：确认取消之后仍能正常工作（不是把通道弄死）
+          L4_SFX['l4-step-echo']({ pan: 0.1, gain: 0.4 });
+          rep.afterReschedule = l4EchoSources.size;
+          push('afterReschedule', rep.afterReschedule);
+          rep.ok = rep.scheduled > 0 && rep.afterCancel === 0 && rep.afterReschedule > 0;
+        } catch (e) {
+          rep.error = String(e && e.message ? e.message : e);
+        }
+      }, 900);
+    }
+    // 第四关剧情取证：?l4view=maint|window|return 走模块公开的诊断状态（仅 ?cam= 组合），
+    // 用于给 Codex 拍"维修间电闸 / 第二次回返窗内异常 / 操作后返程的门"三张代表图，
+    // 正常游玩不会进入这里，也不替代 Node 里的真实链路回归。
+    {
+      const l4view = new URLSearchParams(location.search).get('l4view') || '';
+      if (LEVEL === L4_LEVEL && l4view && l4 && l4.debugState) {
+        document.body.classList.add('l4-view-shot');
+        // 窗内异常图关手电：让"窗内自亮"成为画面里唯一的亮源，避免手电把旧外壳打爆
+        const base = { aged: true, items: true, unlock: true, open: true, enterRoom: true, power: true, torch: true };
+        try {
+          if (l4view === 'maint') l4.debugState(base);
+          else if (l4view === 'window') l4.debugState(Object.assign({ secondReturn: true }, base));
+          else if (l4view === 'return') l4.debugState(Object.assign({ secondReturn: true, close: true }, base));
+          // 第二次回返整车取证：关手电，让车厢自身灯光成为唯一亮源；
+          // 外景把中门打开，让"完整车门 + 门内亮着的内饰"同时进画。
+          else if (l4view === 'carout') {
+            l4.debugState(Object.assign({ secondReturn: true, carDoor: true }, base));
+          } else if (l4view === 'carin' || l4view === 'carback') {
+            l4.debugState(Object.assign({ secondReturn: true }, base, { torch: false }));
+          }
+        } catch (e) { /* 诊断失败不影响取证脚本继续 */ }
+      }
+    }    // 调试信息浮层（?dbg=1）
     if (new URLSearchParams(location.search).get('dbg') === '1') {
       const dbg = document.createElement('div');
       dbg.style.cssText = 'position:fixed;top:280px;left:16px;z-index:999;color:#7cffb2;background:#000c;font:14px monospace;padding:10px;white-space:pre;border:1px solid #2b6';
@@ -7174,6 +7250,18 @@ if (new URLSearchParams(location.search).get('diag') === '1') {
         cam: [camera.position.x, camera.position.y, camera.position.z].map(v => Math.round(v * 100) / 100),
         camRot: [Math.round(camera.rotation.x * 1000) / 1000, Math.round(camera.rotation.y * 1000) / 1000],
         tk: l3TicketCount, brk: l3State.breakerOn, lvr: l3State.leverOn, ray,
+        // 音频取证：AudioContext 真实状态 + L4 回声句柄数 + 已取消次数
+        audio: (() => {
+          try {
+            return {
+              state: audioCtx ? audioCtx.state : 'none',
+              echoSources: l4EchoSources.size,
+              echoCancels: l4EchoCancelCount,
+              echoHook: (window.__l4echoReport || null),
+            };
+          } catch (e) { return 'err'; }
+        })(),
+        l4: (() => { try { return l4 && l4.diag ? l4.diag() : null; } catch (e) { return 'err'; } })(),
         ready: !!(renderReady && diagDrawFrames > 8 && diagLumMax > 0.03),
         frames: diagDrawFrames,
         lum: Math.round(diagLum * 1000) / 1000,

@@ -1,0 +1,366 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-14T04:15:56.072Z",
+  "browserPid": 20040,
+  "cdpPort": 1146,
+  "shots": [
+    {
+      "name": "L4-04-car-exterior",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=356.40,1.70,5.60,-0.620,0.02&l4view=carout&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-gpr4Y4\\L4-04-car-exterior.png",
+      "bytes": 1567310,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-gpr4Y4\\L4-04-car-exterior.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 14261,
+      "diag": {
+        "lv": 3,
+        "cols": 46,
+        "camBlocked": false,
+        "p": [
+          356.4,
+          0.1,
+          5.6
+        ],
+        "cam": [
+          356.4,
+          1.7,
+          5.6
+        ],
+        "camRot": [
+          0.02,
+          -0.62
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "676f6c",
+          "img",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": true,
+          "torchOwned": true,
+          "torchOn": true,
+          "charge": 1,
+          "spare": 0,
+          "key": true,
+          "door": 1,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 5.6,
+          "x": 356.4,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": true,
+            "carInspected": false
+          },
+          "steps": {
+            "active": true,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 11,
+        "lum": 0.082,
+        "lumMax": 0.455,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 3776,
+          "inst": 207,
+          "lights": 74,
+          "tris": 475126,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 68,
+          "tex": 23,
+          "progs": 29
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":46,\"camBlocked\":false,\"p\":[356.4,0.1,5.6],\"cam\":[356.4,1.7,5.6],\"camRot\":[0.02,-0.62],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"676f6c\",\"img\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":true,\"torchOwned\":true,\"torchOn\":true,\"charge\":1,\"spare\":0,\"key\":true,\"door\":1,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":5.6,\"x\":356.4,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":true,\"carInspected\":false},\"steps\":{\"active\":true,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":11,\"lum\":0.082,\"lumMax\":0.455,\"lumMin\":0,\"budget\":{\"meshes\":3776,\"inst\":207,\"lights\":74,\"tris\":475126,\"calls\":1,\"rtris\":1,\"geos\":68,\"tex\":23,\"progs\":29}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L4-05-car-inside-front",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=359.10,1.55,1.20,0,0.02&l4view=carin&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-gpr4Y4\\L4-05-car-inside-front.png",
+      "bytes": 1583817,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-gpr4Y4\\L4-05-car-inside-front.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 16878,
+      "diag": {
+        "lv": 3,
+        "cols": 46,
+        "camBlocked": false,
+        "p": [
+          359.1,
+          -0.05,
+          1.2
+        ],
+        "cam": [
+          359.1,
+          1.55,
+          1.2
+        ],
+        "camRot": [
+          0.02,
+          0
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0.05,
+          "StandardMaterial",
+          "0d1516",
+          "nomap",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": true,
+          "torchOwned": false,
+          "torchOn": false,
+          "charge": 1,
+          "spare": 0,
+          "key": true,
+          "door": 0,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 1.2,
+          "x": 359.1,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": true,
+            "carInspected": false
+          },
+          "steps": {
+            "active": true,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 13,
+        "lum": 0.103,
+        "lumMax": 0.299,
+        "lumMin": 0.003,
+        "budget": {
+          "meshes": 3776,
+          "inst": 207,
+          "lights": 74,
+          "tris": 475126,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 62,
+          "tex": 23,
+          "progs": 29
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":46,\"camBlocked\":false,\"p\":[359.1,-0.05,1.2],\"cam\":[359.1,1.55,1.2],\"camRot\":[0.02,0],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0.05,\"StandardMaterial\",\"0d1516\",\"nomap\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":true,\"torchOwned\":false,\"torchOn\":false,\"charge\":1,\"spare\":0,\"key\":true,\"door\":0,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":1.2,\"x\":359.1,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":true,\"carInspected\":false},\"steps\":{\"active\":true,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":13,\"lum\":0.103,\"lumMax\":0.299,\"lumMin\":0.003,\"budget\":{\"meshes\":3776,\"inst\":207,\"lights\":74,\"tris\":475126,\"calls\":1,\"rtris\":1,\"geos\":62,\"tex\":23,\"progs\":29}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L4-06-car-inside-back",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=359.10,1.55,-3.00,3.14159,0.02&l4view=carback&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-gpr4Y4\\L4-06-car-inside-back.png",
+      "bytes": 1567547,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-gpr4Y4\\L4-06-car-inside-back.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 13540,
+      "diag": {
+        "lv": 3,
+        "cols": 46,
+        "camBlocked": false,
+        "p": [
+          359.1,
+          -0.05,
+          -3
+        ],
+        "cam": [
+          359.1,
+          1.55,
+          -3
+        ],
+        "camRot": [
+          0.02,
+          3.142
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0.05,
+          "StandardMaterial",
+          "0d1516",
+          "nomap",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": true,
+          "torchOwned": false,
+          "torchOn": false,
+          "charge": 1,
+          "spare": 0,
+          "key": true,
+          "door": 0,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": -3,
+          "x": 359.1,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": true,
+            "carInspected": false
+          },
+          "steps": {
+            "active": true,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 12,
+        "lum": 0.081,
+        "lumMax": 0.331,
+        "lumMin": 0.008,
+        "budget": {
+          "meshes": 3776,
+          "inst": 207,
+          "lights": 74,
+          "tris": 475126,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 47,
+          "tex": 23,
+          "progs": 29
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":46,\"camBlocked\":false,\"p\":[359.1,-0.05,-3],\"cam\":[359.1,1.55,-3],\"camRot\":[0.02,3.142],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0.05,\"StandardMaterial\",\"0d1516\",\"nomap\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":true,\"torchOwned\":false,\"torchOn\":false,\"charge\":1,\"spare\":0,\"key\":true,\"door\":0,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":-3,\"x\":359.1,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":true,\"carInspected\":false},\"steps\":{\"active\":true,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":12,\"lum\":0.081,\"lumMax\":0.331,\"lumMin\":0.008,\"budget\":{\"meshes\":3776,\"inst\":207,\"lights\":74,\"tris\":475126,\"calls\":1,\"rtris\":1,\"geos\":47,\"tex\":23,\"progs\":29}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}

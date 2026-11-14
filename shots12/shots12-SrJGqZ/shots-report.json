@@ -1,0 +1,366 @@
+{
+  "base": "http://127.0.0.1:8571/backrooms-pool.html",
+  "when": "2026-11-14T02:45:08.070Z",
+  "browserPid": 41812,
+  "cdpPort": 10875,
+  "shots": [
+    {
+      "name": "L4-01-maint-door-breaker",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=355.00,1.58,19.15,1.02,-0.06&l4view=maint&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-SrJGqZ\\L4-01-maint-door-breaker.png",
+      "bytes": 2056219,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-SrJGqZ\\L4-01-maint-door-breaker.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 14539,
+      "diag": {
+        "lv": 3,
+        "cols": 43,
+        "camBlocked": false,
+        "p": [
+          355,
+          -0.02,
+          19.15
+        ],
+        "cam": [
+          355,
+          1.58,
+          19.15
+        ],
+        "camRot": [
+          -0.06,
+          1.02
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "929b99",
+          "img",
+          "-",
+          0.96,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": false,
+          "torchOwned": true,
+          "torchOn": true,
+          "charge": 1,
+          "spare": 0,
+          "key": false,
+          "door": 0,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 19.15,
+          "x": 355,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": false,
+            "windowSeen": false
+          },
+          "steps": {
+            "active": false,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 12,
+        "lum": 0.103,
+        "lumMax": 0.383,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 3761,
+          "inst": 207,
+          "lights": 73,
+          "tris": 474954,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 60,
+          "tex": 23,
+          "progs": 30
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":43,\"camBlocked\":false,\"p\":[355,-0.02,19.15],\"cam\":[355,1.58,19.15],\"camRot\":[-0.06,1.02],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"929b99\",\"img\",\"-\",0.96,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":false,\"torchOwned\":true,\"torchOn\":true,\"charge\":1,\"spare\":0,\"key\":false,\"door\":0,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":19.15,\"x\":355,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":false,\"windowSeen\":false},\"steps\":{\"active\":false,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":12,\"lum\":0.103,\"lumMax\":0.383,\"lumMin\":0,\"budget\":{\"meshes\":3761,\"inst\":207,\"lights\":73,\"tris\":474954,\"calls\":1,\"rtris\":1,\"geos\":60,\"tex\":23,\"progs\":30}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "gameErrors": [],
+      "netErrors": [
+        "404 http://127.0.0.1:8571/favicon.ico"
+      ],
+      "faviconOnly": true,
+      "shotErr": null
+    },
+    {
+      "name": "L4-02-window-anomaly",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=357.18,1.60,3.05,-1.5708,0.02&l4view=window&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-SrJGqZ\\L4-02-window-anomaly.png",
+      "bytes": 1356748,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-SrJGqZ\\L4-02-window-anomaly.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 19128,
+      "diag": {
+        "lv": 3,
+        "cols": 43,
+        "camBlocked": false,
+        "p": [
+          357.18,
+          0,
+          3.05
+        ],
+        "cam": [
+          357.18,
+          1.6,
+          3.05
+        ],
+        "camRot": [
+          0.02,
+          -1.571
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "676f6c",
+          "img",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": false,
+          "torchOwned": true,
+          "torchOn": true,
+          "charge": 1,
+          "spare": 0,
+          "key": false,
+          "door": 0,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 3.05,
+          "x": 357.18,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 1,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": true,
+            "windowSeen": false
+          },
+          "steps": {
+            "active": true,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 12,
+        "lum": 0.226,
+        "lumMax": 0.953,
+        "lumMin": 0.004,
+        "budget": {
+          "meshes": 3761,
+          "inst": 207,
+          "lights": 73,
+          "tris": 474954,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 80,
+          "tex": 23,
+          "progs": 30
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":43,\"camBlocked\":false,\"p\":[357.18,0,3.05],\"cam\":[357.18,1.6,3.05],\"camRot\":[0.02,-1.571],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"676f6c\",\"img\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":false,\"torchOwned\":true,\"torchOn\":true,\"charge\":1,\"spare\":0,\"key\":false,\"door\":0,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":3.05,\"x\":357.18,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":1,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":true,\"windowSeen\":false},\"steps\":{\"active\":true,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":12,\"lum\":0.226,\"lumMax\":0.953,\"lumMin\":0.004,\"budget\":{\"meshes\":3761,\"inst\":207,\"lights\":73,\"tris\":474954,\"calls\":1,\"rtris\":1,\"geos\":80,\"tex\":23,\"progs\":30}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    },
+    {
+      "name": "L4-03-return-door",
+      "url": "http://127.0.0.1:8571/backrooms-pool.html?level=4&cam=356.90,1.62,21.60,0.245,-0.06&l4view=return&diag=1",
+      "png": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-SrJGqZ\\L4-03-return-door.png",
+      "bytes": 1046904,
+      "ok": true,
+      "seq": [],
+      "staticShot": "D:\\AI\\工作文件夹\\游戏\\shots12\\shots12-SrJGqZ\\L4-03-return-door.png",
+      "gatedWant": 0,
+      "gatedOk": 0,
+      "gatedFail": 0,
+      "gatedEnough": true,
+      "ready": true,
+      "camBlocked": false,
+      "waited": 18891,
+      "diag": {
+        "lv": 3,
+        "cols": 43,
+        "camBlocked": false,
+        "p": [
+          356.9,
+          0.02,
+          21.6
+        ],
+        "cam": [
+          356.9,
+          1.62,
+          21.6
+        ],
+        "camRot": [
+          -0.06,
+          0.245
+        ],
+        "tk": 0,
+        "brk": false,
+        "lvr": false,
+        "ray": [
+          0,
+          "StandardMaterial",
+          "676f6c",
+          "img",
+          "-",
+          0.94,
+          "BufferGeometry",
+          [
+            0,
+            0,
+            0
+          ],
+          0,
+          0
+        ],
+        "audio": {
+          "state": "none",
+          "echoSources": 0,
+          "echoCancels": 2,
+          "echoHook": null
+        },
+        "l4": {
+          "aged": false,
+          "torchOwned": true,
+          "torchOn": true,
+          "charge": 1,
+          "spare": 0,
+          "key": false,
+          "door": 0,
+          "crossings": 0,
+          "forward": 0,
+          "back": 0,
+          "z": 21.6,
+          "x": 356.9,
+          "paused": false,
+          "maint": {
+            "unlocked": true,
+            "door": 0,
+            "entered": true,
+            "powerDone": true,
+            "breaker": 1,
+            "secondReturn": true,
+            "windowSeen": false
+          },
+          "steps": {
+            "active": true,
+            "pending": 0,
+            "emitted": 0,
+            "rejected": 0
+          }
+        },
+        "ready": true,
+        "frames": 12,
+        "lum": 0.016,
+        "lumMax": 0.053,
+        "lumMin": 0,
+        "budget": {
+          "meshes": 3761,
+          "inst": 207,
+          "lights": 73,
+          "tris": 474954,
+          "calls": 1,
+          "rtris": 1,
+          "geos": 145,
+          "tex": 23,
+          "progs": 33
+        }
+      },
+      "probe": {
+        "title": "{\"lv\":3,\"cols\":43,\"camBlocked\":false,\"p\":[356.9,0.02,21.6],\"cam\":[356.9,1.62,21.6],\"camRot\":[-0.06,0.245],\"tk\":0,\"brk\":false,\"lvr\":false,\"ray\":[0,\"StandardMaterial\",\"676f6c\",\"img\",\"-\",0.94,\"BufferGeometry\",[0,0,0],0,0],\"audio\":{\"state\":\"none\",\"echoSources\":0,\"echoCancels\":2,\"echoHook\":null},\"l4\":{\"aged\":false,\"torchOwned\":true,\"torchOn\":true,\"charge\":1,\"spare\":0,\"key\":false,\"door\":0,\"crossings\":0,\"forward\":0,\"back\":0,\"z\":21.6,\"x\":356.9,\"paused\":false,\"maint\":{\"unlocked\":true,\"door\":0,\"entered\":true,\"powerDone\":true,\"breaker\":1,\"secondReturn\":true,\"windowSeen\":false},\"steps\":{\"active\":true,\"pending\":0,\"emitted\":0,\"rejected\":0}},\"ready\":true,\"frames\":12,\"lum\":0.016,\"lumMax\":0.053,\"lumMin\":0,\"budget\":{\"meshes\":3761,\"inst\":207,\"lights\":73,\"tris\":474954,\"calls\":1,\"rtris\":1,\"geos\":145,\"tex\":23,\"progs\":33}}",
+        "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "ren": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "w": 1600,
+        "h": 900
+      },
+      "errors": [],
+      "gameErrors": [],
+      "netErrors": [],
+      "faviconOnly": false,
+      "shotErr": null
+    }
+  ]
+}
